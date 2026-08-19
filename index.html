@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="BEBU Store - E-commerce profesional de productos para bebés. Compra online y recibe en tu domicilio.">
+    <meta name="theme-color" content="#ffffff">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="white">
+    
+    <title>BEBU Store - Catálogo Profesional de Productos para Bebés</title>
+    
+    <link rel="stylesheet" href="style.css">
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" type="image/png" sizes="192x192" href="https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png">
+</head>
+<body>
+    <!-- ========== ENCABEZADO PROFESIONAL ========== -->
+    <header class="header-pro">
+        <div class="header-content-row">
+            <!-- GRUPO IZQUIERDO: Botón Volver + Logo -->
+            <div class="header-left-group">
+                <button 
+                    id="btn-volver" 
+                    class="btn-control-volver" 
+                    onclick="volverNivelAnterior()" 
+                    style="display: none;"
+                    aria-label="Volver a la pantalla anterior">
+                    ⬅ Volver
+                </button>
+                <img 
+                    id="logo-global" 
+                    src="" 
+                    alt="Logo BEBU Store" 
+                    class="logo-app-pro"
+                    loading="lazy">
+            </div>
+            
+            <!-- GRUPO DERECHO: Botón Carrito -->
+            <div class="header-right-group">
+                <button 
+                    id="btn-carrito-header" 
+                    class="btn-control-carrito" 
+                    onclick="abrirModalCarrito()"
+                    aria-label="Abrir carrito de compras">
+                    🛒 Carrito <span id="contador-carrito" class="badge-carrito">0</span>
+                </button>
+            </div>
+        </div>
+        
+        <!-- BUSCADOR UNIVERSAL CENTRADO -->
+        <div class="buscador-container">
+            <input 
+                type="text" 
+                id="buscador" 
+                placeholder="🔍 Buscador universal de productos, marcas o categorías..."
+                aria-label="Buscar productos, marcas o categorías"
+                autocomplete="off">
+        </div>
+    </header>
+
+    <!-- ========== CONTENEDOR PRINCIPAL DINÁMICO ========== -->
+    <main id="app-container" class="main-container">
+        <!-- El contenido se inyecta dinámicamente desde app.js -->
+    </main>
+
+    <!-- ========== MODAL DEL CARRITO / CHECKOUT PROFESIONAL ========== -->
+    <div id="modal-carrito" class="modal-overlay" style="display: none;" role="dialog" aria-labelledby="modal-titulo">
+        <div class="modal-card">
+            <!-- ENCABEZADO DEL MODAL -->
+            <div class="modal-header">
+                <h2 id="modal-titulo">Tu Pedido Actual</h2>
+                <button 
+                    class="close-btn" 
+                    onclick="cerrarModalCarrito()"
+                    aria-label="Cerrar modal del carrito">
+                    &times;
+                </button>
+            </div>
+
+            <!-- LISTA DE PRODUCTOS EN EL CARRITO -->
+            <div id="lista-carrito-modal" class="modal-body-list"></div>
+
+            <!-- CONTROLES DE ENVÍO Y PAGO -->
+            <div class="checkout-controls">
+                <label class="checkbox-label">
+                    <input 
+                        type="checkbox" 
+                        id="switch-envio" 
+                        onchange="calcularTotalGeneral()"
+                        aria-label="Incluir envío a domicilio"> 
+                    🛵 Envío a domicilio (+$2.000)
+                </label>
+                <label class="checkbox-label">
+                    <input 
+                        type="checkbox" 
+                        id="switch-transferencia" 
+                        onchange="calcularTotalGeneral()"
+                        aria-label="Pagar por transferencia o efectivo"> 
+                    🏦 Pago por Transferencia/Efectivo (5% desc.)
+                </label>
+            </div>
+
+            <!-- DESGLOSE DE TOTALES -->
+            <div class="totales-desglose">
+                <div class="desglose-linea">
+                    <span>Subtotal:</span>
+                    <span id="subtotal-modal">$0,00</span>
+                </div>
+                <div class="desglose-linea" id="linea-envio" style="display: none;">
+                    <span>Envío:</span>
+                    <span>+$2.000,00</span>
+                </div>
+                <div class="desglose-linea" id="linea-descuento" style="display: none;">
+                    <span>Descuento (5%):</span>
+                    <span id="descuento-modal" style="color: #28a745;">-$0,00</span>
+                </div>
+                <div class="desglose-linea total-modal">
+                    <span>Total:</span>
+                    <span id="total-final-modal">$0,00</span>
+                </div>
+            </div>
+
+            <!-- BOTÓN ENVIAR POR WHATSAPP -->
+            <button 
+                onclick="enviarPedidoWhatsApp()" 
+                class="btn-whatsapp-pro"
+                id="btn-enviar-whatsapp">
+                Enviar Pedido por WhatsApp 🟢
+            </button>
+
+            <!-- BOTÓN VACIAR CARRITO -->
+            <button 
+                onclick="vaciarCarrito()" 
+                class="btn-vaciar-carrito">
+                Vaciar Carrito
+            </button>
+        </div>
+    </div>
+
+    <!-- ========== SCRIPTS ========== -->
+    <script src="app.js"></script>
+</body>
+</html>
