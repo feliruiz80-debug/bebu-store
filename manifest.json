@@ -1,91 +1,21 @@
 {
-  "name": "BEBU Store - Tienda Online de Productos para Bebés",
+  "name": "BEBU Store - Tienda Online",
   "short_name": "BEBU Store",
-  "description": "Tienda online profesional de productos para bebés. Compra en línea y recibe en tu domicilio.",
-  "start_url": "index.html",
+  "description": "Tienda online profesional de productos para bebés.",
+  "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
-  "background_color": "#ffffff",
-  "theme_color": "#3a6fff",
-  "categories": ["shopping", "e-commerce"],
-  "prefer_related_applications": false,
-  "screenshots": [
-    {
-      "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "form_factor": "narrow"
-    },
-    {
-      "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "form_factor": "wide"
-    }
-  ],
+  "background_color": "#EBE7D8",
+  "theme_color": "#6A5A5B",
   "icons": [
-    {
-      "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-      "sizes": "192x192",
-      "type": "image/png",
-      "purpose": "maskable"
-    },
-    {
-      "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "any"
-    },
-    {
-      "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-      "sizes": "512x512",
-      "type": "image/png",
-      "purpose": "maskable"
-    }
+    { "src": "/icons/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/logo-192.png", "sizes": "192x192", "type": "image/png", "purpose": "maskable" },
+    { "src": "/icons/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "/icons/logo-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
   ],
   "shortcuts": [
-    {
-      "name": "Ver Marcas",
-      "short_name": "Marcas",
-      "description": "Ir al catálogo de marcas disponibles",
-      "url": "index.html?section=brands",
-      "icons": [
-        {
-          "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    },
-    {
-      "name": "Mi Carrito",
-      "short_name": "Carrito",
-      "description": "Ir directamente a mi carrito de compras",
-      "url": "index.html?section=cart",
-      "icons": [
-        {
-          "src": "https://res.cloudinary.com/dsibwc9q5/image/upload/v1778075161/Copia_de_CAT%C3%81LOGO_BEBU_-_2026_2_diqoyb.png",
-          "sizes": "192x192",
-          "type": "image/png"
-        }
-      ]
-    }
-  ],
-  "share_target": {
-    "action": "/share",
-    "method": "POST",
-    "enctype": "application/x-www-form-urlencoded",
-    "params": {
-      "title": "title",
-      "text": "text",
-      "url": "url"
-    }
-  }
+    { "name": "Ver Marcas", "short_name": "Marcas", "url": "/index.html?section=brands", "icons": [{ "src": "/icons/logo-192.png", "sizes": "192x192", "type": "image/png" }] },
+    { "name": "Mi Carrito", "short_name": "Carrito", "url": "/index.html?section=cart", "icons": [{ "src": "/icons/logo-192.png", "sizes": "192x192", "type": "image/png" }] }
+  ]
 }
