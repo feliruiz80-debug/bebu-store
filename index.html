@@ -2,60 +2,6 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-<<<<<<< HEAD
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="theme-color" content="#ffffff">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <title>BEBU Store</title>
-    <link rel="icon" href="logo.png">
-    <link rel="stylesheet" href="style.css">
-    <link rel="manifest" href="manifest.json">
-</head>
-<body>
-    <header class="header">
-        <div class="logo-back-wrap">
-            <button id="back-btn" class="back-btn">Volver</button>
-            <div id="logo-box" class="logo-box">BEBU</div>
-        </div>
-        <div class="brand-title">BEBU Store</div>
-        <button id="header-cart" class="header-cart">Carrito <span id="badge" class="badge">0</span></button>
-    </header>
-
-    <div class="search-wrap">
-        <input type="text" id="search-input" class="search-input" placeholder="Buscar...">
-        <button id="search-clear" class="search-clear">X</button>
-    </div>
-
-    <div id="breadcrumb" class="breadcrumb hidden"></div>
-
-    <div class="content">
-        <section id="brands-view" class="section active">
-            <div class="sec-label">Marcas</div>
-            <div id="brands-grid" class="brands-grid"></div>
-        </section>
-
-        <section id="subcats-view" class="section">
-            <div class="sec-label" id="subcats-label">Lineas</div>
-            <div id="subcats-grid" class="subcats-grid"></div>
-        </section>
-
-        <section id="products-view" class="section">
-            <div class="sec-label" id="products-label">Productos</div>
-            <div id="products-grid" class="products-grid"></div>
-        </section>
-
-        <section id="search-view" class="section">
-            <div class="sec-label" id="search-label">Resultados</div>
-            <div id="search-grid" class="search-results-grid"></div>
-        </section>
-
-        <section id="cart-view" class="section">
-            <div class="sec-label">Mi Carrito</div>
-            <div id="cart-wrap"></div>
-        </section>
-    </div>
-
-=======
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="BEBU Store - E-commerce profesional de productos para bebés. Compra online y recibe en tu domicilio.">
     <meta name="theme-color" content="#ffffff">
@@ -193,7 +139,17 @@
     </div>
 
     <!-- ========== SCRIPTS ========== -->
->>>>>>> 2dcaed15040312dbc2a55c93c487d41b5ab8c48c
     <script src="app.js"></script>
+
+    <!-- REGISTRO DEL SERVICE WORKER PARA ACTIVAR PWA -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('sw.js')
+            .then(reg => console.log('Service Worker registrado con éxito:', reg.scope))
+            .catch(err => console.log('Error al registrar el Service Worker:', err));
+        });
+      }
+    </script>
 </body>
 </html>
