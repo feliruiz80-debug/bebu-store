@@ -6,6 +6,7 @@
     <meta name="description" content="BEBU Store - E-commerce profesional de productos para bebés. Compra online y recibe en tu domicilio.">
     <meta name="theme-color" content="#ffffff">
     <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="white">
     
     <title>BEBU Store - Catálogo Profesional de Productos para Bebés</title>
@@ -61,7 +62,16 @@
 
     <!-- ========== CONTENEDOR PRINCIPAL DINÁMICO ========== -->
     <main id="app-container" class="main-container">
-        <!-- El contenido se inyecta dinámicamente desde app.js -->
+        <!-- Contenedores que app.js necesita obligatoriamente para no dar error -->
+        <section id="brands-view" class="section active">
+            <div id="brands-grid" class="brands-grid"></div>
+        </section>
+        <section id="subcats-view" class="section">
+            <div id="subcats-grid" class="subcats-grid"></div>
+        </section>
+        <section id="products-view" class="section">
+            <div id="products-grid" class="products-grid"></div>
+        </section>
     </main>
 
     <!-- ========== MODAL DEL CARRITO / CHECKOUT PROFESIONAL ========== -->
