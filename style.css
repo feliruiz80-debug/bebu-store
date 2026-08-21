@@ -841,3 +841,24 @@ img { max-width: 100%; display: block; }
 }
 
 /* Keep rest of layout consistent */
+
+/* --- PARCHE MÍNIMO: evita que el logo se mueva, posiciona badge y bordes blancos --- */
+.header-content-row { position: relative; }
+.header-left-group, .header-right-group {
+  width: 84px;
+  min-width: 84px;
+  flex: 0 0 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.header-center-group {
+  position: absolute;
+  left: 50%;
+  top: 12px; /* ajustar si querés más/menos separación vertical */
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+.logo-app-pro { height: 78px; transition: height 180ms ease, transform 180ms ease; }
+.header-right-group { position: relative; } /* para que badge absoluto se posicione respecto al botón */
+.badge-carrito { position: absolute; top: -6px; right: -6px; }
