@@ -25,7 +25,9 @@
   <header class="header-pro" role="banner">
     <div class="header-content-row">
       <div class="header-left-group">
-        <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver">VOLVER</button>
+        <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver">
+          <span aria-hidden="true" class="btn-back-arrow">←</span> Volver
+        </button>
       </div>
 
       <div class="header-center-group">
@@ -151,7 +153,7 @@
         const data = ev.data || {};
         if (data && data.type === 'NEW_VERSION') {
           const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.remove('hidden'); /* FIX: show banner when new version available */
+          if (banner) banner.classList.remove('hidden'); /* show banner when new version available */
         }
       });
 
@@ -177,3 +179,4 @@
   </script>
 </body>
 </html>
+
