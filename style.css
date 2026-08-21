@@ -83,18 +83,28 @@ img { max-width: 100%; display: block; }
   flex: 0 0 auto;
 }
 
+/* Reserve space in header so center logo doesn't shift when left/right buttons appear */
+.header-left-group, .header-right-group {
+  min-width: 84px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
 /* Logo: responsive adjustments */
 .logo-app-pro {
-  height: 60px;
+  height: 78px;
   width: auto;
   border-radius: 12px;
   object-fit: contain;
-  max-width: 150px;
+  max-width: 220px;
+  transition: height 180ms ease, transform 180ms ease;
 }
 
 /* On very small screens, keep logo compact */
 @media (max-width: 420px) {
-  .logo-app-pro { height: 48px; max-width: 120px; }
+  .logo-app-pro { height: 56px; max-width: 140px; }
+  .header-left-group, .header-right-group { min-width: 64px; }
 }
 
 .btn-control-volver {
@@ -107,6 +117,15 @@ img { max-width: 100%; display: block; }
   cursor: pointer;
   transition: all 0.2s;
   white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.btn-back-arrow {
+  font-weight: 900;
+  font-size: 16px;
+  line-height: 1;
 }
 
 .btn-control-volver:hover {
@@ -405,13 +424,15 @@ img { max-width: 100%; display: block; }
 
 .modal-card {
   width: min(820px, 96%);
-  max-height: calc(100vh - 100px);
+  max-height: calc(100vh - 120px);
   overflow-y: auto;
   background: var(--card);
   border-radius: 18px;
   padding: 18px;
   border: 1px solid var(--border);
   box-shadow: var(--shadow);
+  margin: 0 auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 .modal-card-small {
@@ -540,6 +561,8 @@ img { max-width: 100%; display: block; }
 
 .modal-body-list {
   margin-bottom: 16px;
+  padding-left: 4px;
+  padding-right: 4px;
 }
 
 .cart-item {
@@ -782,7 +805,6 @@ img { max-width: 100%; display: block; }
    PROMO CARD / HIGHLIGHTS
    ========================= */
 
-/* Make promo card visually distinctive and span full row so it is prominent */
 .brand-card.promo-card {
   border: 2px solid var(--accent-2);
   box-shadow: 0 10px 36px rgba(10,10,10,0.12);
@@ -791,25 +813,15 @@ img { max-width: 100%; display: block; }
   transition: transform 0.18s, box-shadow 0.18s;
 }
 
-/* Make the promo occupy the full grid row so it appears first and big */
 .brands-grid > .promo-card {
   grid-column: 1 / -1;
 }
 
-/* On wide screens keep it spanning full width but limit visual height */
-@media (min-width: 720px) {
-  .brands-grid > .promo-card {
-    grid-column: 1 / -1;
-  }
-}
-
-/* Slight lift on hover */
 .brand-card.promo-card:hover {
   transform: translateY(-6px);
   box-shadow: 0 18px 48px rgba(10,10,10,0.14);
 }
 
-/* Make promo badge more visible */
 .brand-card.promo-card .promo-badge {
   background: linear-gradient(90deg, var(--accent-2), #ffd4b3);
   color: #5a433a;
@@ -817,27 +829,21 @@ img { max-width: 100%; display: block; }
   padding: 6px 12px;
 }
 
-/* Larger img area for promo */
 .brand-card.promo-card .brand-img {
   min-height: 160px;
   padding: 18px;
 }
 
-/* If logo image present, emphasize it */
 .brand-card.promo-card .brand-img img {
   max-height: 120px;
   max-width: 90%;
 }
 
-/* Accessibility: focus ring for promo card */
 .brand-card.promo-card:focus {
   outline: var(--focus-ring);
 }
 
-/* If for some reason promos have no image, make the initial more prominent */
 .brand-card.promo-card .brand-initial {
   font-size: 48px;
   color: #ff8b6b;
 }
-
-/* Keep rest of layout consistent */
