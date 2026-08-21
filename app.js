@@ -1,9 +1,5 @@
-/* BEBU Store - app.js (versión profesional mejorada)
-   Consume Google Sheet (public) - gviz iz JSON (gviz/tq?tqx=out:json)
-   - Mejoras: logo visible, buscador funcional, modal dirección, envío correcto, WhatsApp limpio
-*/
+/* BEBU Store - app.js (versión mejorada) */
 
-/* ================= CONFIG ================= */
 const SHEET_ID = '1JBnOCILUFaXuWIgUJGOZYPXKV-nQdOTfAXw2voUnKd8';
 
 const GIDS = {
@@ -13,20 +9,9 @@ const GIDS = {
   PROMOS: '718207796'
 };
 
-const SHEET_TTL = 60 * 1000; // 60s
-
-const FALLBACKS = {
-  WHATSAPP: '543517694762',
-  COSTO_ENVIO: 2500,
-  LOGO_LOCAL: '/logo.png'
-};
-
-const LS = {
-  CART: 'bebu:cart:v1',
-  SHEET_CACHE: 'bebu:sheetcache:v1'
-};
-
-/* ================== UTIL =================== */
+const SHEET_TTL = 60 * 1000;
+const FALLBACKS = { WHATSAPP: '543517694762', COSTO_ENVIO: 2500, LOGO_LOCAL: '/logo.png' };
+const LS = { CART: 'bebu:cart:v1', SHEET_CACHE: 'bebu:sheetcache:v1' };
 
 async function fetchGvizJson(url) {
   const res = await fetch(url, { cache: 'no-store' });
@@ -96,7 +81,6 @@ function parsePrice(raw) {
   return isNaN(n) ? null : n;
 }
 
-/* normalize image urls from sheets and fallback */
 function normalizeImageUrl(raw) {
   if (raw === null || raw === undefined) return FALLBACKS.LOGO_LOCAL;
   const s = String(raw).trim();
@@ -104,17 +88,22 @@ function normalizeImageUrl(raw) {
   if (/^data:/i.test(s)) return s;
   if (/^\/\//.test(s)) return location.protocol + s;
   if (/^https?:\/\//i.test(s)) return s;
+  let m = s.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  m = s.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  m = s.match(/drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/);
+  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
+  if (s.includes('googleusercontent.com') || s.includes('gstatic.com')) return s;
   if (/^\//.test(s)) return s;
+  if (/^[\w\-.]+\.(jpg|jpeg|png|webp|svg|gif)$/i.test(s)) return '/' + s;
   return FALLBACKS.LOGO_LOCAL;
 }
-
-/* ================= DATA LAYER ================= */
 
 async function fetchSheetTab(gid) {
   const cacheKey = `gid:${gid}`;
   const cached = getCachedSheet(cacheKey);
   if (cached) return cached;
-
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
   const json = await fetchGvizJson(url);
   const arr = gvizTableToObjects(json);
@@ -124,10 +113,10 @@ async function fetchSheetTab(gid) {
 
 async function loadAllData() {
   const [productosRaw, marcasRaw, configRaw, promosRaw] = await Promise.all([
-    fetchSheetTab(GIDS.PRODUCTOS).catch(err => { console.error('Productos error', err); return []; }),
-    fetchSheetTab(GIDS.MARCAS).catch(err => { console.error('Marcas error', err); return []; }),
-    fetchSheetTab(GIDS.CONFIG).catch(err => { console.error('Config error', err); return []; }),
-    fetchSheetTab(GIDS.PROMOS).catch(err => { console.error('Promos error', err); return []; })
+    fetchSheetTab(GIDS.PRODUCTOS).catch(() => []),
+    fetchSheetTab(GIDS.MARCAS).catch(() => []),
+    fetchSheetTab(GIDS.CONFIG).catch(() => []),
+    fetchSheetTab(GIDS.PROMOS).catch(() => [])
   ]);
 
   const config = {};
@@ -186,37 +175,21 @@ function mapKeysLower(obj) {
   return out;
 }
 
-/* ================= APP STATE ================= */
-
 const AppState = {
-  products: [],
-  brands: [],
-  promos: [],
-  config: {},
-  cart: [],
-  navigationStack: [],
-  currentMarca: null,
-  envioActivo: false,
-  transferencia: false,
-  direccion: ''
+  products: [], brands: [], promos: [], config: {}, cart: [], navigationStack: [],
+  currentMarca: null, envioActivo: false, transferencia: false, direccion: ''
 };
 
 function loadCartFromStorage() {
   try {
     const raw = localStorage.getItem(LS.CART);
     AppState.cart = raw ? JSON.parse(raw) : [];
-  } catch (e) {
-    AppState.cart = [];
-  }
+  } catch (e) { AppState.cart = []; }
 }
 
 function saveCartToStorage() {
-  try {
-    localStorage.setItem(LS.CART, JSON.stringify(AppState.cart));
-  } catch (e) {}
+  try { localStorage.setItem(LS.CART, JSON.stringify(AppState.cart)); } catch (e) {}
 }
-
-/* =============== UI RENDER HELPERS =============== */
 
 function el(id) { return document.getElementById(id); }
 function $(sel) { return document.querySelector(sel); }
@@ -242,15 +215,9 @@ function updateBackButton() {
 function goBack() {
   const current = document.querySelector('.section.active');
   if (!current) return;
-  
-  if (current.id === 'products-view') {
-    renderSubcategories(AppState.currentMarca);
-  } else if (current.id === 'subcats-view') {
-    renderBrands();
-  } else if (current.id === 'search-view') {
-    renderBrands();
-  }
-  
+  if (current.id === 'products-view') renderSubcategories(AppState.currentMarca);
+  else if (current.id === 'subcats-view') renderBrands();
+  else if (current.id === 'search-view') renderBrands();
   const searchInput = el('buscador');
   if (searchInput) searchInput.value = '';
 }
@@ -272,8 +239,6 @@ function updateThemeFromConfig(config) {
     }
   }
 }
-
-/* =============== RENDER: BRANDS / SUBCATS / PRODUCTS =============== */
 
 function renderPromotions() {
   const activePromos = AppState.promos.filter(pr => pr.activo && pr.id_producto);
@@ -312,13 +277,9 @@ function renderBrands() {
 
   const orderedBrands = [];
   const activePromosCount = AppState.promos.filter(pr => pr.activo).length;
-  if (activePromosCount > 0) {
-    orderedBrands.push('__PROMOS__');
-  }
+  if (activePromosCount > 0) orderedBrands.push('__PROMOS__');
   AppState.brands.forEach(b => {
-    if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) {
-      orderedBrands.push(b.marca);
-    }
+    if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) orderedBrands.push(b.marca);
   });
   const productBrandsOrder = [];
   AppState.products.forEach(p => {
@@ -351,7 +312,6 @@ function renderBrands() {
     </div>`;
   }).join('');
   container.innerHTML = html;
-
   showSection('brands-view');
 }
 
@@ -407,21 +367,14 @@ function renderProducts(marca, subcat) {
   showSection('products-view');
 }
 
-/* ================= SEARCH ================= */
-
 let searchDebounceTimer = null;
 function handleSearchInput(value) {
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
     const q = (value || '').toString().trim().toLowerCase();
-    if (!q) {
-      renderBrands();
-      return;
-    }
+    if (!q) { renderBrands(); return; }
     const resultados = AppState.products.filter(p => {
-      return p.descripcion.toLowerCase().includes(q) ||
-             p.marca.toLowerCase().includes(q) ||
-             p.subcategoria.toLowerCase().includes(q);
+      return p.descripcion.toLowerCase().includes(q) || p.marca.toLowerCase().includes(q) || p.subcategoria.toLowerCase().includes(q);
     });
     renderSearchResults(resultados, value);
   }, 220);
@@ -456,8 +409,6 @@ function renderSearchResults(results, query) {
   el('search-count-label') && (el('search-count-label').textContent = `${results.length} resultado${results.length!==1?'s':''}`);
   showSection('search-view');
 }
-
-/* ================= CART LOGIC ================ */
 
 function addToCart(productId, qty = 1) {
   const id = String(productId);
@@ -499,22 +450,13 @@ function computeCartTotals() {
     }
     const subtotalItem = unitPrice * cartItem.qty;
     subtotal += subtotalItem;
-    items.push({
-      id: prod.id,
-      qty: cartItem.qty,
-      product: prod,
-      unitPrice,
-      subtotal: subtotalItem,
-      promoApplied
-    });
+    items.push({ id: prod.id, qty: cartItem.qty, product: prod, unitPrice, subtotal: subtotalItem, promoApplied });
   });
 
   const envio = AppState.envioActivo ? (parsePrice(AppState.config['COSTO_ENVIO'] || AppState.config['COSTOENVIO'] || '') || FALLBACKS.COSTO_ENVIO) : 0;
   const total = subtotal + envio;
   return { items, subtotal, envio, total };
 }
-
-/* ================= CART DRAWER UI ================= */
 
 function renderCartDrawer() {
   const wrapper = el('lista-carrito-modal');
@@ -542,12 +484,8 @@ function renderCartDrawer() {
     </div>`;
   }).join('');
   wrapper.innerHTML = `<div class="cart-items">${htmlItems}</div>`;
-  
   const btnDireccion = el('btn-abrir-direccion');
-  if (btnDireccion) {
-    btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
-  }
-  
+  if (btnDireccion) btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
   updateCartCounter();
   updateTotalsInModal(subtotal, envio, total);
 }
@@ -571,8 +509,6 @@ function updateCartCounter() {
   else { counter.style.display = 'none'; }
 }
 
-/* ================== MODAL DIRECCION =================== */
-
 function openDireccionModal() {
   const modal = el('modal-direccion');
   if (!modal) return;
@@ -591,119 +527,61 @@ function guardarDireccion() {
   const input = el('input-direccion');
   if (!input) return;
   AppState.direccion = input.value.trim();
-  if (!AppState.direccion) {
-    showToast('Ingresa una dirección');
-    return;
-  }
+  if (!AppState.direccion) { showToast('Ingresa una dirección'); return; }
   closeDireccionModal();
   showToast('Dirección guardada');
 }
 
-/* ================== WHATSAPP CHECKOUT ================= */
-
 function sendOrderWhatsApp() {
   if (!AppState.cart || AppState.cart.length === 0) { showToast('El carrito está vacío'); return; }
-  
-  if (AppState.envioActivo && !AppState.direccion) {
-    openDireccionModal();
-    return;
-  }
-
+  if (AppState.envioActivo && !AppState.direccion) { openDireccionModal(); return; }
   const phone = String(AppState.config['WHATSAPP'] || AppState.config['Whatsapp'] || AppState.config['whatsapp'] || FALLBACKS.WHATSAPP).replace(/\D/g,'');
   const { items, subtotal, envio, total } = computeCartTotals();
   const lines = [];
-  
-  lines.push('PEDIDO BEBU');
-  lines.push('');
-  lines.push('DETALLE DEL PEDIDO');
-  items.forEach(it => {
-    lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`);
-  });
-  lines.push('');
-  lines.push('RESUMEN DE PAGO');
-  lines.push(`Subtotal: ${fmt(subtotal)}`);
+  lines.push('PEDIDO BEBU', '', 'DETALLE DEL PEDIDO');
+  items.forEach(it => lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`));
+  lines.push('', 'RESUMEN DE PAGO', `Subtotal: ${fmt(subtotal)}`);
   if (envio) lines.push(`Envío: ${fmt(envio)}`);
-  lines.push(`TOTAL: ${fmt(total)}`);
-  lines.push('');
-  
-  if (AppState.envioActivo) {
-    lines.push('ENVÍO A DOMICILIO');
-    lines.push(`Dirección: ${AppState.direccion}`);
-    lines.push('');
-  }
-  
-  if (AppState.transferencia) {
-    lines.push('FORMA DE PAGO');
-    lines.push('Transferencia bancaria');
-    lines.push('Alias: TIENDABEBU');
-    lines.push('');
-  }
-  
+  lines.push(`TOTAL: ${fmt(total)}`, '');
+  if (AppState.envioActivo) { lines.push('ENVÍO A DOMICILIO', `Dirección: ${AppState.direccion}`, ''); }
+  if (AppState.transferencia) { lines.push('FORMA DE PAGO', 'Transferencia bancaria', 'Alias: TIENDABEBU', ''); }
   lines.push('Por confirmar');
-
   const text = encodeURIComponent(lines.join('\n'));
   const url = `https://wa.me/${phone}?text=${text}`;
   window.open(url, '_blank');
-
   setTimeout(() => {
-    AppState.cart = [];
-    AppState.direccion = '';
-    AppState.envioActivo = false;
-    AppState.transferencia = false;
-    saveCartToStorage();
-    renderCartDrawer();
-    const envioCheck = el('switch-envio');
-    const transCheck = el('switch-transferencia');
-    if (envioCheck) envioCheck.checked = false;
-    if (transCheck) transCheck.checked = false;
+    AppState.cart = []; AppState.direccion = ''; AppState.envioActivo = false; AppState.transferencia = false;
+    saveCartToStorage(); renderCartDrawer();
+    const envioCheck = el('switch-envio'); const transCheck = el('switch-transferencia');
+    if (envioCheck) envioCheck.checked = false; if (transCheck) transCheck.checked = false;
   }, 700);
 }
 
-/* ================== UI: toasts, helpers ================= */
-
 function showToast(msg, t = 2000) {
-  const existing = document.querySelector('.bebu-toast');
-  if (existing) existing.remove();
-  const toast = document.createElement('div');
-  toast.className = 'bebu-toast';
-  toast.textContent = msg;
-  document.body.appendChild(toast);
+  const existing = document.querySelector('.bebu-toast'); if (existing) existing.remove();
+  const toast = document.createElement('div'); toast.className = 'bebu-toast'; toast.textContent = msg; document.body.appendChild(toast);
   setTimeout(() => toast.remove(), t);
 }
 
 function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
 
-/* =================== EVENTS BINDING =================== */
-
 function bindUI() {
-  const searchInput = el('buscador');
-  if (searchInput) searchInput.addEventListener('input', e => handleSearchInput(e.target.value));
-
+  const searchInput = el('buscador'); if (searchInput) searchInput.addEventListener('input', e => handleSearchInput(e.target.value));
   const appContainer = el('app-container');
   if (appContainer) {
     appContainer.addEventListener('click', e => {
       const brandCard = e.target.closest('.brand-card');
       if (brandCard) {
         const marca = brandCard.getAttribute('data-marca');
-        if (marca === 'PROMOCIONES' || brandCard.dataset.action === 'promos') {
-          renderPromotions();
-          return;
-        }
-        AppState.currentMarca = marca;
-        renderSubcategories(marca);
-        return;
+        if (marca === 'PROMOCIONES' || brandCard.dataset.action === 'promos') { renderPromotions(); return; }
+        AppState.currentMarca = marca; renderSubcategories(marca); return;
       }
       const subCard = e.target.closest('.subcat-card');
-      if (subCard) {
-        const sub = subCard.getAttribute('data-sub');
-        renderProducts(AppState.currentMarca, sub);
-        return;
-      }
+      if (subCard) { const sub = subCard.getAttribute('data-sub'); renderProducts(AppState.currentMarca, sub); return; }
       const btn = e.target.closest('button[data-action]');
       if (btn) {
-        const action = btn.getAttribute('data-action');
-        const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action'); const id = btn.getAttribute('data-id');
         if (action === 'add') addToCart(id, 1);
         else if (action === 'wa') {
           const p = AppState.products.find(pp => String(pp.id) === String(id));
@@ -717,118 +595,50 @@ function bindUI() {
     });
   }
 
-  document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') closeCartModal();
-  });
-
-  const cartBtn = el('btn-carrito-header');
-  if (cartBtn) cartBtn.addEventListener('click', openCartModal);
-
-  const backBtn = el('btn-volver');
-  if (backBtn) backBtn.addEventListener('click', goBack);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCartModal(); });
+  const cartBtn = el('btn-carrito-header'); if (cartBtn) cartBtn.addEventListener('click', openCartModal);
+  const backBtn = el('btn-volver'); if (backBtn) backBtn.addEventListener('click', goBack);
 
   document.addEventListener('click', e => {
     if (e.target.closest('.close-btn')) closeCartModal();
     if (e.target.closest('.btn-vaciar-carrito')) {
-      if (confirm('Vaciar carrito?')) {
-        AppState.cart = [];
-        saveCartToStorage();
-        renderCartDrawer();
-      }
+      if (confirm('Vaciar carrito?')) { AppState.cart = []; saveCartToStorage(); renderCartDrawer(); }
     }
   });
 
   const modalList = el('lista-carrito-modal');
-  if (modalList) {
-    modalList.addEventListener('click', e => {
-      const btn = e.target.closest('[data-action]');
-      if (!btn) return;
-      const action = btn.getAttribute('data-action');
-      const idx = Number(btn.getAttribute('data-idx'));
-      if (action === 'inc') updateCartQty(idx, 1);
-      else if (action === 'dec') updateCartQty(idx, -1);
-      else if (action === 'del') removeCartItem(idx);
-    });
-  }
+  if (modalList) modalList.addEventListener('click', e => {
+    const btn = e.target.closest('[data-action]'); if (!btn) return;
+    const action = btn.getAttribute('data-action'); const idx = Number(btn.getAttribute('data-idx'));
+    if (action === 'inc') updateCartQty(idx, 1); else if (action === 'dec') updateCartQty(idx, -1); else if (action === 'del') removeCartItem(idx);
+  });
 
-  const envioToggle = el('switch-envio');
-  if (envioToggle) {
-    envioToggle.addEventListener('change', () => {
-      AppState.envioActivo = envioToggle.checked;
-      renderCartDrawer();
-    });
-  }
-
-  const transToggle = el('switch-transferencia');
-  if (transToggle) {
-    transToggle.addEventListener('change', () => {
-      AppState.transferencia = transToggle.checked;
-    });
-  }
-
-  const sendBtn = el('btn-enviar-whatsapp');
-  if (sendBtn) sendBtn.addEventListener('click', sendOrderWhatsApp);
-
-  const btnDireccion = el('btn-abrir-direccion');
-  if (btnDireccion) btnDireccion.addEventListener('click', openDireccionModal);
-
-  const btnGuardar = el('btn-guardar-direccion');
-  if (btnGuardar) btnGuardar.addEventListener('click', guardarDireccion);
-
-  const closeDirBtn = el('close-direccion-btn');
-  if (closeDirBtn) closeDirBtn.addEventListener('click', closeDireccionModal);
-  
-  const closeDirBtn2 = el('close-direccion-btn-2');
-  if (closeDirBtn2) closeDirBtn2.addEventListener('click', closeDireccionModal);
-
-  const inputDireccion = el('input-direccion');
-  if (inputDireccion) {
-    inputDireccion.addEventListener('keypress', e => {
-      if (e.key === 'Enter') guardarDireccion();
-    });
-  }
+  const envioToggle = el('switch-envio'); if (envioToggle) envioToggle.addEventListener('change', () => { AppState.envioActivo = envioToggle.checked; renderCartDrawer(); });
+  const transToggle = el('switch-transferencia'); if (transToggle) transToggle.addEventListener('change', () => { AppState.transferencia = transToggle.checked; });
+  const sendBtn = el('btn-enviar-whatsapp'); if (sendBtn) sendBtn.addEventListener('click', sendOrderWhatsApp);
+  const btnDireccion = el('btn-abrir-direccion'); if (btnDireccion) btnDireccion.addEventListener('click', openDireccionModal);
+  const btnGuardar = el('btn-guardar-direccion'); if (btnGuardar) btnGuardar.addEventListener('click', guardarDireccion);
+  const closeDirBtn = el('close-direccion-btn'); if (closeDirBtn) closeDirBtn.addEventListener('click', closeDireccionModal);
+  const closeDirBtn2 = el('close-direccion-btn-2'); if (closeDirBtn2) closeDirBtn2.addEventListener('click', closeDireccionModal);
+  const inputDireccion = el('input-direccion'); if (inputDireccion) inputDireccion.addEventListener('keypress', e => { if (e.key === 'Enter') guardarDireccion(); });
 }
 
-/* =================== CART MODAL OPEN/CLOSE =================== */
-
-function openCartModal() {
-  const modal = el('modal-carrito');
-  if (!modal) return;
-  modal.style.display = 'block';
-  renderCartDrawer();
-}
-
-function closeCartModal() {
-  const modal = el('modal-carrito');
-  if (!modal) return;
-  modal.style.display = 'none';
-}
-
-/* =================== BOOTSTRAP APP =================== */
+function openCartModal() { const modal = el('modal-carrito'); if (!modal) return; modal.style.display = 'block'; renderCartDrawer(); }
+function closeCartModal() { const modal = el('modal-carrito'); if (!modal) return; modal.style.display = 'none'; }
 
 async function bootstrap() {
   try {
     const logoEl = el('logo-global');
-    if (logoEl && logoEl.tagName === 'IMG') {
-      logoEl.src = FALLBACKS.LOGO_LOCAL;
-      logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; };
-    }
-
-    loadCartFromStorage();
-    bindUI();
-    const brandsGrid = el('brands-grid');
-    if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
-
+    if (logoEl && logoEl.tagName === 'IMG') { logoEl.src = FALLBACKS.LOGO_LOCAL; logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; }; }
+    loadCartFromStorage(); bindUI();
+    const brandsGrid = el('brands-grid'); if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
     const data = await loadAllData();
     AppState.products = data.productos || [];
     AppState.brands = (data.marcas || []).map(m => ({ marca: m.marca, logo: m.logo }));
     AppState.promos = data.promos || [];
     AppState.config = data.config || {};
-
     updateThemeFromConfig(AppState.config);
-    renderBrands();
-    updateCartCounter();
-
+    renderBrands(); updateCartCounter();
   } catch (err) {
     console.error('Bootstrap error', err);
     const container = el('brands-grid');
@@ -836,7 +646,4 @@ async function bootstrap() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  bootstrap();
-});
-
+document.addEventListener('DOMContentLoaded', () => { bootstrap(); });
