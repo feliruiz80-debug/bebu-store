@@ -1,14 +1,11 @@
-/* BEBU Store - app.js
-   Consume Google Sheet (public) - gv iz JSON (gviz/tq?tqx=out:json)
-   - Reemplaza el app.js antiguo.
-   - Antes de usar: publica las 4 pestañas del sheet (Archivo -> Publicar en la web).
-   - Configurable via const SHEET_ID y GIDS.
+/* BEBU Store - app.js (versión profesional mejorada)
+   Consume Google Sheet (public) - gviz iz JSON (gviz/tq?tqx=out:json)
+   - Mejoras: logo visible, buscador funcional, modal dirección, envío correcto, WhatsApp limpio
 */
 
 /* ================= CONFIG ================= */
 const SHEET_ID = '1JBnOCILUFaXuWIgUJGOZYPXKV-nQdOTfAXw2voUnKd8';
 
-// GIDs que mencionaste
 const GIDS = {
   PRODUCTOS: '1022185098',
   MARCAS: '1283244979',
@@ -16,17 +13,14 @@ const GIDS = {
   PROMOS: '718207796'
 };
 
-// TTL cache en ms (lecturas desde Sheet)
 const SHEET_TTL = 60 * 1000; // 60s
 
-// WhatsApp y envío se leerán desde sheet Config; fallback si no existe:
 const FALLBACKS = {
   WHATSAPP: '543517694762',
   COSTO_ENVIO: 2500,
-  LOGO_LOCAL: '/icons/logo-192.png'
+  LOGO_LOCAL: '/logo.png'
 };
 
-// LocalStorage keys
 const LS = {
   CART: 'bebu:cart:v1',
   SHEET_CACHE: 'bebu:sheetcache:v1'
@@ -34,13 +28,10 @@ const LS = {
 
 /* ================== UTIL =================== */
 
-// Parse respuesta "gviz" que viene envuelta: "/*O_o*/ google.visualization.Query.setResponse(...);"
 async function fetchGvizJson(url) {
   const res = await fetch(url, { cache: 'no-store' });
   if (!res.ok) throw new Error('Network response not ok: ' + res.status);
   const text = await res.text();
-
-  // Extraer JSON entre la primera "({" o "setResponse(" y la última ");"
   const start = text.indexOf('{');
   const end = text.lastIndexOf('}');
   if (start === -1 || end === -1) throw new Error('Unexpected gviz format');
@@ -48,10 +39,7 @@ async function fetchGvizJson(url) {
   return JSON.parse(jsonText);
 }
 
-// Convierte la tabla gviz a array de objetos usando la primera fila como headers
 function gvizTableToObjects(gvizObj) {
-  // gvizObj.table.cols -> [{label, id, type}]
-  // gvizObj.table.rows -> [{c:[{v:..}, {v:..}]}, ...]
   const cols = (gvizObj.table && gvizObj.table.cols) || [];
   const rows = (gvizObj.table && gvizObj.table.rows) || [];
   const headers = cols.map(c => (c.label || c.id || '').toString().trim());
@@ -65,7 +53,6 @@ function gvizTableToObjects(gvizObj) {
   });
 }
 
-// Cache simple en localStorage para respuestas del sheet
 function getCachedSheet(key) {
   try {
     const raw = localStorage.getItem(LS.SHEET_CACHE);
@@ -75,7 +62,6 @@ function getCachedSheet(key) {
     if (!entry) return null;
     const now = Date.now();
     if (now - entry.ts > SHEET_TTL) {
-      // caducó
       delete store[key];
       localStorage.setItem(LS.SHEET_CACHE, JSON.stringify(store));
       return null;
@@ -95,11 +81,9 @@ function setCachedSheet(key, data) {
   } catch (e) {}
 }
 
-// Formateo moneda ARS sin decimales (según requeriste antes)
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
 function fmt(v) { return currency.format(Math.round(v || 0)); }
 
-// Limpia precio entrante (cadena o número) a número
 function parsePrice(raw) {
   if (raw === null || raw === undefined) return null;
   let s = String(raw).trim();
@@ -126,7 +110,6 @@ async function fetchSheetTab(gid) {
   return arr;
 }
 
-// Carga las 4 pestañas en paralelo y normaliza
 async function loadAllData() {
   const [productosRaw, marcasRaw, configRaw, promosRaw] = await Promise.all([
     fetchSheetTab(GIDS.PRODUCTOS).catch(err => { console.error('Productos error', err); return []; }),
@@ -135,10 +118,8 @@ async function loadAllData() {
     fetchSheetTab(GIDS.PROMOS).catch(err => { console.error('Promos error', err); return []; })
   ]);
 
-  // Normalizar Config: clave/valor por fila
   const config = {};
   configRaw.forEach(row => {
-    // asumir primer col = key, segunda col = value (no dependemos del label exacto)
     const keys = Object.keys(row);
     if (keys.length >= 2) {
       const k = String(row[keys[0]] || '').toString().trim();
@@ -147,8 +128,6 @@ async function loadAllData() {
     }
   });
 
-  // Normalizar Marcas
-  // Soporta columnas: MARCA, URL_LOGO (nombres exactos pero tolera otras mayúsculas)
   const marcas = marcasRaw.map(r => {
     const lower = mapKeysLower(r);
     return {
@@ -157,8 +136,6 @@ async function loadAllData() {
     };
   }).filter(m => m.marca);
 
-  // Normalizar Productos
-  // ID | MARCA | SUBCATEGORIA | DESCRIPCION | PRECIO | URL_IMAGEN
   const productos = productosRaw.map(r => {
     const lower = mapKeysLower(r);
     const precioRaw = lower['precio'] !== undefined ? lower['precio'] : (lower['price'] || '');
@@ -172,8 +149,6 @@ async function loadAllData() {
     };
   }).filter(p => p.id && p.descripcion);
 
-  // Normalizar Promos
-  // ID_PROMO | ID_PRODUCTO | CANTIDAD | PRECIO_PROMO | ACTIVO (SI/NO)
   const promos = promosRaw.map(r => {
     const lower = mapKeysLower(r);
     return {
@@ -199,14 +174,17 @@ function mapKeysLower(obj) {
 /* ================= APP STATE ================= */
 
 const AppState = {
-  products: [],        // productos normalizados
-  brands: [],          // marcas normalizadas
-  promos: [],          // promos
-  config: {},          // config
-  cart: []             // {id_producto, cantidad}
+  products: [],
+  brands: [],
+  promos: [],
+  config: {},
+  cart: [],
+  navigationStack: ['brands-view'],
+  envioActivo: false,
+  transferencia: false,
+  direccion: ''
 };
 
-// Cargar carrito desde localStorage
 function loadCartFromStorage() {
   try {
     const raw = localStorage.getItem(LS.CART);
@@ -234,42 +212,41 @@ function showSection(id) {
   if (elSec) elSec.classList.add('active');
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
+  AppState.navigationStack[AppState.navigationStack.length - 1] = id;
+  updateBackButton();
+}
+
+function updateBackButton() {
+  const btnVolver = el('btn-volver');
+  if (!btnVolver) return;
+  const current = AppState.navigationStack[AppState.navigationStack.length - 1];
+  btnVolver.style.display = current === 'brands-view' ? 'none' : 'inline-flex';
+}
+
+function goBack() {
+  if (AppState.navigationStack.length > 1) {
+    AppState.navigationStack.pop();
+    const prev = AppState.navigationStack[AppState.navigationStack.length - 1];
+    showSection(prev);
+  }
 }
 
 function updateThemeFromConfig(config) {
-  // CONFIG may contain COLOR_1..COLOR_6 and URL_LOGO_APP
   const root = document.documentElement;
   for (let i = 1; i <= 6; i++) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-  // logo
-  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || '';
-  const logoEl = el('logo-global') || el('logo-box');
-  if (logoEl && logoUrl) {
+  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || '/logo.png';
+  const logoEl = el('logo-global');
+  if (logoEl) {
     if (logoEl.tagName === 'IMG') {
       logoEl.src = logoUrl;
       logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; };
     } else {
       logoEl.innerHTML = `<img src="${logoUrl}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
     }
-  } else if (logoEl) {
-    // fallback local
-    if (logoEl.tagName === 'IMG') {
-      logoEl.src = FALLBACKS.LOGO_LOCAL;
-    }
   }
-}
-
-// Breadcrumb
-function updateBreadcrumb() {
-  const bc = el('breadcrumb');
-  if (!bc) return;
-  const state = el('products-view').classList.contains('active') ? 'Productos' :
-                el('subcats-view').classList.contains('active') ? 'Lineas' : 'Marcas';
-  // basic
-  bc.textContent = state;
-  if (state === 'Marcas') bc.classList.add('hidden'); else bc.classList.remove('hidden');
 }
 
 /* =============== RENDER: BRANDS / SUBCATS / PRODUCTS =============== */
@@ -277,13 +254,11 @@ function updateBreadcrumb() {
 function renderBrands() {
   const container = el('brands-grid');
   container.innerHTML = '';
-  // Agrupar marcas encontradas en productos (para asegurar que sólo marcas con productos se muestren)
   const marcasMap = {};
   AppState.products.forEach(p => {
     marcasMap[p.marca] = marcasMap[p.marca] || { count: 0, logo: '' };
     marcasMap[p.marca].count++;
   });
-  // merge logos from AppState.brands
   AppState.brands.forEach(b => {
     if (b.marca) {
       marcasMap[b.marca] = marcasMap[b.marca] || { count: 0, logo: '' };
@@ -293,7 +268,7 @@ function renderBrands() {
 
   const marcasList = Object.keys(marcasMap).sort();
   if (marcasList.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="ei">😕</div><p>No hay marcas disponibles</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="ei">No hay marcas disponibles</div></div>`;
     return;
   }
 
@@ -309,7 +284,6 @@ function renderBrands() {
   container.innerHTML = html;
 
   showSection('brands-view');
-  updateBreadcrumb();
 }
 
 function renderSubcategories(marca) {
@@ -318,7 +292,7 @@ function renderSubcategories(marca) {
   const items = AppState.products.filter(p => p.marca === marca);
   const subs = Array.from(new Set(items.map(i => i.subcategoria))).sort();
   if (subs.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="ei">😕</div><p>No hay líneas para ${escapeHtml(marca)}</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="ei">No hay líneas para ${escapeHtml(marca)}</div></div>`;
     return;
   }
   container.innerHTML = subs.map(s => {
@@ -328,8 +302,8 @@ function renderSubcategories(marca) {
     </div>`;
   }).join('');
   el('subcats-label') && (el('subcats-label').textContent = `Líneas de ${marca}`);
+  AppState.currentMarca = marca;
   showSection('subcats-view');
-  updateBreadcrumb();
 }
 
 function renderProducts(marca, subcat) {
@@ -337,11 +311,10 @@ function renderProducts(marca, subcat) {
   container.innerHTML = '';
   const list = AppState.products.filter(p => p.marca === marca && p.subcategoria === subcat);
   if (list.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="ei">😕</div><p>Sin productos</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="ei">Sin productos</div></div>`;
     return;
   }
   container.innerHTML = list.map(p => {
-    const promoHtml = renderPromoBadgeIfAny(p.id);
     const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
       <div class="product-img">${img}</div>
@@ -349,7 +322,7 @@ function renderProducts(marca, subcat) {
         <div>
           <div class="product-brand">${escapeHtml(p.marca)} - ${escapeHtml(p.subcategoria)}</div>
           <div class="product-name">${escapeHtml(p.descripcion)}</div>
-          <div class="product-price">${fmt(p.precio)} ${promoHtml ? '<span style="margin-left:6px">'+promoHtml+'</span>' : ''}</div>
+          <div class="product-price">${fmt(p.precio)}</div>
         </div>
         <div class="product-buttons">
           <button class="btn btn-add" data-action="add" data-id="${escapeAttr(p.id)}">Agregar</button>
@@ -360,15 +333,6 @@ function renderProducts(marca, subcat) {
   }).join('');
   el('products-label') && (el('products-label').textContent = `${subcat} - ${list.length} producto${list.length!==1?'s':''}`);
   showSection('products-view');
-  updateBreadcrumb();
-}
-
-// Render badge si existe promo activa (ej: "Oferta: Llevando 2, $X")
-function renderPromoBadgeIfAny(productId) {
-  const promos = AppState.promos.filter(pr => pr.id_producto === String(productId) && pr.activo && pr.precio_promo);
-  if (!promos || promos.length === 0) return '';
-  const p = promos[0];
-  return `<span class="promo-badge" title="Promo: ${p.cantidad} o más a ${fmt(p.precio_promo)}">¡Oferta!</span>`;
 }
 
 /* ================= SEARCH ================= */
@@ -379,7 +343,6 @@ function handleSearchInput(value) {
   searchDebounceTimer = setTimeout(() => {
     const q = (value || '').toString().trim().toLowerCase();
     if (!q) {
-      // volver a vista previa
       renderBrands();
       return;
     }
@@ -396,7 +359,7 @@ function renderSearchResults(results, query) {
   const container = el('search-grid');
   if (!container) return;
   if (results.length === 0) {
-    container.innerHTML = `<div class="empty-state"><div class="ei">🔎</div><p>Sin resultados para "${escapeHtml(query)}"</p></div>`;
+    container.innerHTML = `<div class="empty-state"><div class="ei">Sin resultados para "${escapeHtml(query)}"</div></div>`;
     showSection('search-view');
     return;
   }
@@ -417,13 +380,12 @@ function renderSearchResults(results, query) {
       </div>
     </div>`;
   }).join('');
-  el('search-count-label') && (el('search-count-label').textContent = `${results.length} resultado${results.length!==1?'s':''} para "${query}"`);
+  el('search-count-label') && (el('search-count-label').textContent = `${results.length} resultado${results.length!==1?'s':''}`);
   showSection('search-view');
 }
 
-/* ================= CART LOGIC (promos aplicadas) ================ */
+/* ================= CART LOGIC ================ */
 
-// Añadir producto al carrito. Identificador de item = id_producto
 function addToCart(productId, qty = 1) {
   const id = String(productId);
   const existing = AppState.cart.find(it => it.id === id);
@@ -434,7 +396,6 @@ function addToCart(productId, qty = 1) {
   showToast('Agregado al carrito');
 }
 
-// Cambiar cantidad (incremento/decremento directo)
 function updateCartQty(idx, delta) {
   if (idx < 0 || idx >= AppState.cart.length) return;
   AppState.cart[idx].qty += delta;
@@ -443,7 +404,6 @@ function updateCartQty(idx, delta) {
   renderCartDrawer();
 }
 
-// Remove item
 function removeCartItem(idx) {
   if (idx < 0 || idx >= AppState.cart.length) return;
   AppState.cart.splice(idx, 1);
@@ -451,15 +411,12 @@ function removeCartItem(idx) {
   renderCartDrawer();
 }
 
-// Compute prices applying promos:
-// Returns { items:[{id, qty, product, unitPrice, subtotal, promoApplied}], subtotal, envio, total }
 function computeCartTotals() {
   const items = [];
   let subtotal = 0;
   AppState.cart.forEach(cartItem => {
     const prod = AppState.products.find(p => String(p.id) === String(cartItem.id));
     if (!prod) return;
-    // buscar promo activa para este producto
     const promo = AppState.promos.find(pr => String(pr.id_producto) === String(prod.id) && pr.activo && pr.precio_promo && pr.cantidad > 0);
     let unitPrice = prod.precio;
     let promoApplied = null;
@@ -479,8 +436,8 @@ function computeCartTotals() {
     });
   });
 
-  const envio = parsePrice(AppState.config['COSTO_ENVIO'] || AppState.config['COSTOENVIO'] || '') || FALLBACKS.COSTO_ENVIO;
-  const total = subtotal + (AppState.cart.length ? envio : 0);
+  const envio = AppState.envioActivo ? (parsePrice(AppState.config['COSTO_ENVIO'] || AppState.config['COSTOENVIO'] || '') || FALLBACKS.COSTO_ENVIO) : 0;
+  const total = subtotal + envio;
   return { items, subtotal, envio, total };
 }
 
@@ -490,7 +447,7 @@ function renderCartDrawer() {
   const wrapper = el('lista-carrito-modal');
   if (!wrapper) return;
   if (!AppState.cart || AppState.cart.length === 0) {
-    wrapper.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">🧺</div><p>Tu carrito está vacío</p></div>`;
+    wrapper.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">Carrito vacío</div><p>Tu carrito está vacío</p></div>`;
     updateCartCounter();
     updateTotalsInModal(0, 0, 0);
     return;
@@ -501,7 +458,7 @@ function renderCartDrawer() {
       <div class="cart-item-info">
         <div class="cart-item-brand">${escapeHtml(it.product.marca)} - ${escapeHtml(it.product.subcategoria)}</div>
         <div class="cart-item-name">${escapeHtml(it.product.descripcion)}</div>
-        <div class="cart-item-price">${fmt(it.unitPrice)} c/u ${it.promoApplied ? '<span class="promo-inline">Promo aplicada</span>' : ''}</div>
+        <div class="cart-item-price">${fmt(it.unitPrice)} c/u ${it.promoApplied ? '<span class="promo-inline">Promo</span>' : ''}</div>
       </div>
       <div class="cart-item-controls">
         <button class="qty-btn" data-action="dec" data-idx="${idx}">-</button>
@@ -518,58 +475,108 @@ function renderCartDrawer() {
 
 function updateTotalsInModal(subtotal, envio, total) {
   const subtotalEl = el('subtotal-modal');
-  const envioLine = el('linea-envio');
+  const envioVal = el('envio-valor');
+  const linea = el('linea-envio');
   const totalEl = el('total-final-modal');
   if (subtotalEl) subtotalEl.textContent = fmt(subtotal);
-  if (envioLine) envioLine.style.display = envio ? 'flex' : 'none';
+  if (envioVal) envioVal.textContent = fmt(envio);
+  if (linea) linea.style.display = envio ? 'flex' : 'none';
   if (totalEl) totalEl.textContent = fmt(total);
 }
 
 function updateCartCounter() {
-  const counter = el('contador-carrito') || el('badge');
+  const counter = el('contador-carrito');
   if (!counter) return;
   const n = AppState.cart.reduce((s, it) => s + it.qty, 0);
   if (n > 0) { counter.textContent = n > 9 ? '9+' : String(n); counter.style.display = 'inline-flex'; }
   else { counter.style.display = 'none'; }
 }
 
+/* ================== MODAL DIRECCION =================== */
+
+function openDireccionModal() {
+  const modal = el('modal-direccion');
+  if (!modal) return;
+  modal.style.display = 'block';
+  const input = el('input-direccion');
+  if (input) input.value = AppState.direccion;
+}
+
+function closeDireccionModal() {
+  const modal = el('modal-direccion');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
+
+function guardarDireccion() {
+  const input = el('input-direccion');
+  if (!input) return;
+  AppState.direccion = input.value.trim();
+  if (!AppState.direccion) {
+    showToast('Ingresa una dirección');
+    return;
+  }
+  closeDireccionModal();
+  showToast('Dirección guardada');
+}
+
 /* ================== WHATSAPP CHECKOUT ================= */
 
 function sendOrderWhatsApp() {
   if (!AppState.cart || AppState.cart.length === 0) { showToast('El carrito está vacío'); return; }
+  
+  if (AppState.envioActivo && !AppState.direccion) {
+    openDireccionModal();
+    return;
+  }
+
   const phone = String(AppState.config['WHATSAPP'] || AppState.config['Whatsapp'] || AppState.config['whatsapp'] || FALLBACKS.WHATSAPP).replace(/\D/g,'');
   const { items, subtotal, envio, total } = computeCartTotals();
   const lines = [];
-  lines.push('*PEDIDO BEBU*');
+  
+  lines.push('PEDIDO BEBU');
   lines.push('');
-  lines.push('*DETALLE DEL PEDIDO*');
+  lines.push('DETALLE DEL PEDIDO');
   items.forEach(it => {
-    lines.push(`• ${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`);
-    if (it.promoApplied) lines.push(`  (Promo aplicada: ${it.promoApplied.cantidad} o más)`);
+    lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`);
   });
   lines.push('');
-  lines.push('*RESUMEN DE PAGO*');
-  lines.push(`• Subtotal: ${fmt(subtotal)}`);
-  if (envio) lines.push(`• Envío: ${fmt(envio)}`);
-  lines.push(`• TOTAL: ${fmt(total)}`);
+  lines.push('RESUMEN DE PAGO');
+  lines.push(`Subtotal: ${fmt(subtotal)}`);
+  if (envio) lines.push(`Envío: ${fmt(envio)}`);
+  lines.push(`TOTAL: ${fmt(total)}`);
   lines.push('');
-  lines.push('*FORMA DE ENTREGA*');
-  lines.push(envio ? '• Envío a domicilio' : '• Retiro en local');
-  lines.push('');
-  lines.push('*FORMA DE PAGO*');
-  lines.push('• Por acordar (indicar en el mensaje si es transferencia o efectivo)');
-  lines.push('');
-  lines.push('_¡Quedo atento a la confirmación del pedido!_');
+  
+  if (AppState.envioActivo) {
+    lines.push('ENVÍO A DOMICILIO');
+    lines.push(`Dirección: ${AppState.direccion}`);
+    lines.push('');
+  }
+  
+  if (AppState.transferencia) {
+    lines.push('FORMA DE PAGO');
+    lines.push('Transferencia bancaria');
+    lines.push('Alias: TIENDABEBU');
+    lines.push('');
+  }
+  
+  lines.push('Por confirmar');
 
   const text = encodeURIComponent(lines.join('\n'));
   const url = `https://wa.me/${phone}?text=${text}`;
   window.open(url, '_blank');
 
-  // opcional: vaciar carrito después de enviar
   setTimeout(() => {
     AppState.cart = [];
+    AppState.direccion = '';
+    AppState.envioActivo = false;
+    AppState.transferencia = false;
     saveCartToStorage();
     renderCartDrawer();
+    const envioCheck = el('switch-envio');
+    const transCheck = el('switch-transferencia');
+    if (envioCheck) envioCheck.checked = false;
+    if (transCheck) transCheck.checked = false;
   }, 700);
 }
 
@@ -591,33 +598,25 @@ function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
 /* =================== EVENTS BINDING =================== */
 
 function bindUI() {
-  // header search
   const searchInput = el('buscador');
   if (searchInput) searchInput.addEventListener('input', e => handleSearchInput(e.target.value));
 
-  // click delegation for brand / subcat / product buttons
   const appContainer = el('app-container');
   if (appContainer) {
     appContainer.addEventListener('click', e => {
-      // brand card
       const brandCard = e.target.closest('.brand-card');
       if (brandCard) {
         const marca = brandCard.getAttribute('data-marca');
+        AppState.currentMarca = marca;
         renderSubcategories(marca);
         return;
       }
-      // subcat card
       const subCard = e.target.closest('.subcat-card');
       if (subCard) {
         const sub = subCard.getAttribute('data-sub');
-        const marcaLabel = (el('subcats-label') && el('subcats-label').textContent || '').replace(/^Líneas de\s*/, '').trim();
-        // marcaSeleccionada se extrae del label; better to track selection globally if required
-        const marca = marcaLabel || Object.keys(AppState.brands)[0] || '';
-        // prefer to read marca from previous selection; but for simplicity assume last clicked brand
-        renderProducts(currentSelectedBrand || marca, sub);
+        renderProducts(AppState.currentMarca, sub);
         return;
       }
-      // product card buttons
       const btn = e.target.closest('button[data-action]');
       if (btn) {
         const action = btn.getAttribute('data-action');
@@ -626,7 +625,7 @@ function bindUI() {
         else if (action === 'wa') {
           const p = AppState.products.find(pp => String(pp.id) === String(id));
           if (!p) return showToast('Producto no encontrado');
-          const msg = `Hola! Me interesa: ${p.descripcion} - ${fmt(p.precio)}`;
+          const msg = `Hola, me interesa: ${p.descripcion} - ${fmt(p.precio)}`;
           const phone = String(AppState.config['WHATSAPP'] || FALLBACKS.WHATSAPP).replace(/\D/g,'');
           window.open(`https://wa.me/${phone}?text=${encodeURIComponent(msg)}`, '_blank');
         }
@@ -635,19 +634,16 @@ function bindUI() {
     });
   }
 
-  // brand keyboard accessibility
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape') {
-      // cerrar drawer si existe
-      closeCartModal();
-    }
+    if (e.key === 'Escape') closeCartModal();
   });
 
-  // header cart open
   const cartBtn = el('btn-carrito-header');
   if (cartBtn) cartBtn.addEventListener('click', openCartModal);
 
-  // modal close
+  const backBtn = el('btn-volver');
+  if (backBtn) backBtn.addEventListener('click', goBack);
+
   document.addEventListener('click', e => {
     if (e.target.closest('.close-btn')) closeCartModal();
     if (e.target.closest('.btn-vaciar-carrito')) {
@@ -659,7 +655,6 @@ function bindUI() {
     }
   });
 
-  // cart modal delegation for qty changes
   const modalList = el('lista-carrito-modal');
   if (modalList) {
     modalList.addEventListener('click', e => {
@@ -673,15 +668,39 @@ function bindUI() {
     });
   }
 
-  // envio checkbox
   const envioToggle = el('switch-envio');
-  if (envioToggle) envioToggle.addEventListener('change', () => {
-    renderCartDrawer();
-  });
+  if (envioToggle) {
+    envioToggle.addEventListener('change', () => {
+      AppState.envioActivo = envioToggle.checked;
+      renderCartDrawer();
+    });
+  }
 
-  // enviar por whatsapp desde modal
+  const transToggle = el('switch-transferencia');
+  if (transToggle) {
+    transToggle.addEventListener('change', () => {
+      AppState.transferencia = transToggle.checked;
+    });
+  }
+
   const sendBtn = el('btn-enviar-whatsapp');
   if (sendBtn) sendBtn.addEventListener('click', sendOrderWhatsApp);
+
+  const btnDireccion = el('btn-abrir-direccion');
+  if (btnDireccion) btnDireccion.addEventListener('click', openDireccionModal);
+
+  const btnGuardar = el('btn-guardar-direccion');
+  if (btnGuardar) btnGuardar.addEventListener('click', guardarDireccion);
+
+  const closeDirBtn = el('close-direccion-btn');
+  if (closeDirBtn) closeDirBtn.addEventListener('click', closeDireccionModal);
+
+  const inputDireccion = el('input-direccion');
+  if (inputDireccion) {
+    inputDireccion.addEventListener('keypress', e => {
+      if (e.key === 'Enter') guardarDireccion();
+    });
+  }
 }
 
 /* =================== CART MODAL OPEN/CLOSE =================== */
@@ -701,11 +720,8 @@ function closeCartModal() {
 
 /* =================== BOOTSTRAP APP =================== */
 
-let currentSelectedBrand = null;
-
 async function bootstrap() {
   try {
-    // logo inmediato fallback mientras carga
     const logoEl = el('logo-global');
     if (logoEl && logoEl.tagName === 'IMG') {
       logoEl.src = FALLBACKS.LOGO_LOCAL;
@@ -714,61 +730,27 @@ async function bootstrap() {
 
     loadCartFromStorage();
     bindUI();
-    // show loading skeletons (simple)
     const brandsGrid = el('brands-grid');
-    if (brandsGrid) brandsGrid.innerHTML = `<div class="loading"><div class="spinner"></div>Cargando...</div>`;
+    if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
 
     const data = await loadAllData();
-    // Assign to state
     AppState.products = data.productos || [];
     AppState.brands = (data.marcas || []).map(m => ({ marca: m.marca, logo: m.logo }));
     AppState.promos = data.promos || [];
     AppState.config = data.config || {};
 
-    // apply theme and logo from config
     updateThemeFromConfig(AppState.config);
-
-    // render initial
     renderBrands();
     updateCartCounter();
-
-    // set click hooks for brand cards after first render
-    // we need to setup delegation for selecting brand -> subcats -> products
-    document.getElementById('brands-grid')?.addEventListener('click', e => {
-      const card = e.target.closest('.brand-card');
-      if (!card) return;
-      const marca = card.getAttribute('data-marca');
-      currentSelectedBrand = marca;
-      renderSubcategories(marca);
-    });
-    // When a subcat is clicked, render products for currentSelectedBrand
-    document.getElementById('subcats-grid')?.addEventListener('click', e => {
-      const card = e.target.closest('.subcat-card');
-      if (!card) return;
-      const sub = card.getAttribute('data-sub');
-      if (!currentSelectedBrand) {
-        // infer marca from label if possible
-        const label = el('subcats-label')?.textContent || '';
-        currentSelectedBrand = label.replace(/^Líneas de\s*/, '').trim() || (AppState.brands[0] && AppState.brands[0].marca);
-      }
-      renderProducts(currentSelectedBrand, sub);
-    });
-
-    // final UI tune
-    // If config has colors COLOR_1..COLOR_6 apply to CSS variables
-    for (let i = 1; i <= 6; i++) {
-      const key = `COLOR_${i}`;
-      if (AppState.config[key]) document.documentElement.style.setProperty(`--color-${i}`, AppState.config[key]);
-    }
+    updateBackButton();
 
   } catch (err) {
     console.error('Bootstrap error', err);
     const container = el('brands-grid');
-    if (container) container.innerHTML = `<div class="empty-state"><div class="ei">⚠️</div><p>Error al cargar la tienda. Revisa la consola o la publicación del Sheet.</p></div>`;
+    if (container) container.innerHTML = `<div class="empty-state"><div class="ei">Error al cargar. Revisa la consola.</div></div>`;
   }
 }
 
-// Auto-run on DOMContentLoaded
 document.addEventListener('DOMContentLoaded', () => {
   bootstrap();
 });
