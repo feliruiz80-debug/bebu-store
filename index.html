@@ -14,7 +14,6 @@
   <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
 </head>
 <body>
-  <!-- Update banner (hidden by default) -->
   <div id="update-banner" class="hidden" role="status" aria-live="polite">
     <div class="update-inner">
       <span>Nueva versión disponible</span>
@@ -23,25 +22,19 @@
     </div>
   </div>
 
-  <!-- Header -->
   <header class="header-pro" role="banner">
     <div class="header-content-row">
-      <div class="header-left-group" aria-hidden="false">
-        <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver">
-          <span aria-hidden="true" class="btn-back-arrow">←</span>
-          <span class="btn-volver-label">Volver</span>
-        </button>
+      <div class="header-left-group">
+        <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver">VOLVER</button>
       </div>
 
-      <div class="header-center-group" aria-hidden="false">
+      <div class="header-center-group">
         <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store" loading="lazy">
       </div>
 
-      <div class="header-right-group" style="position:relative;">
+      <div class="header-right-group">
         <button id="btn-carrito-header" class="btn-control-carrito" aria-label="Abrir carrito">
-          <span aria-hidden="true" style="font-size:20px; line-height:1;">🛒</span>
-          <span id="contador-carrito" class="badge-carrito" style="display:none">0</span>
-          <span class="sr-only">Carrito</span>
+          Carrito <span id="contador-carrito" class="badge-carrito" style="display:none">0</span>
         </button>
       </div>
     </div>
@@ -51,30 +44,28 @@
     </div>
   </header>
 
-  <!-- Main content -->
   <main id="app-container" class="main-container content" role="main">
-    <section id="brands-view" class="section active" aria-labelledby="brands-label">
-      <div class="sec-label" id="brands-label">Marcas</div>
-      <div id="brands-grid" class="brands-grid" aria-live="polite"></div>
+    <section id="brands-view" class="section active">
+      <div class="sec-label">Marcas</div>
+      <div id="brands-grid" class="brands-grid"></div>
     </section>
 
-    <section id="subcats-view" class="section" aria-labelledby="subcats-label">
+    <section id="subcats-view" class="section">
       <div class="sec-label" id="subcats-label">Líneas</div>
       <div id="subcats-grid" class="subcats-grid"></div>
     </section>
 
-    <section id="products-view" class="section" aria-labelledby="products-label">
+    <section id="products-view" class="section">
       <div class="sec-label" id="products-label">Productos</div>
       <div id="products-grid" class="products-grid"></div>
     </section>
 
-    <section id="search-view" class="section" aria-labelledby="search-count-label">
+    <section id="search-view" class="section">
       <div class="sec-label" id="search-count-label">Resultados</div>
       <div id="search-grid" class="search-results-grid"></div>
     </section>
   </main>
 
-  <!-- Cart modal -->
   <div id="modal-carrito" class="modal-overlay" role="dialog" aria-hidden="true" style="display:none">
     <div class="modal-card" role="document">
       <div class="modal-header">
@@ -82,7 +73,7 @@
         <button class="close-btn" aria-label="Cerrar modal">&times;</button>
       </div>
 
-      <div id="lista-carrito-modal" class="modal-body-list" aria-live="polite"></div>
+      <div id="lista-carrito-modal" class="modal-body-list"></div>
 
       <div class="checkout-controls">
         <label class="checkbox-label">
@@ -98,7 +89,7 @@
         <button id="btn-abrir-direccion" class="btn-secondary" style="display:none">Ingresar Dirección</button>
       </div>
 
-      <div class="totales-desglose" aria-hidden="false">
+      <div class="totales-desglose">
         <div class="desglose-linea">
           <span>Subtotal:</span>
           <span id="subtotal-modal">$0</span>
@@ -118,7 +109,6 @@
     </div>
   </div>
 
-  <!-- Address modal -->
   <div id="modal-direccion" class="modal-overlay" role="dialog" aria-hidden="true" style="display:none">
     <div class="modal-card-small" role="document">
       <div class="modal-header">
@@ -143,13 +133,14 @@
     (function() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(reg => {
-          if (reg.waiting) { navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage({ type: 'CHECK_NEW_VERSION' }); }
+          if (reg.waiting) {
+            navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage({ type: 'CHECK_NEW_VERSION' });
+          }
           reg.addEventListener('updatefound', () => {
             const newSW = reg.installing;
-            if (!newSW) return;
             newSW.addEventListener('statechange', () => {
               if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage({ type: 'CHECK_NEW_VERSION' });
+                console.log('Service worker updated');
               }
             });
           });
@@ -160,7 +151,7 @@
         const data = ev.data || {};
         if (data && data.type === 'NEW_VERSION') {
           const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.remove('hidden');
+          if (banner) banner.classList.remove('hidden'); /* FIX: show banner when new version available */
         }
       });
 
@@ -170,13 +161,16 @@
         if (btnNow) btnNow.addEventListener('click', () => {
           if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.getRegistration().then(reg => {
-              if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              if (reg && reg.waiting) {
+                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
+              }
             });
           }
           setTimeout(() => location.reload(true), 800);
         });
         if (btnLater) btnLater.addEventListener('click', () => {
-          const banner = document.getElementById('update-banner'); banner && banner.classList.add('hidden');
+          const banner = document.getElementById('update-banner');
+          banner && banner.classList.add('hidden');
         });
       });
     })();
