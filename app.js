@@ -179,7 +179,8 @@ const AppState = {
   promos: [],
   config: {},
   cart: [],
-  navigationStack: ['brands-view'],
+  navigationStack: [],
+  currentMarca: null,
   envioActivo: false,
   transferencia: false,
   direccion: ''
@@ -212,23 +213,31 @@ function showSection(id) {
   if (elSec) elSec.classList.add('active');
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
-  AppState.navigationStack[AppState.navigationStack.length - 1] = id;
   updateBackButton();
 }
 
 function updateBackButton() {
   const btnVolver = el('btn-volver');
   if (!btnVolver) return;
-  const current = AppState.navigationStack[AppState.navigationStack.length - 1];
-  btnVolver.style.display = current === 'brands-view' ? 'none' : 'inline-flex';
+  const current = document.querySelector('.section.active');
+  const currentId = current ? current.id : '';
+  btnVolver.style.display = currentId === 'brands-view' || currentId === 'search-view' ? 'none' : 'inline-flex';
 }
 
 function goBack() {
-  if (AppState.navigationStack.length > 1) {
-    AppState.navigationStack.pop();
-    const prev = AppState.navigationStack[AppState.navigationStack.length - 1];
-    showSection(prev);
+  const current = document.querySelector('.section.active');
+  if (!current) return;
+  
+  if (current.id === 'products-view') {
+    renderSubcategories(AppState.currentMarca);
+  } else if (current.id === 'subcats-view') {
+    renderBrands();
+  } else if (current.id === 'search-view') {
+    renderBrands();
   }
+  
+  const searchInput = el('buscador');
+  if (searchInput) searchInput.value = '';
 }
 
 function updateThemeFromConfig(config) {
@@ -269,13 +278,14 @@ function renderBrands() {
   const marcasList = Object.keys(marcasMap).sort();
   if (marcasList.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">No hay marcas disponibles</div></div>`;
+    showSection('brands-view');
     return;
   }
 
   const html = marcasList.map(marca => {
     const logo = marcasMap[marca].logo;
     const count = marcasMap[marca].count;
-    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.style.display='none'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
+    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='/logo.png'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
       <div class="brand-img">${logoHtml}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
@@ -469,6 +479,12 @@ function renderCartDrawer() {
     </div>`;
   }).join('');
   wrapper.innerHTML = `<div class="cart-items">${htmlItems}</div>`;
+  
+  const btnDireccion = el('btn-abrir-direccion');
+  if (btnDireccion) {
+    btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
+  }
+  
   updateCartCounter();
   updateTotalsInModal(subtotal, envio, total);
 }
@@ -694,6 +710,9 @@ function bindUI() {
 
   const closeDirBtn = el('close-direccion-btn');
   if (closeDirBtn) closeDirBtn.addEventListener('click', closeDireccionModal);
+  
+  const closeDirBtn2 = el('close-direccion-btn-2');
+  if (closeDirBtn2) closeDirBtn2.addEventListener('click', closeDireccionModal);
 
   const inputDireccion = el('input-direccion');
   if (inputDireccion) {
@@ -742,7 +761,6 @@ async function bootstrap() {
     updateThemeFromConfig(AppState.config);
     renderBrands();
     updateCartCounter();
-    updateBackButton();
 
   } catch (err) {
     console.error('Bootstrap error', err);
