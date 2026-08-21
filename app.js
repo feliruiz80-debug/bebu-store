@@ -246,7 +246,7 @@ function updateThemeFromConfig(config) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || '/logo.png';
+  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || config['url_logo'] || config['URL_LOGO'] || '/logo.png';
   const logoEl = el('logo-global');
   if (logoEl) {
     if (logoEl.tagName === 'IMG') {
@@ -260,11 +260,28 @@ function updateThemeFromConfig(config) {
 
 /* =============== RENDER: BRANDS / SUBCATS / PRODUCTS =============== */
 
+function renderPromotions() {
+  // Mostrar productos que tienen promo activa y producto encontrado
+  const activePromos = AppState.promos.filter(pr => pr.activo && pr.id_producto);
+  const results = [];
+  activePromos.forEach(pr => {
+    const prod = AppState.products.find(p => String(p.id) === String(pr.id_producto));
+    if (prod) {
+      // mostrar el producto con precio promocional si existe
+      const copy = Object.assign({}, prod);
+      if (pr.precio_promo) copy.precio = pr.precio_promo;
+      results.push(copy);
+    }
+  });
+  renderSearchResults(results, 'Promociones');
+}
+
 function renderBrands() {
   const container = el('brands-grid');
   container.innerHTML = '';
   const marcasMap = {};
   AppState.products.forEach(p => {
+    if (!p.marca) return;
     marcasMap[p.marca] = marcasMap[p.marca] || { count: 0, logo: '' };
     marcasMap[p.marca].count++;
   });
@@ -275,17 +292,45 @@ function renderBrands() {
     }
   });
 
-  const marcasList = Object.keys(marcasMap).sort();
-  if (marcasList.length === 0) {
+  // Build ordered brand list respecting the sheet order:
+  const orderedBrands = [];
+  // 1) PROMOCIONES first if any active promos
+  const activePromosCount = AppState.promos.filter(pr => pr.activo).length;
+  if (activePromosCount > 0) {
+    orderedBrands.push('__PROMOS__');
+  }
+  // 2) Add brands in the order they appear in the MARCAS sheet (AppState.brands)
+  AppState.brands.forEach(b => {
+    if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) {
+      orderedBrands.push(b.marca);
+    }
+  });
+  // 3) Add any remaining brands found in products (first appearance order)
+  const productBrandsOrder = [];
+  AppState.products.forEach(p => {
+    if (p.marca && !productBrandsOrder.includes(p.marca)) productBrandsOrder.push(p.marca);
+  });
+  productBrandsOrder.forEach(pb => {
+    if (marcasMap[pb] && !orderedBrands.includes(pb)) orderedBrands.push(pb);
+  });
+
+  if (orderedBrands.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">No hay marcas disponibles</div></div>`;
     showSection('brands-view');
     return;
   }
 
-  const html = marcasList.map(marca => {
+  const html = orderedBrands.map(marca => {
+    if (marca === '__PROMOS__') {
+      // Promotions card
+      return `<div class="brand-card promo-card" data-marca="PROMOCIONES" role="button" tabindex="0" data-action="promos">
+        <div class="brand-img"><div class="promo-badge">PROMOCIONES</div></div>
+        <div class="brand-body"><div class="brand-name">Promociones</div><div class="brand-count">${activePromosCount} promo${activePromosCount!==1?'s':''}</div></div>
+      </div>`;
+    }
     const logo = marcasMap[marca].logo;
     const count = marcasMap[marca].count;
-    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='/logo.png'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
+    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
       <div class="brand-img">${logoHtml}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
@@ -300,7 +345,8 @@ function renderSubcategories(marca) {
   const container = el('subcats-grid');
   container.innerHTML = '';
   const items = AppState.products.filter(p => p.marca === marca);
-  const subs = Array.from(new Set(items.map(i => i.subcategoria))).sort();
+  // Preserve sheet order and unique subcategories by first occurrence
+  const subs = items.map(i => i.subcategoria).filter((v, i, self) => v && self.indexOf(v) === i);
   if (subs.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">No hay líneas para ${escapeHtml(marca)}</div></div>`;
     return;
@@ -623,6 +669,10 @@ function bindUI() {
       const brandCard = e.target.closest('.brand-card');
       if (brandCard) {
         const marca = brandCard.getAttribute('data-marca');
+        if (marca === 'PROMOCIONES') {
+          renderPromotions();
+          return;
+        }
         AppState.currentMarca = marca;
         renderSubcategories(marca);
         return;
