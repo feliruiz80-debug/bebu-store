@@ -34,9 +34,11 @@
         <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store" loading="lazy">
       </div>
 
-      <div class="header-right-group">
+      <div class="header-right-group" style="position:relative;">
         <button id="btn-carrito-header" class="btn-control-carrito" aria-label="Abrir carrito">
-          Carrito <span id="contador-carrito" class="badge-carrito" style="display:none">0</span>
+          <span aria-hidden="true" style="font-size:20px;line-height:1">🛒</span>
+          <span id="contador-carrito" class="badge-carrito" style="display:none">0</span>
+          <span class="sr-only">Carrito</span>
         </button>
       </div>
     </div>
@@ -135,15 +137,11 @@
     (function() {
       if ('serviceWorker' in navigator) {
         navigator.serviceWorker.register('/sw.js').then(reg => {
-          if (reg.waiting) {
-            navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage({ type: 'CHECK_NEW_VERSION' });
-          }
+          if (reg.waiting) { navigator.serviceWorker.controller && navigator.serviceWorker.controller.postMessage({ type: 'CHECK_NEW_VERSION' }); }
           reg.addEventListener('updatefound', () => {
             const newSW = reg.installing;
             newSW.addEventListener('statechange', () => {
-              if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('Service worker updated');
-              }
+              if (newSW.state === 'installed' && navigator.serviceWorker.controller) console.log('Service worker updated');
             });
           });
         }).catch(err => console.warn('SW registration failed:', err));
@@ -153,7 +151,7 @@
         const data = ev.data || {};
         if (data && data.type === 'NEW_VERSION') {
           const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.remove('hidden'); /* show banner when new version available */
+          if (banner) banner.classList.remove('hidden');
         }
       });
 
@@ -163,20 +161,16 @@
         if (btnNow) btnNow.addEventListener('click', () => {
           if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.getRegistration().then(reg => {
-              if (reg && reg.waiting) {
-                reg.waiting.postMessage({ type: 'SKIP_WAITING' });
-              }
+              if (reg && reg.waiting) reg.waiting.postMessage({ type: 'SKIP_WAITING' });
             });
           }
           setTimeout(() => location.reload(true), 800);
         });
         if (btnLater) btnLater.addEventListener('click', () => {
-          const banner = document.getElementById('update-banner');
-          banner && banner.classList.add('hidden');
+          const banner = document.getElementById('update-banner'); banner && banner.classList.add('hidden');
         });
       });
     })();
   </script>
 </body>
 </html>
-
