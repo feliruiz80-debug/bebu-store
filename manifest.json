@@ -17,7 +17,17 @@
     { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
   ],
   "shortcuts": [
-    { "name": "Ver Marcas", "short_name": "Marcas", "url": "/index.html?section=brands", "icons": [{ "src": "/logo.png", "sizes": "192x192", "type": "image/png" }] },
-    { "name": "Mi Carrito", "short_name": "Carrito", "url": "/index.html?section=cart", "icons": [{ "src": "/logo.png", "sizes": "192x192", "type": "image/png" }] }
+    {
+      "name": "Ver Marcas",
+      "short_name": "Marcas",
+      "url": "/index.html?section=brands",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192", "type": "image/png" }]
+    },
+    {
+      "name": "Mi Carrito",
+      "short_name": "Carrito",
+      "url": "/index.html?section=cart",
+      "icons": [{ "src": "/logo.png", "sizes": "192x192", "type": "image/png" }]
+    }
   ]
 }
