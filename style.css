@@ -83,12 +83,18 @@ img { max-width: 100%; display: block; }
   flex: 0 0 auto;
 }
 
+/* Logo: responsive adjustments */
 .logo-app-pro {
   height: 60px;
   width: auto;
   border-radius: 12px;
   object-fit: contain;
   max-width: 150px;
+}
+
+/* On very small screens, keep logo compact */
+@media (max-width: 420px) {
+  .logo-app-pro { height: 48px; max-width: 120px; }
 }
 
 .btn-control-volver {
@@ -771,3 +777,67 @@ img { max-width: 100%; display: block; }
     grid-template-columns: repeat(4, 1fr);
   }
 }
+
+/* =========================
+   PROMO CARD / HIGHLIGHTS
+   ========================= */
+
+/* Make promo card visually distinctive and span full row so it is prominent */
+.brand-card.promo-card {
+  border: 2px solid var(--accent-2);
+  box-shadow: 0 10px 36px rgba(10,10,10,0.12);
+  transform: translateZ(0);
+  background: linear-gradient(180deg, #fff7f2, #fff9f5);
+  transition: transform 0.18s, box-shadow 0.18s;
+}
+
+/* Make the promo occupy the full grid row so it appears first and big */
+.brands-grid > .promo-card {
+  grid-column: 1 / -1;
+}
+
+/* On wide screens keep it spanning full width but limit visual height */
+@media (min-width: 720px) {
+  .brands-grid > .promo-card {
+    grid-column: 1 / -1;
+  }
+}
+
+/* Slight lift on hover */
+.brand-card.promo-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 18px 48px rgba(10,10,10,0.14);
+}
+
+/* Make promo badge more visible */
+.brand-card.promo-card .promo-badge {
+  background: linear-gradient(90deg, var(--accent-2), #ffd4b3);
+  color: #5a433a;
+  font-size: 13px;
+  padding: 6px 12px;
+}
+
+/* Larger img area for promo */
+.brand-card.promo-card .brand-img {
+  min-height: 160px;
+  padding: 18px;
+}
+
+/* If logo image present, emphasize it */
+.brand-card.promo-card .brand-img img {
+  max-height: 120px;
+  max-width: 90%;
+}
+
+/* Accessibility: focus ring for promo card */
+.brand-card.promo-card:focus {
+  outline: var(--focus-ring);
+}
+
+/* If for some reason promos have no image, make the initial more prominent */
+.brand-card.promo-card .brand-initial {
+  font-size: 48px;
+  color: #ff8b6b;
+}
+
+/* Keep rest of layout consistent */
