@@ -26,6 +26,9 @@
     <div class="header-content-row">
       <div class="header-left-group">
         <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver">VOLVER</button>
+      </div>
+
+      <div class="header-center-group">
         <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store" loading="lazy">
       </div>
 
@@ -148,7 +151,7 @@
         const data = ev.data || {};
         if (data && data.type === 'NEW_VERSION') {
           const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.remove('hidden');
+          if (banner) banner.classList.add('hidden');
         }
       });
 
@@ -174,3 +177,4 @@
   </script>
 </body>
 </html>
+
