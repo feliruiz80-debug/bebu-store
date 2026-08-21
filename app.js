@@ -1,5 +1,6 @@
-/* BEBU Store - app.js (versión mejorada) */
+/* app.js - BEBU Store (final, listo para usar) */
 
+/* ================= CONFIG ================= */
 const SHEET_ID = '1JBnOCILUFaXuWIgUJGOZYPXKV-nQdOTfAXw2voUnKd8';
 
 const GIDS = {
@@ -9,9 +10,11 @@ const GIDS = {
   PROMOS: '718207796'
 };
 
-const SHEET_TTL = 60 * 1000;
+const SHEET_TTL = 60 * 1000; // cache TTL localStorage
 const FALLBACKS = { WHATSAPP: '543517694762', COSTO_ENVIO: 2500, LOGO_LOCAL: '/logo.png' };
 const LS = { CART: 'bebu:cart:v1', SHEET_CACHE: 'bebu:sheetcache:v1' };
+
+/* ================== UTIL =================== */
 
 async function fetchGvizJson(url) {
   const res = await fetch(url, { cache: 'no-store' });
@@ -52,9 +55,7 @@ function getCachedSheet(key) {
       return null;
     }
     return entry.data;
-  } catch (e) {
-    return null;
-  }
+  } catch (e) { return null; }
 }
 
 function setCachedSheet(key, data) {
@@ -81,6 +82,7 @@ function parsePrice(raw) {
   return isNaN(n) ? null : n;
 }
 
+/* Normalize image URLs (Cloudinary, Drive, protocol-relative, data:, relative names) */
 function normalizeImageUrl(raw) {
   if (raw === null || raw === undefined) return FALLBACKS.LOGO_LOCAL;
   const s = String(raw).trim();
@@ -88,6 +90,7 @@ function normalizeImageUrl(raw) {
   if (/^data:/i.test(s)) return s;
   if (/^\/\//.test(s)) return location.protocol + s;
   if (/^https?:\/\//i.test(s)) return s;
+  // Google Drive variants
   let m = s.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
   if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
   m = s.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
@@ -99,6 +102,68 @@ function normalizeImageUrl(raw) {
   if (/^[\w\-.]+\.(jpg|jpeg|png|webp|svg|gif)$/i.test(s)) return '/' + s;
   return FALLBACKS.LOGO_LOCAL;
 }
+
+/* Test image load via JS - returns Promise */
+function testImage(url, timeout = 7000) {
+  return new Promise((resolve, reject) => {
+    try {
+      const img = new Image();
+      img.crossOrigin = 'anonymous';
+      let done = false;
+      const t = setTimeout(() => {
+        if (done) return;
+        done = true;
+        img.src = '';
+        reject(new Error('timeout'));
+      }, timeout);
+      img.onload = () => { if (done) return; done = true; clearTimeout(t); resolve(true); };
+      img.onerror = () => { if (done) return; done = true; clearTimeout(t); reject(new Error('error loading image')); };
+      img.src = url;
+    } catch (e) { reject(e); }
+  });
+}
+
+/* Create <img> element with retry logic for Drive alternatives */
+function createLogoImgElement(rawLogo, altText) {
+  const img = document.createElement('img');
+  img.alt = altText || '';
+  img.loading = 'lazy';
+  img.style.maxWidth = '90%';
+  img.style.maxHeight = '90%';
+  img.crossOrigin = 'anonymous';
+
+  const primary = normalizeImageUrl(rawLogo);
+
+  // Build alternates for drive-like URLs
+  const alternates = (function buildAlternates(u) {
+    const out = [u];
+    try {
+      const m = u.match(/([?&]id=|\/d\/)([a-zA-Z0-9_-]+)/);
+      const id = m && m[2];
+      if (id) {
+        out.push(`https://drive.google.com/uc?export=view&id=${id}`);
+        out.push(`https://drive.google.com/uc?export=download&id=${id}`);
+      }
+    } catch (e) {}
+    return Array.from(new Set(out));
+  })(primary);
+
+  let attempt = 0;
+  const tryNext = () => {
+    if (attempt >= alternates.length) {
+      img.src = FALLBACKS.LOGO_LOCAL;
+      console.warn('[BEBU] logo fallback for', rawLogo);
+      return;
+    }
+    const u = alternates[attempt++];
+    testImage(u, 5000).then(() => { img.src = u; }).catch(() => { tryNext(); });
+  };
+
+  tryNext();
+  return img;
+}
+
+/* ================= DATA LAYER ================= */
 
 async function fetchSheetTab(gid) {
   const cacheKey = `gid:${gid}`;
@@ -113,10 +178,10 @@ async function fetchSheetTab(gid) {
 
 async function loadAllData() {
   const [productosRaw, marcasRaw, configRaw, promosRaw] = await Promise.all([
-    fetchSheetTab(GIDS.PRODUCTOS).catch(() => []),
-    fetchSheetTab(GIDS.MARCAS).catch(() => []),
-    fetchSheetTab(GIDS.CONFIG).catch(() => []),
-    fetchSheetTab(GIDS.PROMOS).catch(() => [])
+    fetchSheetTab(GIDS.PRODUCTOS).catch(err => { console.error('Productos error', err); return []; }),
+    fetchSheetTab(GIDS.MARCAS).catch(err => { console.error('Marcas error', err); return []; }),
+    fetchSheetTab(GIDS.CONFIG).catch(err => { console.error('Config error', err); return []; }),
+    fetchSheetTab(GIDS.PROMOS).catch(err => { console.error('Promos error', err); return []; })
   ]);
 
   const config = {};
@@ -133,7 +198,7 @@ async function loadAllData() {
     const lower = mapKeysLower(r);
     return {
       marca: (lower['marca'] || lower['name'] || '').toString().trim().toUpperCase(),
-      logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || '').toString().trim()
+      logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || lower['url'] || '').toString().trim()
     };
   }).filter(m => m.marca);
 
@@ -153,7 +218,7 @@ async function loadAllData() {
   const truthySet = new Set(['si','s','true','1','ok','yes','activo','on']);
   const promos = promosRaw.map(r => {
     const lower = mapKeysLower(r);
-    const activeRaw = String(lower['activo'] || lower['active'] || lower['estado'] || '').toString().trim().toLowerCase();
+    const activeRaw = String(lower['activo'] || lower['active'] || lower['estado'] || lower['enabled'] || '').toString().trim().toLowerCase();
     const cantidadRaw = lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || lower['min_qty'] || 0;
     return {
       id_promo: (lower['id_promo'] || lower['idpromo'] || lower['promo_id'] || '').toString().trim(),
@@ -175,6 +240,8 @@ function mapKeysLower(obj) {
   return out;
 }
 
+/* ================= APP STATE ================= */
+
 const AppState = {
   products: [], brands: [], promos: [], config: {}, cart: [], navigationStack: [],
   currentMarca: null, envioActivo: false, transferencia: false, direccion: ''
@@ -186,11 +253,9 @@ function loadCartFromStorage() {
     AppState.cart = raw ? JSON.parse(raw) : [];
   } catch (e) { AppState.cart = []; }
 }
+function saveCartToStorage() { try { localStorage.setItem(LS.CART, JSON.stringify(AppState.cart)); } catch (e) {} }
 
-function saveCartToStorage() {
-  try { localStorage.setItem(LS.CART, JSON.stringify(AppState.cart)); } catch (e) {}
-}
-
+/* =============== UI HELPERS =============== */
 function el(id) { return document.getElementById(id); }
 function $(sel) { return document.querySelector(sel); }
 function $all(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -211,17 +276,15 @@ function updateBackButton() {
   const currentId = current ? current.id : '';
   btnVolver.style.display = currentId === 'brands-view' || currentId === 'search-view' ? 'none' : 'inline-flex';
 }
-
 function goBack() {
-  const current = document.querySelector('.section.active');
-  if (!current) return;
+  const current = document.querySelector('.section.active'); if (!current) return;
   if (current.id === 'products-view') renderSubcategories(AppState.currentMarca);
   else if (current.id === 'subcats-view') renderBrands();
   else if (current.id === 'search-view') renderBrands();
-  const searchInput = el('buscador');
-  if (searchInput) searchInput.value = '';
+  const searchInput = el('buscador'); if (searchInput) searchInput.value = '';
 }
 
+/* Theme & logo from CONFIG */
 function updateThemeFromConfig(config) {
   const root = document.documentElement;
   for (let i = 1; i <= 6; i++) {
@@ -239,6 +302,8 @@ function updateThemeFromConfig(config) {
     }
   }
 }
+
+/* ================= RENDER: BRANDS / PROMOS / PRODUCTS ================= */
 
 function renderPromotions() {
   const activePromos = AppState.promos.filter(pr => pr.activo && pr.id_producto);
@@ -278,9 +343,11 @@ function renderBrands() {
   const orderedBrands = [];
   const activePromosCount = AppState.promos.filter(pr => pr.activo).length;
   if (activePromosCount > 0) orderedBrands.push('__PROMOS__');
+
   AppState.brands.forEach(b => {
     if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) orderedBrands.push(b.marca);
   });
+
   const productBrandsOrder = [];
   AppState.products.forEach(p => {
     if (p.marca && !productBrandsOrder.includes(p.marca)) productBrandsOrder.push(p.marca);
@@ -298,20 +365,37 @@ function renderBrands() {
   const html = orderedBrands.map(marca => {
     if (marca === '__PROMOS__') {
       return `<div class="brand-card promo-card" data-marca="PROMOCIONES" role="button" tabindex="0" data-action="promos">
-        <div class="brand-img"><div class="promo-badge">PROMOCIONES</div></div>
+        <div class="brand-img" data-logo=""><div class="promo-badge">PROMOCIONES</div></div>
         <div class="brand-body"><div class="brand-name">Promociones</div><div class="brand-count">${activePromosCount} promo${activePromosCount!==1?'s':''}</div></div>
       </div>`;
     }
-    const logo = marcasMap[marca].logo;
-    const count = marcasMap[marca].count;
-    const logoUrl = logo ? normalizeImageUrl(logo) : '';
-    const logoHtml = logoUrl ? `<img src="${escapeAttr(logoUrl)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACKS.LOGO_LOCAL}';">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
+    const count = marcasMap[marca].count || 0;
+    const rawLogo = marcasMap[marca].logo || '';
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
-      <div class="brand-img">${logoHtml}</div>
+      <div class="brand-img" data-logo="${escapeAttr(rawLogo)}">${rawLogo ? '' : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
     </div>`;
   }).join('');
   container.innerHTML = html;
+
+  // Attach images programmatically (so onerror/onload controlled)
+  const logoDivs = container.querySelectorAll('.brand-img[data-logo]');
+  logoDivs.forEach(div => {
+    const raw = div.getAttribute('data-logo') || '';
+    if (!raw) return;
+    if (div.dataset._handled) return;
+    const parentCard = div.closest('.brand-card');
+    const brandName = parentCard ? (parentCard.querySelector('.brand-name')?.textContent || '') : '';
+    try {
+      const imgEl = createLogoImgElement(raw, brandName);
+      div.innerHTML = '';
+      div.appendChild(imgEl);
+    } catch (e) {
+      div.innerHTML = `<img src="${FALLBACKS.LOGO_LOCAL}" alt="${escapeAttr(brandName)}">`;
+    }
+    div.dataset._handled = '1';
+  });
+
   showSection('brands-view');
 }
 
@@ -367,6 +451,7 @@ function renderProducts(marca, subcat) {
   showSection('products-view');
 }
 
+/* ================= SEARCH ================= */
 let searchDebounceTimer = null;
 function handleSearchInput(value) {
   clearTimeout(searchDebounceTimer);
@@ -410,6 +495,7 @@ function renderSearchResults(results, query) {
   showSection('search-view');
 }
 
+/* ================= CART LOGIC / UI ================= */
 function addToCart(productId, qty = 1) {
   const id = String(productId);
   const existing = AppState.cart.find(it => it.id === id);
@@ -427,45 +513,29 @@ function updateCartQty(idx, delta) {
   saveCartToStorage();
   renderCartDrawer();
 }
-
-function removeCartItem(idx) {
-  if (idx < 0 || idx >= AppState.cart.length) return;
-  AppState.cart.splice(idx, 1);
-  saveCartToStorage();
-  renderCartDrawer();
-}
+function removeCartItem(idx) { if (idx < 0 || idx >= AppState.cart.length) return; AppState.cart.splice(idx, 1); saveCartToStorage(); renderCartDrawer(); }
 
 function computeCartTotals() {
-  const items = [];
-  let subtotal = 0;
+  const items = []; let subtotal = 0;
   AppState.cart.forEach(cartItem => {
     const prod = AppState.products.find(p => String(p.id) === String(cartItem.id));
     if (!prod) return;
     const promo = AppState.promos.find(pr => String(pr.id_producto) === String(prod.id) && pr.activo && pr.precio_promo && pr.cantidad > 0);
-    let unitPrice = prod.precio;
-    let promoApplied = null;
-    if (promo && cartItem.qty >= promo.cantidad) {
-      unitPrice = promo.precio_promo;
-      promoApplied = promo;
-    }
-    const subtotalItem = unitPrice * cartItem.qty;
-    subtotal += subtotalItem;
+    let unitPrice = prod.precio; let promoApplied = null;
+    if (promo && cartItem.qty >= promo.cantidad) { unitPrice = promo.precio_promo; promoApplied = promo; }
+    const subtotalItem = unitPrice * cartItem.qty; subtotal += subtotalItem;
     items.push({ id: prod.id, qty: cartItem.qty, product: prod, unitPrice, subtotal: subtotalItem, promoApplied });
   });
-
   const envio = AppState.envioActivo ? (parsePrice(AppState.config['COSTO_ENVIO'] || AppState.config['COSTOENVIO'] || '') || FALLBACKS.COSTO_ENVIO) : 0;
   const total = subtotal + envio;
   return { items, subtotal, envio, total };
 }
 
 function renderCartDrawer() {
-  const wrapper = el('lista-carrito-modal');
-  if (!wrapper) return;
+  const wrapper = el('lista-carrito-modal'); if (!wrapper) return;
   if (!AppState.cart || AppState.cart.length === 0) {
     wrapper.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">Carrito vacío</div><p>Tu carrito está vacío</p></div>`;
-    updateCartCounter();
-    updateTotalsInModal(0, 0, 0);
-    return;
+    updateCartCounter(); updateTotalsInModal(0,0,0); return;
   }
   const { items, subtotal, envio, total } = computeCartTotals();
   const htmlItems = items.map((it, idx) => {
@@ -484,61 +554,33 @@ function renderCartDrawer() {
     </div>`;
   }).join('');
   wrapper.innerHTML = `<div class="cart-items">${htmlItems}</div>`;
-  const btnDireccion = el('btn-abrir-direccion');
-  if (btnDireccion) btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
-  updateCartCounter();
-  updateTotalsInModal(subtotal, envio, total);
+  const btnDireccion = el('btn-abrir-direccion'); if (btnDireccion) btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
+  updateCartCounter(); updateTotalsInModal(subtotal, envio, total);
 }
-
 function updateTotalsInModal(subtotal, envio, total) {
-  const subtotalEl = el('subtotal-modal');
-  const envioVal = el('envio-valor');
-  const linea = el('linea-envio');
-  const totalEl = el('total-final-modal');
-  if (subtotalEl) subtotalEl.textContent = fmt(subtotal);
-  if (envioVal) envioVal.textContent = fmt(envio);
-  if (linea) linea.style.display = envio ? 'flex' : 'none';
-  if (totalEl) totalEl.textContent = fmt(total);
+  const subtotalEl = el('subtotal-modal'); const envioVal = el('envio-valor'); const linea = el('linea-envio'); const totalEl = el('total-final-modal');
+  if (subtotalEl) subtotalEl.textContent = fmt(subtotal); if (envioVal) envioVal.textContent = fmt(envio); if (linea) linea.style.display = envio ? 'flex' : 'none'; if (totalEl) totalEl.textContent = fmt(total);
 }
-
 function updateCartCounter() {
-  const counter = el('contador-carrito');
-  if (!counter) return;
+  const counter = el('contador-carrito'); if (!counter) return;
   const n = AppState.cart.reduce((s, it) => s + it.qty, 0);
   if (n > 0) { counter.textContent = n > 9 ? '9+' : String(n); counter.style.display = 'inline-flex'; }
   else { counter.style.display = 'none'; }
 }
 
-function openDireccionModal() {
-  const modal = el('modal-direccion');
-  if (!modal) return;
-  modal.style.display = 'block';
-  const input = el('input-direccion');
-  if (input) input.value = AppState.direccion;
-}
+/* ================= MODALS ================= */
+function openDireccionModal() { const modal = el('modal-direccion'); if (!modal) return; modal.style.display = 'block'; const input = el('input-direccion'); if (input) input.value = AppState.direccion; }
+function closeDireccionModal() { const modal = el('modal-direccion'); if (!modal) return; modal.style.display = 'none'; }
+function guardarDireccion() { const input = el('input-direccion'); if (!input) return; AppState.direccion = input.value.trim(); if (!AppState.direccion) { showToast('Ingresa una dirección'); return; } closeDireccionModal(); showToast('Dirección guardada'); }
 
-function closeDireccionModal() {
-  const modal = el('modal-direccion');
-  if (!modal) return;
-  modal.style.display = 'none';
-}
-
-function guardarDireccion() {
-  const input = el('input-direccion');
-  if (!input) return;
-  AppState.direccion = input.value.trim();
-  if (!AppState.direccion) { showToast('Ingresa una dirección'); return; }
-  closeDireccionModal();
-  showToast('Dirección guardada');
-}
-
+/* ================= WHATSAPP CHECKOUT ================= */
 function sendOrderWhatsApp() {
   if (!AppState.cart || AppState.cart.length === 0) { showToast('El carrito está vacío'); return; }
   if (AppState.envioActivo && !AppState.direccion) { openDireccionModal(); return; }
   const phone = String(AppState.config['WHATSAPP'] || AppState.config['Whatsapp'] || AppState.config['whatsapp'] || FALLBACKS.WHATSAPP).replace(/\D/g,'');
   const { items, subtotal, envio, total } = computeCartTotals();
   const lines = [];
-  lines.push('PEDIDO BEBU', '', 'DETALLE DEL PEDIDO');
+  lines.push('PEDIDO BEBU','', 'DETALLE DEL PEDIDO');
   items.forEach(it => lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`));
   lines.push('', 'RESUMEN DE PAGO', `Subtotal: ${fmt(subtotal)}`);
   if (envio) lines.push(`Envío: ${fmt(envio)}`);
@@ -557,17 +599,19 @@ function sendOrderWhatsApp() {
   }, 700);
 }
 
+/* ================= UI: toasts / helpers ================= */
 function showToast(msg, t = 2000) {
   const existing = document.querySelector('.bebu-toast'); if (existing) existing.remove();
   const toast = document.createElement('div'); toast.className = 'bebu-toast'; toast.textContent = msg; document.body.appendChild(toast);
   setTimeout(() => toast.remove(), t);
 }
-
 function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
 
+/* ================= EVENTS BINDING ================= */
 function bindUI() {
   const searchInput = el('buscador'); if (searchInput) searchInput.addEventListener('input', e => handleSearchInput(e.target.value));
+
   const appContainer = el('app-container');
   if (appContainer) {
     appContainer.addEventListener('click', e => {
@@ -596,6 +640,7 @@ function bindUI() {
   }
 
   document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCartModal(); });
+
   const cartBtn = el('btn-carrito-header'); if (cartBtn) cartBtn.addEventListener('click', openCartModal);
   const backBtn = el('btn-volver'); if (backBtn) backBtn.addEventListener('click', goBack);
 
@@ -623,6 +668,7 @@ function bindUI() {
   const inputDireccion = el('input-direccion'); if (inputDireccion) inputDireccion.addEventListener('keypress', e => { if (e.key === 'Enter') guardarDireccion(); });
 }
 
+/* ================= MODAL OPEN/CLOSE & BOOTSTRAP ================= */
 function openCartModal() { const modal = el('modal-carrito'); if (!modal) return; modal.style.display = 'block'; renderCartDrawer(); }
 function closeCartModal() { const modal = el('modal-carrito'); if (!modal) return; modal.style.display = 'none'; }
 
@@ -630,15 +676,19 @@ async function bootstrap() {
   try {
     const logoEl = el('logo-global');
     if (logoEl && logoEl.tagName === 'IMG') { logoEl.src = FALLBACKS.LOGO_LOCAL; logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; }; }
+
     loadCartFromStorage(); bindUI();
     const brandsGrid = el('brands-grid'); if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
+
     const data = await loadAllData();
     AppState.products = data.productos || [];
     AppState.brands = (data.marcas || []).map(m => ({ marca: m.marca, logo: m.logo }));
     AppState.promos = data.promos || [];
     AppState.config = data.config || {};
+
     updateThemeFromConfig(AppState.config);
-    renderBrands(); updateCartCounter();
+    renderBrands();
+    updateCartCounter();
   } catch (err) {
     console.error('Bootstrap error', err);
     const container = el('brands-grid');
