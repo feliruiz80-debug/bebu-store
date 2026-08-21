@@ -1,4 +1,7 @@
-/* app.js - BEBU Store (final, listo para usar) */
+/* BEBU Store - app.js (versión profesional mejorada)
+   Consume Google Sheet (public) - gviz iz JSON (gviz/tq?tqx=out:json)
+   - Mejoras: logo visible, buscador funcional, modal dirección, envío correcto, WhatsApp limpio
+*/
 
 /* ================= CONFIG ================= */
 const SHEET_ID = '1JBnOCILUFaXuWIgUJGOZYPXKV-nQdOTfAXw2voUnKd8';
@@ -10,9 +13,18 @@ const GIDS = {
   PROMOS: '718207796'
 };
 
-const SHEET_TTL = 60 * 1000; // cache TTL localStorage
-const FALLBACKS = { WHATSAPP: '543517694762', COSTO_ENVIO: 2500, LOGO_LOCAL: '/logo.png' };
-const LS = { CART: 'bebu:cart:v1', SHEET_CACHE: 'bebu:sheetcache:v1' };
+const SHEET_TTL = 60 * 1000; // 60s
+
+const FALLBACKS = {
+  WHATSAPP: '543517694762',
+  COSTO_ENVIO: 2500,
+  LOGO_LOCAL: '/logo.png'
+};
+
+const LS = {
+  CART: 'bebu:cart:v1',
+  SHEET_CACHE: 'bebu:sheetcache:v1'
+};
 
 /* ================== UTIL =================== */
 
@@ -55,7 +67,9 @@ function getCachedSheet(key) {
       return null;
     }
     return entry.data;
-  } catch (e) { return null; }
+  } catch (e) {
+    return null;
+  }
 }
 
 function setCachedSheet(key, data) {
@@ -82,93 +96,13 @@ function parsePrice(raw) {
   return isNaN(n) ? null : n;
 }
 
-/* Normalize image URLs (Cloudinary, Drive, protocol-relative, data:, relative names) */
-function normalizeImageUrl(raw) {
-  if (raw === null || raw === undefined) return FALLBACKS.LOGO_LOCAL;
-  const s = String(raw).trim();
-  if (!s) return FALLBACKS.LOGO_LOCAL;
-  if (/^data:/i.test(s)) return s;
-  if (/^\/\//.test(s)) return location.protocol + s;
-  if (/^https?:\/\//i.test(s)) return s;
-  // Google Drive variants
-  let m = s.match(/drive\.google\.com\/file\/d\/([a-zA-Z0-9_-]+)/);
-  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  m = s.match(/drive\.google\.com\/open\?id=([a-zA-Z0-9_-]+)/);
-  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  m = s.match(/drive\.google\.com\/uc\?id=([a-zA-Z0-9_-]+)/);
-  if (m && m[1]) return `https://drive.google.com/uc?export=view&id=${m[1]}`;
-  if (s.includes('googleusercontent.com') || s.includes('gstatic.com')) return s;
-  if (/^\//.test(s)) return s;
-  if (/^[\w\-.]+\.(jpg|jpeg|png|webp|svg|gif)$/i.test(s)) return '/' + s;
-  return FALLBACKS.LOGO_LOCAL;
-}
-
-/* Test image load via JS - returns Promise */
-function testImage(url, timeout = 7000) {
-  return new Promise((resolve, reject) => {
-    try {
-      const img = new Image();
-      img.crossOrigin = 'anonymous';
-      let done = false;
-      const t = setTimeout(() => {
-        if (done) return;
-        done = true;
-        img.src = '';
-        reject(new Error('timeout'));
-      }, timeout);
-      img.onload = () => { if (done) return; done = true; clearTimeout(t); resolve(true); };
-      img.onerror = () => { if (done) return; done = true; clearTimeout(t); reject(new Error('error loading image')); };
-      img.src = url;
-    } catch (e) { reject(e); }
-  });
-}
-
-/* Create <img> element with retry logic for Drive alternatives */
-function createLogoImgElement(rawLogo, altText) {
-  const img = document.createElement('img');
-  img.alt = altText || '';
-  img.loading = 'lazy';
-  img.style.maxWidth = '90%';
-  img.style.maxHeight = '90%';
-  img.crossOrigin = 'anonymous';
-
-  const primary = normalizeImageUrl(rawLogo);
-
-  // Build alternates for drive-like URLs
-  const alternates = (function buildAlternates(u) {
-    const out = [u];
-    try {
-      const m = u.match(/([?&]id=|\/d\/)([a-zA-Z0-9_-]+)/);
-      const id = m && m[2];
-      if (id) {
-        out.push(`https://drive.google.com/uc?export=view&id=${id}`);
-        out.push(`https://drive.google.com/uc?export=download&id=${id}`);
-      }
-    } catch (e) {}
-    return Array.from(new Set(out));
-  })(primary);
-
-  let attempt = 0;
-  const tryNext = () => {
-    if (attempt >= alternates.length) {
-      img.src = FALLBACKS.LOGO_LOCAL;
-      console.warn('[BEBU] logo fallback for', rawLogo);
-      return;
-    }
-    const u = alternates[attempt++];
-    testImage(u, 5000).then(() => { img.src = u; }).catch(() => { tryNext(); });
-  };
-
-  tryNext();
-  return img;
-}
-
 /* ================= DATA LAYER ================= */
 
 async function fetchSheetTab(gid) {
   const cacheKey = `gid:${gid}`;
   const cached = getCachedSheet(cacheKey);
   if (cached) return cached;
+
   const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
   const json = await fetchGvizJson(url);
   const arr = gvizTableToObjects(json);
@@ -198,7 +132,7 @@ async function loadAllData() {
     const lower = mapKeysLower(r);
     return {
       marca: (lower['marca'] || lower['name'] || '').toString().trim().toUpperCase(),
-      logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || lower['url'] || '').toString().trim()
+      logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || '').toString().trim()
     };
   }).filter(m => m.marca);
 
@@ -211,21 +145,18 @@ async function loadAllData() {
       subcategoria: (lower['subcategoria'] || lower['category'] || lower['subcat'] || 'GENERAL').toString().trim(),
       descripcion: (lower['descripcion'] || lower['description'] || '').toString().trim(),
       precio: parsePrice(precioRaw) || 0,
-      imagen: normalizeImageUrl(lower['url_imagen'] || lower['url_imagen_producto'] || lower['image'] || '')
+      imagen: (lower['url_imagen'] || lower['url_imagen_producto'] || lower['image'] || '').toString().trim()
     };
   }).filter(p => p.id && p.descripcion);
 
-  const truthySet = new Set(['si','s','true','1','ok','yes','activo','on']);
   const promos = promosRaw.map(r => {
     const lower = mapKeysLower(r);
-    const activeRaw = String(lower['activo'] || lower['active'] || lower['estado'] || lower['enabled'] || '').toString().trim().toLowerCase();
-    const cantidadRaw = lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || lower['min_qty'] || 0;
     return {
-      id_promo: (lower['id_promo'] || lower['idpromo'] || lower['promo_id'] || '').toString().trim(),
-      id_producto: (lower['id_producto'] || lower['idproducto'] || lower['product_id'] || lower['producto_id'] || '').toString().trim(),
-      cantidad: parseInt(cantidadRaw || 0, 10) || 0,
-      precio_promo: parsePrice(lower['precio_promo'] || lower['precio'] || lower['promoprice'] || lower['price']) || null,
-      activo: truthySet.has(activeRaw)
+      id_promo: (lower['id_promo'] || lower['idpromo'] || '').toString().trim(),
+      id_producto: (lower['id_producto'] || lower['idproducto'] || lower['product_id'] || '').toString().trim(),
+      cantidad: parseInt(lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || 0, 10) || 0,
+      precio_promo: parsePrice(lower['precio_promo'] || lower['precio'] || lower['promoprice']) || null,
+      activo: String(lower['activo'] || lower['active'] || '').toString().trim().toLowerCase() === 'si'
     };
   }).filter(p => p.id_producto);
 
@@ -243,19 +174,35 @@ function mapKeysLower(obj) {
 /* ================= APP STATE ================= */
 
 const AppState = {
-  products: [], brands: [], promos: [], config: {}, cart: [], navigationStack: [],
-  currentMarca: null, envioActivo: false, transferencia: false, direccion: ''
+  products: [],
+  brands: [],
+  promos: [],
+  config: {},
+  cart: [],
+  navigationStack: [],
+  currentMarca: null,
+  envioActivo: false,
+  transferencia: false,
+  direccion: ''
 };
 
 function loadCartFromStorage() {
   try {
     const raw = localStorage.getItem(LS.CART);
     AppState.cart = raw ? JSON.parse(raw) : [];
-  } catch (e) { AppState.cart = []; }
+  } catch (e) {
+    AppState.cart = [];
+  }
 }
-function saveCartToStorage() { try { localStorage.setItem(LS.CART, JSON.stringify(AppState.cart)); } catch (e) {} }
 
-/* =============== UI HELPERS =============== */
+function saveCartToStorage() {
+  try {
+    localStorage.setItem(LS.CART, JSON.stringify(AppState.cart));
+  } catch (e) {}
+}
+
+/* =============== UI RENDER HELPERS =============== */
+
 function el(id) { return document.getElementById(id); }
 function $(sel) { return document.querySelector(sel); }
 function $all(sel) { return Array.from(document.querySelectorAll(sel)); }
@@ -276,48 +223,54 @@ function updateBackButton() {
   const currentId = current ? current.id : '';
   btnVolver.style.display = currentId === 'brands-view' || currentId === 'search-view' ? 'none' : 'inline-flex';
 }
+
 function goBack() {
-  const current = document.querySelector('.section.active'); if (!current) return;
-  if (current.id === 'products-view') renderSubcategories(AppState.currentMarca);
-  else if (current.id === 'subcats-view') renderBrands();
-  else if (current.id === 'search-view') renderBrands();
-  const searchInput = el('buscador'); if (searchInput) searchInput.value = '';
+  const current = document.querySelector('.section.active');
+  if (!current) return;
+  
+  if (current.id === 'products-view') {
+    renderSubcategories(AppState.currentMarca);
+  } else if (current.id === 'subcats-view') {
+    renderBrands();
+  } else if (current.id === 'search-view') {
+    renderBrands();
+  }
+  
+  const searchInput = el('buscador');
+  if (searchInput) searchInput.value = '';
 }
 
-/* Theme & logo from CONFIG */
 function updateThemeFromConfig(config) {
   const root = document.documentElement;
   for (let i = 1; i <= 6; i++) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || config['url_logo'] || config['URL_LOGO'] || FALLBACKS.LOGO_LOCAL;
+  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || config['url_logo'] || config['URL_LOGO'] || '/logo.png';
   const logoEl = el('logo-global');
   if (logoEl) {
     if (logoEl.tagName === 'IMG') {
-      logoEl.src = normalizeImageUrl(logoUrl);
+      logoEl.src = logoUrl;
       logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; };
     } else {
-      logoEl.innerHTML = `<img src="${normalizeImageUrl(logoUrl)}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
+      logoEl.innerHTML = `<img src="${logoUrl}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
     }
   }
 }
 
-/* ================= RENDER: BRANDS / PROMOS / PRODUCTS ================= */
+/* =============== RENDER: BRANDS / SUBCATS / PRODUCTS =============== */
 
 function renderPromotions() {
+  // Mostrar productos que tienen promo activa y producto encontrado
   const activePromos = AppState.promos.filter(pr => pr.activo && pr.id_producto);
-  const seenIds = new Set();
   const results = [];
   activePromos.forEach(pr => {
-    if (seenIds.has(String(pr.id_producto))) return;
     const prod = AppState.products.find(p => String(p.id) === String(pr.id_producto));
     if (prod) {
+      // mostrar el producto con precio promocional si existe
       const copy = Object.assign({}, prod);
       if (pr.precio_promo) copy.precio = pr.precio_promo;
-      copy._promo = pr;
       results.push(copy);
-      seenIds.add(String(pr.id_producto));
     }
   });
   renderSearchResults(results, 'Promociones');
@@ -325,7 +278,6 @@ function renderPromotions() {
 
 function renderBrands() {
   const container = el('brands-grid');
-  if (!container) return;
   container.innerHTML = '';
   const marcasMap = {};
   AppState.products.forEach(p => {
@@ -340,14 +292,20 @@ function renderBrands() {
     }
   });
 
+  // Build ordered brand list respecting the sheet order:
   const orderedBrands = [];
+  // 1) PROMOCIONES first if any active promos
   const activePromosCount = AppState.promos.filter(pr => pr.activo).length;
-  if (activePromosCount > 0) orderedBrands.push('__PROMOS__');
-
+  if (activePromosCount > 0) {
+    orderedBrands.push('__PROMOS__');
+  }
+  // 2) Add brands in the order they appear in the MARCAS sheet (AppState.brands)
   AppState.brands.forEach(b => {
-    if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) orderedBrands.push(b.marca);
+    if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) {
+      orderedBrands.push(b.marca);
+    }
   });
-
+  // 3) Add any remaining brands found in products (first appearance order)
   const productBrandsOrder = [];
   AppState.products.forEach(p => {
     if (p.marca && !productBrandsOrder.includes(p.marca)) productBrandsOrder.push(p.marca);
@@ -364,46 +322,30 @@ function renderBrands() {
 
   const html = orderedBrands.map(marca => {
     if (marca === '__PROMOS__') {
+      // Promotions card
       return `<div class="brand-card promo-card" data-marca="PROMOCIONES" role="button" tabindex="0" data-action="promos">
-        <div class="brand-img" data-logo=""><div class="promo-badge">PROMOCIONES</div></div>
+        <div class="brand-img"><div class="promo-badge">PROMOCIONES</div></div>
         <div class="brand-body"><div class="brand-name">Promociones</div><div class="brand-count">${activePromosCount} promo${activePromosCount!==1?'s':''}</div></div>
       </div>`;
     }
-    const count = marcasMap[marca].count || 0;
-    const rawLogo = marcasMap[marca].logo || '';
+    const logo = marcasMap[marca].logo;
+    const count = marcasMap[marca].count;
+    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
-      <div class="brand-img" data-logo="${escapeAttr(rawLogo)}">${rawLogo ? '' : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`}</div>
+      <div class="brand-img">${logoHtml}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
     </div>`;
   }).join('');
   container.innerHTML = html;
-
-  // Attach images programmatically (so onerror/onload controlled)
-  const logoDivs = container.querySelectorAll('.brand-img[data-logo]');
-  logoDivs.forEach(div => {
-    const raw = div.getAttribute('data-logo') || '';
-    if (!raw) return;
-    if (div.dataset._handled) return;
-    const parentCard = div.closest('.brand-card');
-    const brandName = parentCard ? (parentCard.querySelector('.brand-name')?.textContent || '') : '';
-    try {
-      const imgEl = createLogoImgElement(raw, brandName);
-      div.innerHTML = '';
-      div.appendChild(imgEl);
-    } catch (e) {
-      div.innerHTML = `<img src="${FALLBACKS.LOGO_LOCAL}" alt="${escapeAttr(brandName)}">`;
-    }
-    div.dataset._handled = '1';
-  });
 
   showSection('brands-view');
 }
 
 function renderSubcategories(marca) {
   const container = el('subcats-grid');
-  if (!container) return;
   container.innerHTML = '';
   const items = AppState.products.filter(p => p.marca === marca);
+  // Preserve sheet order and unique subcategories by first occurrence
   const subs = items.map(i => i.subcategoria).filter((v, i, self) => v && self.indexOf(v) === i);
   if (subs.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">No hay líneas para ${escapeHtml(marca)}</div></div>`;
@@ -422,7 +364,6 @@ function renderSubcategories(marca) {
 
 function renderProducts(marca, subcat) {
   const container = el('products-grid');
-  if (!container) return;
   container.innerHTML = '';
   const list = AppState.products.filter(p => p.marca === marca && p.subcategoria === subcat);
   if (list.length === 0) {
@@ -430,8 +371,7 @@ function renderProducts(marca, subcat) {
     return;
   }
   container.innerHTML = list.map(p => {
-    const imgUrl = normalizeImageUrl(p.imagen);
-    const img = `<img src="${escapeAttr(imgUrl)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACKS.LOGO_LOCAL}';">`;
+    const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
       <div class="product-img">${img}</div>
       <div class="product-body">
@@ -452,14 +392,20 @@ function renderProducts(marca, subcat) {
 }
 
 /* ================= SEARCH ================= */
+
 let searchDebounceTimer = null;
 function handleSearchInput(value) {
   clearTimeout(searchDebounceTimer);
   searchDebounceTimer = setTimeout(() => {
     const q = (value || '').toString().trim().toLowerCase();
-    if (!q) { renderBrands(); return; }
+    if (!q) {
+      renderBrands();
+      return;
+    }
     const resultados = AppState.products.filter(p => {
-      return p.descripcion.toLowerCase().includes(q) || p.marca.toLowerCase().includes(q) || p.subcategoria.toLowerCase().includes(q);
+      return p.descripcion.toLowerCase().includes(q) ||
+             p.marca.toLowerCase().includes(q) ||
+             p.subcategoria.toLowerCase().includes(q);
     });
     renderSearchResults(resultados, value);
   }, 220);
@@ -474,8 +420,7 @@ function renderSearchResults(results, query) {
     return;
   }
   container.innerHTML = results.map(p => {
-    const imgUrl = normalizeImageUrl(p.imagen);
-    const img = `<img src="${escapeAttr(imgUrl)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACKS.LOGO_LOCAL}';">`;
+    const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
       <div class="product-img">${img}</div>
       <div class="product-body">
@@ -495,7 +440,8 @@ function renderSearchResults(results, query) {
   showSection('search-view');
 }
 
-/* ================= CART LOGIC / UI ================= */
+/* ================= CART LOGIC ================ */
+
 function addToCart(productId, qty = 1) {
   const id = String(productId);
   const existing = AppState.cart.find(it => it.id === id);
@@ -513,29 +459,54 @@ function updateCartQty(idx, delta) {
   saveCartToStorage();
   renderCartDrawer();
 }
-function removeCartItem(idx) { if (idx < 0 || idx >= AppState.cart.length) return; AppState.cart.splice(idx, 1); saveCartToStorage(); renderCartDrawer(); }
+
+function removeCartItem(idx) {
+  if (idx < 0 || idx >= AppState.cart.length) return;
+  AppState.cart.splice(idx, 1);
+  saveCartToStorage();
+  renderCartDrawer();
+}
 
 function computeCartTotals() {
-  const items = []; let subtotal = 0;
+  const items = [];
+  let subtotal = 0;
   AppState.cart.forEach(cartItem => {
     const prod = AppState.products.find(p => String(p.id) === String(cartItem.id));
     if (!prod) return;
     const promo = AppState.promos.find(pr => String(pr.id_producto) === String(prod.id) && pr.activo && pr.precio_promo && pr.cantidad > 0);
-    let unitPrice = prod.precio; let promoApplied = null;
-    if (promo && cartItem.qty >= promo.cantidad) { unitPrice = promo.precio_promo; promoApplied = promo; }
-    const subtotalItem = unitPrice * cartItem.qty; subtotal += subtotalItem;
-    items.push({ id: prod.id, qty: cartItem.qty, product: prod, unitPrice, subtotal: subtotalItem, promoApplied });
+    let unitPrice = prod.precio;
+    let promoApplied = null;
+    if (promo && cartItem.qty >= promo.cantidad) {
+      unitPrice = promo.precio_promo;
+      promoApplied = promo;
+    }
+    const subtotalItem = unitPrice * cartItem.qty;
+    subtotal += subtotalItem;
+    items.push({
+      id: prod.id,
+      qty: cartItem.qty,
+      product: prod,
+      unitPrice,
+      subtotal: subtotalItem,
+      promoApplied
+    });
   });
+
   const envio = AppState.envioActivo ? (parsePrice(AppState.config['COSTO_ENVIO'] || AppState.config['COSTOENVIO'] || '') || FALLBACKS.COSTO_ENVIO) : 0;
   const total = subtotal + envio;
   return { items, subtotal, envio, total };
 }
 
+/* ================= CART DRAWER UI ================= */
+
 function renderCartDrawer() {
-  const wrapper = el('lista-carrito-modal'); if (!wrapper) return;
+  const wrapper = el('lista-carrito-modal');
+  if (!wrapper) return;
   if (!AppState.cart || AppState.cart.length === 0) {
     wrapper.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">Carrito vacío</div><p>Tu carrito está vacío</p></div>`;
-    updateCartCounter(); updateTotalsInModal(0,0,0); return;
+    updateCartCounter();
+    updateTotalsInModal(0, 0, 0);
+    return;
   }
   const { items, subtotal, envio, total } = computeCartTotals();
   const htmlItems = items.map((it, idx) => {
@@ -554,63 +525,143 @@ function renderCartDrawer() {
     </div>`;
   }).join('');
   wrapper.innerHTML = `<div class="cart-items">${htmlItems}</div>`;
-  const btnDireccion = el('btn-abrir-direccion'); if (btnDireccion) btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
-  updateCartCounter(); updateTotalsInModal(subtotal, envio, total);
+  
+  const btnDireccion = el('btn-abrir-direccion');
+  if (btnDireccion) {
+    btnDireccion.style.display = AppState.envioActivo ? 'inline-block' : 'none';
+  }
+  
+  updateCartCounter();
+  updateTotalsInModal(subtotal, envio, total);
 }
+
 function updateTotalsInModal(subtotal, envio, total) {
-  const subtotalEl = el('subtotal-modal'); const envioVal = el('envio-valor'); const linea = el('linea-envio'); const totalEl = el('total-final-modal');
-  if (subtotalEl) subtotalEl.textContent = fmt(subtotal); if (envioVal) envioVal.textContent = fmt(envio); if (linea) linea.style.display = envio ? 'flex' : 'none'; if (totalEl) totalEl.textContent = fmt(total);
+  const subtotalEl = el('subtotal-modal');
+  const envioVal = el('envio-valor');
+  const linea = el('linea-envio');
+  const totalEl = el('total-final-modal');
+  if (subtotalEl) subtotalEl.textContent = fmt(subtotal);
+  if (envioVal) envioVal.textContent = fmt(envio);
+  if (linea) linea.style.display = envio ? 'flex' : 'none';
+  if (totalEl) totalEl.textContent = fmt(total);
 }
+
 function updateCartCounter() {
-  const counter = el('contador-carrito'); if (!counter) return;
+  const counter = el('contador-carrito');
+  if (!counter) return;
   const n = AppState.cart.reduce((s, it) => s + it.qty, 0);
   if (n > 0) { counter.textContent = n > 9 ? '9+' : String(n); counter.style.display = 'inline-flex'; }
   else { counter.style.display = 'none'; }
 }
 
-/* ================= MODALS ================= */
-function openDireccionModal() { const modal = el('modal-direccion'); if (!modal) return; modal.style.display = 'block'; const input = el('input-direccion'); if (input) input.value = AppState.direccion; }
-function closeDireccionModal() { const modal = el('modal-direccion'); if (!modal) return; modal.style.display = 'none'; }
-function guardarDireccion() { const input = el('input-direccion'); if (!input) return; AppState.direccion = input.value.trim(); if (!AppState.direccion) { showToast('Ingresa una dirección'); return; } closeDireccionModal(); showToast('Dirección guardada'); }
+/* ================== MODAL DIRECCION =================== */
 
-/* ================= WHATSAPP CHECKOUT ================= */
+function openDireccionModal() {
+  const modal = el('modal-direccion');
+  if (!modal) return;
+  modal.style.display = 'block';
+  const input = el('input-direccion');
+  if (input) input.value = AppState.direccion;
+}
+
+function closeDireccionModal() {
+  const modal = el('modal-direccion');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
+
+function guardarDireccion() {
+  const input = el('input-direccion');
+  if (!input) return;
+  AppState.direccion = input.value.trim();
+  if (!AppState.direccion) {
+    showToast('Ingresa una dirección');
+    return;
+  }
+  closeDireccionModal();
+  showToast('Dirección guardada');
+}
+
+/* ================== WHATSAPP CHECKOUT ================= */
+
 function sendOrderWhatsApp() {
   if (!AppState.cart || AppState.cart.length === 0) { showToast('El carrito está vacío'); return; }
-  if (AppState.envioActivo && !AppState.direccion) { openDireccionModal(); return; }
+  
+  if (AppState.envioActivo && !AppState.direccion) {
+    openDireccionModal();
+    return;
+  }
+
   const phone = String(AppState.config['WHATSAPP'] || AppState.config['Whatsapp'] || AppState.config['whatsapp'] || FALLBACKS.WHATSAPP).replace(/\D/g,'');
   const { items, subtotal, envio, total } = computeCartTotals();
   const lines = [];
-  lines.push('PEDIDO BEBU','', 'DETALLE DEL PEDIDO');
-  items.forEach(it => lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`));
-  lines.push('', 'RESUMEN DE PAGO', `Subtotal: ${fmt(subtotal)}`);
+  
+  lines.push('PEDIDO BEBU');
+  lines.push('');
+  lines.push('DETALLE DEL PEDIDO');
+  items.forEach(it => {
+    lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`);
+  });
+  lines.push('');
+  lines.push('RESUMEN DE PAGO');
+  lines.push(`Subtotal: ${fmt(subtotal)}`);
   if (envio) lines.push(`Envío: ${fmt(envio)}`);
-  lines.push(`TOTAL: ${fmt(total)}`, '');
-  if (AppState.envioActivo) { lines.push('ENVÍO A DOMICILIO', `Dirección: ${AppState.direccion}`, ''); }
-  if (AppState.transferencia) { lines.push('FORMA DE PAGO', 'Transferencia bancaria', 'Alias: TIENDABEBU', ''); }
+  lines.push(`TOTAL: ${fmt(total)}`);
+  lines.push('');
+  
+  if (AppState.envioActivo) {
+    lines.push('ENVÍO A DOMICILIO');
+    lines.push(`Dirección: ${AppState.direccion}`);
+    lines.push('');
+  }
+  
+  if (AppState.transferencia) {
+    lines.push('FORMA DE PAGO');
+    lines.push('Transferencia bancaria');
+    lines.push('Alias: TIENDABEBU');
+    lines.push('');
+  }
+  
   lines.push('Por confirmar');
+
   const text = encodeURIComponent(lines.join('\n'));
   const url = `https://wa.me/${phone}?text=${text}`;
   window.open(url, '_blank');
+
   setTimeout(() => {
-    AppState.cart = []; AppState.direccion = ''; AppState.envioActivo = false; AppState.transferencia = false;
-    saveCartToStorage(); renderCartDrawer();
-    const envioCheck = el('switch-envio'); const transCheck = el('switch-transferencia');
-    if (envioCheck) envioCheck.checked = false; if (transCheck) transCheck.checked = false;
+    AppState.cart = [];
+    AppState.direccion = '';
+    AppState.envioActivo = false;
+    AppState.transferencia = false;
+    saveCartToStorage();
+    renderCartDrawer();
+    const envioCheck = el('switch-envio');
+    const transCheck = el('switch-transferencia');
+    if (envioCheck) envioCheck.checked = false;
+    if (transCheck) transCheck.checked = false;
   }, 700);
 }
 
-/* ================= UI: toasts / helpers ================= */
+/* ================== UI: toasts, helpers ================= */
+
 function showToast(msg, t = 2000) {
-  const existing = document.querySelector('.bebu-toast'); if (existing) existing.remove();
-  const toast = document.createElement('div'); toast.className = 'bebu-toast'; toast.textContent = msg; document.body.appendChild(toast);
+  const existing = document.querySelector('.bebu-toast');
+  if (existing) existing.remove();
+  const toast = document.createElement('div');
+  toast.className = 'bebu-toast';
+  toast.textContent = msg;
+  document.body.appendChild(toast);
   setTimeout(() => toast.remove(), t);
 }
+
 function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
 
-/* ================= EVENTS BINDING ================= */
+/* =================== EVENTS BINDING =================== */
+
 function bindUI() {
-  const searchInput = el('buscador'); if (searchInput) searchInput.addEventListener('input', e => handleSearchInput(e.target.value));
+  const searchInput = el('buscador');
+  if (searchInput) searchInput.addEventListener('input', e => handleSearchInput(e.target.value));
 
   const appContainer = el('app-container');
   if (appContainer) {
@@ -618,14 +669,24 @@ function bindUI() {
       const brandCard = e.target.closest('.brand-card');
       if (brandCard) {
         const marca = brandCard.getAttribute('data-marca');
-        if (marca === 'PROMOCIONES' || brandCard.dataset.action === 'promos') { renderPromotions(); return; }
-        AppState.currentMarca = marca; renderSubcategories(marca); return;
+        if (marca === 'PROMOCIONES') {
+          renderPromotions();
+          return;
+        }
+        AppState.currentMarca = marca;
+        renderSubcategories(marca);
+        return;
       }
       const subCard = e.target.closest('.subcat-card');
-      if (subCard) { const sub = subCard.getAttribute('data-sub'); renderProducts(AppState.currentMarca, sub); return; }
+      if (subCard) {
+        const sub = subCard.getAttribute('data-sub');
+        renderProducts(AppState.currentMarca, sub);
+        return;
+      }
       const btn = e.target.closest('button[data-action]');
       if (btn) {
-        const action = btn.getAttribute('data-action'); const id = btn.getAttribute('data-id');
+        const action = btn.getAttribute('data-action');
+        const id = btn.getAttribute('data-id');
         if (action === 'add') addToCart(id, 1);
         else if (action === 'wa') {
           const p = AppState.products.find(pp => String(pp.id) === String(id));
@@ -639,46 +700,107 @@ function bindUI() {
     });
   }
 
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCartModal(); });
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeCartModal();
+  });
 
-  const cartBtn = el('btn-carrito-header'); if (cartBtn) cartBtn.addEventListener('click', openCartModal);
-  const backBtn = el('btn-volver'); if (backBtn) backBtn.addEventListener('click', goBack);
+  const cartBtn = el('btn-carrito-header');
+  if (cartBtn) cartBtn.addEventListener('click', openCartModal);
+
+  const backBtn = el('btn-volver');
+  if (backBtn) backBtn.addEventListener('click', goBack);
 
   document.addEventListener('click', e => {
     if (e.target.closest('.close-btn')) closeCartModal();
     if (e.target.closest('.btn-vaciar-carrito')) {
-      if (confirm('Vaciar carrito?')) { AppState.cart = []; saveCartToStorage(); renderCartDrawer(); }
+      if (confirm('Vaciar carrito?')) {
+        AppState.cart = [];
+        saveCartToStorage();
+        renderCartDrawer();
+      }
     }
   });
 
   const modalList = el('lista-carrito-modal');
-  if (modalList) modalList.addEventListener('click', e => {
-    const btn = e.target.closest('[data-action]'); if (!btn) return;
-    const action = btn.getAttribute('data-action'); const idx = Number(btn.getAttribute('data-idx'));
-    if (action === 'inc') updateCartQty(idx, 1); else if (action === 'dec') updateCartQty(idx, -1); else if (action === 'del') removeCartItem(idx);
-  });
+  if (modalList) {
+    modalList.addEventListener('click', e => {
+      const btn = e.target.closest('[data-action]');
+      if (!btn) return;
+      const action = btn.getAttribute('data-action');
+      const idx = Number(btn.getAttribute('data-idx'));
+      if (action === 'inc') updateCartQty(idx, 1);
+      else if (action === 'dec') updateCartQty(idx, -1);
+      else if (action === 'del') removeCartItem(idx);
+    });
+  }
 
-  const envioToggle = el('switch-envio'); if (envioToggle) envioToggle.addEventListener('change', () => { AppState.envioActivo = envioToggle.checked; renderCartDrawer(); });
-  const transToggle = el('switch-transferencia'); if (transToggle) transToggle.addEventListener('change', () => { AppState.transferencia = transToggle.checked; });
-  const sendBtn = el('btn-enviar-whatsapp'); if (sendBtn) sendBtn.addEventListener('click', sendOrderWhatsApp);
-  const btnDireccion = el('btn-abrir-direccion'); if (btnDireccion) btnDireccion.addEventListener('click', openDireccionModal);
-  const btnGuardar = el('btn-guardar-direccion'); if (btnGuardar) btnGuardar.addEventListener('click', guardarDireccion);
-  const closeDirBtn = el('close-direccion-btn'); if (closeDirBtn) closeDirBtn.addEventListener('click', closeDireccionModal);
-  const closeDirBtn2 = el('close-direccion-btn-2'); if (closeDirBtn2) closeDirBtn2.addEventListener('click', closeDireccionModal);
-  const inputDireccion = el('input-direccion'); if (inputDireccion) inputDireccion.addEventListener('keypress', e => { if (e.key === 'Enter') guardarDireccion(); });
+  const envioToggle = el('switch-envio');
+  if (envioToggle) {
+    envioToggle.addEventListener('change', () => {
+      AppState.envioActivo = envioToggle.checked;
+      renderCartDrawer();
+    });
+  }
+
+  const transToggle = el('switch-transferencia');
+  if (transToggle) {
+    transToggle.addEventListener('change', () => {
+      AppState.transferencia = transToggle.checked;
+    });
+  }
+
+  const sendBtn = el('btn-enviar-whatsapp');
+  if (sendBtn) sendBtn.addEventListener('click', sendOrderWhatsApp);
+
+  const btnDireccion = el('btn-abrir-direccion');
+  if (btnDireccion) btnDireccion.addEventListener('click', openDireccionModal);
+
+  const btnGuardar = el('btn-guardar-direccion');
+  if (btnGuardar) btnGuardar.addEventListener('click', guardarDireccion);
+
+  const closeDirBtn = el('close-direccion-btn');
+  if (closeDirBtn) closeDirBtn.addEventListener('click', closeDireccionModal);
+  
+  const closeDirBtn2 = el('close-direccion-btn-2');
+  if (closeDirBtn2) closeDirBtn2.addEventListener('click', closeDireccionModal);
+
+  const inputDireccion = el('input-direccion');
+  if (inputDireccion) {
+    inputDireccion.addEventListener('keypress', e => {
+      if (e.key === 'Enter') guardarDireccion();
+    });
+  }
 }
 
-/* ================= MODAL OPEN/CLOSE & BOOTSTRAP ================= */
-function openCartModal() { const modal = el('modal-carrito'); if (!modal) return; modal.style.display = 'block'; renderCartDrawer(); }
-function closeCartModal() { const modal = el('modal-carrito'); if (!modal) return; modal.style.display = 'none'; }
+/* =================== CART MODAL OPEN/CLOSE =================== */
+
+function openCartModal() {
+  const modal = el('modal-carrito');
+  if (!modal) return;
+  modal.style.display = 'block';
+  renderCartDrawer();
+}
+
+function closeCartModal() {
+  const modal = el('modal-carrito');
+  if (!modal) return;
+  modal.style.display = 'none';
+}
+
+/* =================== BOOTSTRAP APP =================== */
 
 async function bootstrap() {
   try {
     const logoEl = el('logo-global');
-    if (logoEl && logoEl.tagName === 'IMG') { logoEl.src = FALLBACKS.LOGO_LOCAL; logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; }; }
+    if (logoEl && logoEl.tagName === 'IMG') {
+      logoEl.src = FALLBACKS.LOGO_LOCAL;
+      logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; };
+    }
 
-    loadCartFromStorage(); bindUI();
-    const brandsGrid = el('brands-grid'); if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
+    loadCartFromStorage();
+    bindUI();
+    const brandsGrid = el('brands-grid');
+    if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
 
     const data = await loadAllData();
     AppState.products = data.productos || [];
@@ -689,6 +811,7 @@ async function bootstrap() {
     updateThemeFromConfig(AppState.config);
     renderBrands();
     updateCartCounter();
+
   } catch (err) {
     console.error('Bootstrap error', err);
     const container = el('brands-grid');
@@ -696,4 +819,6 @@ async function bootstrap() {
   }
 }
 
-document.addEventListener('DOMContentLoaded', () => { bootstrap(); });
+document.addEventListener('DOMContentLoaded', () => {
+  bootstrap();
+});
