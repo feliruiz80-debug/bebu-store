@@ -97,10 +97,15 @@ self.addEventListener('install', event => {
   log('install event — version', SW_VERSION);
   event.waitUntil(
     (async () => {
-      const cache = await caches.open(STATIC_CACHE);
-      await cache.addAll(APP_SHELL);
-      await self.skipWaiting();
-      log('App shell cached and skipWaiting called');
+      try {
+        const cache = await caches.open(STATIC_CACHE);
+        await cache.addAll(APP_SHELL);
+        // Activate new SW immediately
+        await self.skipWaiting();
+        log('App shell cached and skipWaiting called');
+      } catch (e) {
+        console.warn('SW install: cache.addAll failed', e);
+      }
     })()
   );
 });
@@ -109,19 +114,24 @@ self.addEventListener('activate', event => {
   log('activate event — version', SW_VERSION);
   event.waitUntil(
     (async () => {
-      const keys = await caches.keys();
-      await Promise.all(keys.map(async key => {
-        if (![STATIC_CACHE, RUNTIME_CACHE, IMAGE_CACHE, API_CACHE].includes(key)) {
-          log('Deleting old cache', key);
-          await caches.delete(key);
+      try {
+        const keys = await caches.keys();
+        await Promise.all(keys.map(async key => {
+          if (![STATIC_CACHE, RUNTIME_CACHE, IMAGE_CACHE, API_CACHE].includes(key)) {
+            log('Deleting old cache', key);
+            await caches.delete(key);
+          }
+        }));
+
+        await self.clients.claim();
+
+        // Notify clients that a new version is active/available
+        const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
+        for (const client of clientsList) {
+          client.postMessage({ type: 'NEW_VERSION', version: SW_VERSION });
         }
-      }));
-
-      await self.clients.claim();
-
-      const clients = await self.clients.matchAll({ includeUncontrolled: true });
-      for (const client of clients) {
-        client.postMessage({ type: 'NEW_VERSION', version: SW_VERSION });
+      } catch (e) {
+        console.warn('activate error', e);
       }
     })()
   );
@@ -162,7 +172,7 @@ self.addEventListener('fetch', event => {
       try {
         const response = await fetchWithTimeout(request, NAVIGATION_NETWORK_TIMEOUT);
         if (response && response.status === 200) {
-          putInCache(RUNTIME_CACHE, '/index.html', response);
+          await putInCache(RUNTIME_CACHE, '/index.html', response);
         }
         return response;
       } catch (err) {
@@ -289,9 +299,11 @@ self.addEventListener('notificationclick', (event) => {
   event.waitUntil((async () => {
     const allClients = await clients.matchAll({ type: 'window', includeUncontrolled: true });
     for (const client of allClients) {
-      if (client.url === urlToOpen && 'focus' in client) {
-        return client.focus();
-      }
+      try {
+        if (new URL(client.url).pathname === new URL(urlToOpen, location.origin).pathname && 'focus' in client) {
+          return client.focus();
+        }
+      } catch (e) {}
     }
     if (clients.openWindow) {
       return clients.openWindow(urlToOpen);
@@ -351,15 +363,20 @@ self.addEventListener('message', (event) => {
   }
 
   if (msg.type === 'CHECK_NEW_VERSION') {
-    self.registration.then(reg => {
-      if (reg && reg.waiting) {
-        clients.matchAll().then(list => {
+    // If there's a waiting worker, notify clients that a new version is available
+    try {
+      if (self.registration && self.registration.waiting) {
+        // Notify all clients
+        (async () => {
+          const list = await clients.matchAll({ includeUncontrolled: true });
           for (const c of list) {
             c.postMessage({ type: 'NEW_VERSION', version: SW_VERSION });
           }
-        });
+        })();
       }
-    }).catch(() => {});
+    } catch (e) {
+      // ignore
+    }
     return;
   }
 });
