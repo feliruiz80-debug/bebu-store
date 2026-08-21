@@ -8,7 +8,7 @@ const IMAGE_CACHE = `${CACHE_PREFIX}-images-${SW_VERSION}`;
 const API_CACHE = `${CACHE_PREFIX}-api-${SW_VERSION}`;
 
 const APP_SHELL = ['/', '/index.html', '/style.css', '/app.js', '/manifest.json', '/logo.png'];
-const API_HOSTNAMES = ['docs.google.com', 'opensheet.elk.sh', 'sheets.googleapis.com'];
+const API_HOSTNAMES = ['docs.google.com', 'opensheet.elk.sh', 'sheets.googleapis.com', 'res.cloudinary.com'];
 const IMAGE_EXTENSIONS = ['.png', '.jpg', '.jpeg', '.webp', '.svg', '.gif'];
 
 const IMAGE_CACHE_MAX_ENTRIES = 120;
@@ -97,10 +97,7 @@ self.addEventListener('fetch', event => {
     event.respondWith((async () => {
       const cached = await matchCache(IMAGE_CACHE, request);
       if (cached) {
-        event.waitUntil((async () => {
-          try { const networkResp = await fetch(request); if (networkResp && networkResp.status === 200) await putInCache(IMAGE_CACHE, request, networkResp); } catch (e) {}
-          await trimCache(IMAGE_CACHE, IMAGE_CACHE_MAX_ENTRIES);
-        })());
+        event.waitUntil((async () => { try { const networkResp = await fetch(request); if (networkResp && networkResp.status === 200) await putInCache(IMAGE_CACHE, request, networkResp); } catch (e) {} await trimCache(IMAGE_CACHE, IMAGE_CACHE_MAX_ENTRIES); })());
         return cached;
       }
       try {
