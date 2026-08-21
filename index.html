@@ -151,7 +151,7 @@
         const data = ev.data || {};
         if (data && data.type === 'NEW_VERSION') {
           const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.add('hidden');
+          if (banner) banner.classList.remove('hidden'); /* FIX: show banner when new version available */
         }
       });
 
@@ -177,4 +177,3 @@
   </script>
 </body>
 </html>
-
