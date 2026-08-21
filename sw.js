@@ -100,7 +100,6 @@ self.addEventListener('install', event => {
       try {
         const cache = await caches.open(STATIC_CACHE);
         await cache.addAll(APP_SHELL);
-        // Activate new SW immediately
         await self.skipWaiting();
         log('App shell cached and skipWaiting called');
       } catch (e) {
@@ -125,7 +124,6 @@ self.addEventListener('activate', event => {
 
         await self.clients.claim();
 
-        // Notify clients that a new version is active/available
         const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
         for (const client of clientsList) {
           client.postMessage({ type: 'NEW_VERSION', version: SW_VERSION });
@@ -363,10 +361,8 @@ self.addEventListener('message', (event) => {
   }
 
   if (msg.type === 'CHECK_NEW_VERSION') {
-    // If there's a waiting worker, notify clients that a new version is available
     try {
       if (self.registration && self.registration.waiting) {
-        // Notify all clients
         (async () => {
           const list = await clients.matchAll({ includeUncontrolled: true });
           for (const c of list) {
@@ -374,9 +370,7 @@ self.addEventListener('message', (event) => {
           }
         })();
       }
-    } catch (e) {
-      // ignore
-    }
+    } catch (e) {}
     return;
   }
 });
