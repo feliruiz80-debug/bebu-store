@@ -96,6 +96,18 @@ function parsePrice(raw) {
   return isNaN(n) ? null : n;
 }
 
+/* normalize image urls from sheets and fallback */
+function normalizeImageUrl(raw) {
+  if (raw === null || raw === undefined) return FALLBACKS.LOGO_LOCAL;
+  const s = String(raw).trim();
+  if (!s) return FALLBACKS.LOGO_LOCAL;
+  if (/^data:/i.test(s)) return s;
+  if (/^\/\//.test(s)) return location.protocol + s;
+  if (/^https?:\/\//i.test(s)) return s;
+  if (/^\//.test(s)) return s;
+  return FALLBACKS.LOGO_LOCAL;
+}
+
 /* ================= DATA LAYER ================= */
 
 async function fetchSheetTab(gid) {
@@ -145,18 +157,21 @@ async function loadAllData() {
       subcategoria: (lower['subcategoria'] || lower['category'] || lower['subcat'] || 'GENERAL').toString().trim(),
       descripcion: (lower['descripcion'] || lower['description'] || '').toString().trim(),
       precio: parsePrice(precioRaw) || 0,
-      imagen: (lower['url_imagen'] || lower['url_imagen_producto'] || lower['image'] || '').toString().trim()
+      imagen: normalizeImageUrl(lower['url_imagen'] || lower['url_imagen_producto'] || lower['image'] || '')
     };
   }).filter(p => p.id && p.descripcion);
 
+  const truthySet = new Set(['si','s','true','1','ok','yes','activo','on']);
   const promos = promosRaw.map(r => {
     const lower = mapKeysLower(r);
+    const activeRaw = String(lower['activo'] || lower['active'] || lower['estado'] || '').toString().trim().toLowerCase();
+    const cantidadRaw = lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || lower['min_qty'] || 0;
     return {
-      id_promo: (lower['id_promo'] || lower['idpromo'] || '').toString().trim(),
-      id_producto: (lower['id_producto'] || lower['idproducto'] || lower['product_id'] || '').toString().trim(),
-      cantidad: parseInt(lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || 0, 10) || 0,
-      precio_promo: parsePrice(lower['precio_promo'] || lower['precio'] || lower['promoprice']) || null,
-      activo: String(lower['activo'] || lower['active'] || '').toString().trim().toLowerCase() === 'si'
+      id_promo: (lower['id_promo'] || lower['idpromo'] || lower['promo_id'] || '').toString().trim(),
+      id_producto: (lower['id_producto'] || lower['idproducto'] || lower['product_id'] || lower['producto_id'] || '').toString().trim(),
+      cantidad: parseInt(cantidadRaw || 0, 10) || 0,
+      precio_promo: parsePrice(lower['precio_promo'] || lower['precio'] || lower['promoprice'] || lower['price']) || null,
+      activo: truthySet.has(activeRaw)
     };
   }).filter(p => p.id_producto);
 
@@ -246,14 +261,14 @@ function updateThemeFromConfig(config) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || config['url_logo'] || config['URL_LOGO'] || '/logo.png';
+  const logoUrl = config['URL_LOGO_APP'] || config['url_logo_app'] || config['url_logo'] || config['URL_LOGO'] || FALLBACKS.LOGO_LOCAL;
   const logoEl = el('logo-global');
   if (logoEl) {
     if (logoEl.tagName === 'IMG') {
-      logoEl.src = logoUrl;
+      logoEl.src = normalizeImageUrl(logoUrl);
       logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; };
     } else {
-      logoEl.innerHTML = `<img src="${logoUrl}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
+      logoEl.innerHTML = `<img src="${normalizeImageUrl(logoUrl)}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
     }
   }
 }
@@ -261,16 +276,18 @@ function updateThemeFromConfig(config) {
 /* =============== RENDER: BRANDS / SUBCATS / PRODUCTS =============== */
 
 function renderPromotions() {
-  // Mostrar productos que tienen promo activa y producto encontrado
   const activePromos = AppState.promos.filter(pr => pr.activo && pr.id_producto);
+  const seenIds = new Set();
   const results = [];
   activePromos.forEach(pr => {
+    if (seenIds.has(String(pr.id_producto))) return;
     const prod = AppState.products.find(p => String(p.id) === String(pr.id_producto));
     if (prod) {
-      // mostrar el producto con precio promocional si existe
       const copy = Object.assign({}, prod);
       if (pr.precio_promo) copy.precio = pr.precio_promo;
+      copy._promo = pr;
       results.push(copy);
+      seenIds.add(String(pr.id_producto));
     }
   });
   renderSearchResults(results, 'Promociones');
@@ -278,6 +295,7 @@ function renderPromotions() {
 
 function renderBrands() {
   const container = el('brands-grid');
+  if (!container) return;
   container.innerHTML = '';
   const marcasMap = {};
   AppState.products.forEach(p => {
@@ -292,20 +310,16 @@ function renderBrands() {
     }
   });
 
-  // Build ordered brand list respecting the sheet order:
   const orderedBrands = [];
-  // 1) PROMOCIONES first if any active promos
   const activePromosCount = AppState.promos.filter(pr => pr.activo).length;
   if (activePromosCount > 0) {
     orderedBrands.push('__PROMOS__');
   }
-  // 2) Add brands in the order they appear in the MARCAS sheet (AppState.brands)
   AppState.brands.forEach(b => {
     if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) {
       orderedBrands.push(b.marca);
     }
   });
-  // 3) Add any remaining brands found in products (first appearance order)
   const productBrandsOrder = [];
   AppState.products.forEach(p => {
     if (p.marca && !productBrandsOrder.includes(p.marca)) productBrandsOrder.push(p.marca);
@@ -322,7 +336,6 @@ function renderBrands() {
 
   const html = orderedBrands.map(marca => {
     if (marca === '__PROMOS__') {
-      // Promotions card
       return `<div class="brand-card promo-card" data-marca="PROMOCIONES" role="button" tabindex="0" data-action="promos">
         <div class="brand-img"><div class="promo-badge">PROMOCIONES</div></div>
         <div class="brand-body"><div class="brand-name">Promociones</div><div class="brand-count">${activePromosCount} promo${activePromosCount!==1?'s':''}</div></div>
@@ -330,7 +343,8 @@ function renderBrands() {
     }
     const logo = marcasMap[marca].logo;
     const count = marcasMap[marca].count;
-    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
+    const logoUrl = logo ? normalizeImageUrl(logo) : '';
+    const logoHtml = logoUrl ? `<img src="${escapeAttr(logoUrl)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACKS.LOGO_LOCAL}';">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
       <div class="brand-img">${logoHtml}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
@@ -343,9 +357,9 @@ function renderBrands() {
 
 function renderSubcategories(marca) {
   const container = el('subcats-grid');
+  if (!container) return;
   container.innerHTML = '';
   const items = AppState.products.filter(p => p.marca === marca);
-  // Preserve sheet order and unique subcategories by first occurrence
   const subs = items.map(i => i.subcategoria).filter((v, i, self) => v && self.indexOf(v) === i);
   if (subs.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">No hay líneas para ${escapeHtml(marca)}</div></div>`;
@@ -364,6 +378,7 @@ function renderSubcategories(marca) {
 
 function renderProducts(marca, subcat) {
   const container = el('products-grid');
+  if (!container) return;
   container.innerHTML = '';
   const list = AppState.products.filter(p => p.marca === marca && p.subcategoria === subcat);
   if (list.length === 0) {
@@ -371,7 +386,8 @@ function renderProducts(marca, subcat) {
     return;
   }
   container.innerHTML = list.map(p => {
-    const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
+    const imgUrl = normalizeImageUrl(p.imagen);
+    const img = `<img src="${escapeAttr(imgUrl)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACKS.LOGO_LOCAL}';">`;
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
       <div class="product-img">${img}</div>
       <div class="product-body">
@@ -420,7 +436,8 @@ function renderSearchResults(results, query) {
     return;
   }
   container.innerHTML = results.map(p => {
-    const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
+    const imgUrl = normalizeImageUrl(p.imagen);
+    const img = `<img src="${escapeAttr(imgUrl)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.onerror=null;this.src='${FALLBACKS.LOGO_LOCAL}';">`;
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
       <div class="product-img">${img}</div>
       <div class="product-body">
@@ -669,7 +686,7 @@ function bindUI() {
       const brandCard = e.target.closest('.brand-card');
       if (brandCard) {
         const marca = brandCard.getAttribute('data-marca');
-        if (marca === 'PROMOCIONES') {
+        if (marca === 'PROMOCIONES' || brandCard.dataset.action === 'promos') {
           renderPromotions();
           return;
         }
@@ -822,3 +839,4 @@ async function bootstrap() {
 document.addEventListener('DOMContentLoaded', () => {
   bootstrap();
 });
+
