@@ -1,4 +1,5 @@
-/* BEBU Store - style.css (versión profesional mejorada v3.0 - Light & Shadows) */
+
+/* BEBU Store - style.css (versión profesional mejorada v3.1 - Light Theme) */
 
 :root {
   --brand-text: #6A5A5B;
@@ -125,10 +126,6 @@ img { max-width: 100%; display: block; }
   object-fit: contain;
   max-width: 160px;
   transition: height 0.2s ease;
-  box-shadow: var(--shadow-sm);
-  border: 2px solid var(--border-light);
-  background: var(--card-light);
-  padding: 4px;
 }
 
 @media (max-width: 768px) {
@@ -1142,21 +1139,5 @@ img { max-width: 100%; display: block; }
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
-  }
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --card: #2a2a2a;
-    --card-light: #333333;
-    --muted: #aaa;
-    --border: #444;
-    --bg-warm: #1a1a1a;
-    --bg-light: #242424;
-  }
-  
-  .brand-img,
-  .product-img {
-    background: linear-gradient(135deg, #2a2a2a, #1f1f1f);
   }
 }
