@@ -1,6 +1,6 @@
-/* BEBU Store - app.js (versión profesional mejorada)
-   Consume Google Sheet (public) - gviz iz JSON (gviz/tq?tqx=out:json)
-   - Mejoras: logo visible, buscador funcional, modal dirección, envío correcto, WhatsApp limpio
+/* BEBU Store - app.js (versión profesional mejorada v3.0)
+   Consume Google Sheet (public) - gviz JSON (gviz/tq?tqx=out:json)
+   - Mejoras: refactorizado, bugs corregidos, mejor performance
 */
 
 /* ================= CONFIG ================= */
@@ -29,14 +29,19 @@ const LS = {
 /* ================== UTIL =================== */
 
 async function fetchGvizJson(url) {
-  const res = await fetch(url, { cache: 'no-store' });
-  if (!res.ok) throw new Error('Network response not ok: ' + res.status);
-  const text = await res.text();
-  const start = text.indexOf('{');
-  const end = text.lastIndexOf('}');
-  if (start === -1 || end === -1) throw new Error('Unexpected gviz format');
-  const jsonText = text.slice(start, end + 1);
-  return JSON.parse(jsonText);
+  try {
+    const res = await fetch(url, { cache: 'no-store' });
+    if (!res.ok) throw new Error(`Network response not ok: ${res.status}`);
+    const text = await res.text();
+    const start = text.indexOf('{');
+    const end = text.lastIndexOf('}');
+    if (start === -1 || end === -1) throw new Error('Unexpected gviz format');
+    const jsonText = text.slice(start, end + 1);
+    return JSON.parse(jsonText);
+  } catch (error) {
+    console.error('fetchGvizJson error:', error);
+    throw error;
+  }
 }
 
 function gvizTableToObjects(gvizObj) {
@@ -78,7 +83,9 @@ function setCachedSheet(key, data) {
     const store = raw ? JSON.parse(raw) : {};
     store[key] = { ts: Date.now(), data };
     localStorage.setItem(LS.SHEET_CACHE, JSON.stringify(store));
-  } catch (e) {}
+  } catch (e) {
+    console.warn('setCachedSheet error:', e);
+  }
 }
 
 const currency = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS', maximumFractionDigits: 0 });
@@ -96,6 +103,9 @@ function parsePrice(raw) {
   return isNaN(n) ? null : n;
 }
 
+function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
+
 /* ================= DATA LAYER ================= */
 
 async function fetchSheetTab(gid) {
@@ -103,64 +113,74 @@ async function fetchSheetTab(gid) {
   const cached = getCachedSheet(cacheKey);
   if (cached) return cached;
 
-  const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
-  const json = await fetchGvizJson(url);
-  const arr = gvizTableToObjects(json);
-  setCachedSheet(cacheKey, arr);
-  return arr;
+  try {
+    const url = `https://docs.google.com/spreadsheets/d/${SHEET_ID}/gviz/tq?tqx=out:json&gid=${gid}`;
+    const json = await fetchGvizJson(url);
+    const arr = gvizTableToObjects(json);
+    setCachedSheet(cacheKey, arr);
+    return arr;
+  } catch (err) {
+    console.error(`Error fetching sheet tab ${gid}:`, err);
+    return [];
+  }
 }
 
 async function loadAllData() {
-  const [productosRaw, marcasRaw, configRaw, promosRaw] = await Promise.all([
-    fetchSheetTab(GIDS.PRODUCTOS).catch(err => { console.error('Productos error', err); return []; }),
-    fetchSheetTab(GIDS.MARCAS).catch(err => { console.error('Marcas error', err); return []; }),
-    fetchSheetTab(GIDS.CONFIG).catch(err => { console.error('Config error', err); return []; }),
-    fetchSheetTab(GIDS.PROMOS).catch(err => { console.error('Promos error', err); return []; })
-  ]);
+  try {
+    const [productosRaw, marcasRaw, configRaw, promosRaw] = await Promise.all([
+      fetchSheetTab(GIDS.PRODUCTOS),
+      fetchSheetTab(GIDS.MARCAS),
+      fetchSheetTab(GIDS.CONFIG),
+      fetchSheetTab(GIDS.PROMOS)
+    ]);
 
-  const config = {};
-  configRaw.forEach(row => {
-    const keys = Object.keys(row);
-    if (keys.length >= 2) {
-      const k = String(row[keys[0]] || '').toString().trim();
-      const v = row[keys[1]] !== undefined ? row[keys[1]] : '';
-      if (k) config[k] = v;
-    }
-  });
+    const config = {};
+    (configRaw || []).forEach(row => {
+      const keys = Object.keys(row);
+      if (keys.length >= 2) {
+        const k = String(row[keys[0]] || '').toString().trim();
+        const v = row[keys[1]] !== undefined ? row[keys[1]] : '';
+        if (k) config[k] = v;
+      }
+    });
 
-  const marcas = marcasRaw.map(r => {
-    const lower = mapKeysLower(r);
-    return {
-      marca: (lower['marca'] || lower['name'] || '').toString().trim().toUpperCase(),
-      logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || '').toString().trim()
-    };
-  }).filter(m => m.marca);
+    const marcas = (marcasRaw || []).map(r => {
+      const lower = mapKeysLower(r);
+      return {
+        marca: (lower['marca'] || lower['name'] || '').toString().trim().toUpperCase(),
+        logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || '').toString().trim()
+      };
+    }).filter(m => m.marca);
 
-  const productos = productosRaw.map(r => {
-    const lower = mapKeysLower(r);
-    const precioRaw = lower['precio'] !== undefined ? lower['precio'] : (lower['price'] || '');
-    return {
-      id: (lower['id'] !== undefined ? String(lower['id']) : (lower['ID'] !== undefined ? String(lower['ID']) : '')) || '',
-      marca: (lower['marca'] || lower['brand'] || '').toString().trim().toUpperCase(),
-      subcategoria: (lower['subcategoria'] || lower['category'] || lower['subcat'] || 'GENERAL').toString().trim(),
-      descripcion: (lower['descripcion'] || lower['description'] || '').toString().trim(),
-      precio: parsePrice(precioRaw) || 0,
-      imagen: (lower['url_imagen'] || lower['url_imagen_producto'] || lower['image'] || '').toString().trim()
-    };
-  }).filter(p => p.id && p.descripcion);
+    const productos = (productosRaw || []).map(r => {
+      const lower = mapKeysLower(r);
+      const precioRaw = lower['precio'] !== undefined ? lower['precio'] : (lower['price'] || '');
+      return {
+        id: (lower['id'] !== undefined ? String(lower['id']) : (lower['ID'] !== undefined ? String(lower['ID']) : '')) || '',
+        marca: (lower['marca'] || lower['brand'] || '').toString().trim().toUpperCase(),
+        subcategoria: (lower['subcategoria'] || lower['category'] || lower['subcat'] || 'GENERAL').toString().trim(),
+        descripcion: (lower['descripcion'] || lower['description'] || '').toString().trim(),
+        precio: parsePrice(precioRaw) || 0,
+        imagen: (lower['url_imagen'] || lower['url_imagen_producto'] || lower['image'] || '').toString().trim()
+      };
+    }).filter(p => p.id && p.descripcion);
 
-  const promos = promosRaw.map(r => {
-    const lower = mapKeysLower(r);
-    return {
-      id_promo: (lower['id_promo'] || lower['idpromo'] || '').toString().trim(),
-      id_producto: (lower['id_producto'] || lower['idproducto'] || lower['product_id'] || '').toString().trim(),
-      cantidad: parseInt(lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || 0, 10) || 0,
-      precio_promo: parsePrice(lower['precio_promo'] || lower['precio'] || lower['promoprice']) || null,
-      activo: String(lower['activo'] || lower['active'] || '').toString().trim().toLowerCase() === 'si'
-    };
-  }).filter(p => p.id_producto);
+    const promos = (promosRaw || []).map(r => {
+      const lower = mapKeysLower(r);
+      return {
+        id_promo: (lower['id_promo'] || lower['idpromo'] || '').toString().trim(),
+        id_producto: (lower['id_producto'] || lower['idproducto'] || lower['product_id'] || '').toString().trim(),
+        cantidad: parseInt(lower['cantidad'] || lower['qty'] || lower['cantidad_min'] || 0, 10) || 0,
+        precio_promo: parsePrice(lower['precio_promo'] || lower['precio'] || lower['promoprice']) || null,
+        activo: String(lower['activo'] || lower['active'] || '').toString().trim().toLowerCase() === 'si'
+      };
+    }).filter(p => p.id_producto);
 
-  return { productos, marcas, config, promos };
+    return { productos, marcas, config, promos };
+  } catch (err) {
+    console.error('loadAllData error:', err);
+    return { productos: [], marcas: [], config: {}, promos: [] };
+  }
 }
 
 function mapKeysLower(obj) {
@@ -181,6 +201,7 @@ const AppState = {
   cart: [],
   navigationStack: [],
   currentMarca: null,
+  currentSection: 'brands', // Track current section
   envioActivo: false,
   transferencia: false,
   direccion: ''
@@ -198,7 +219,9 @@ function loadCartFromStorage() {
 function saveCartToStorage() {
   try {
     localStorage.setItem(LS.CART, JSON.stringify(AppState.cart));
-  } catch (e) {}
+  } catch (e) {
+    console.warn('saveCartToStorage error:', e);
+  }
 }
 
 /* =============== UI RENDER HELPERS =============== */
@@ -211,6 +234,7 @@ function showSection(id) {
   $all('.section').forEach(s => s.classList.remove('active'));
   const elSec = el(id);
   if (elSec) elSec.classList.add('active');
+  AppState.currentSection = id;
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
   updateBackButton();
@@ -219,20 +243,18 @@ function showSection(id) {
 function updateBackButton() {
   const btnVolver = el('btn-volver');
   if (!btnVolver) return;
-  const current = document.querySelector('.section.active');
-  const currentId = current ? current.id : '';
-  btnVolver.style.display = currentId === 'brands-view' || currentId === 'search-view' ? 'none' : 'inline-flex';
+  const current = AppState.currentSection;
+  btnVolver.style.display = (current === 'brands-view' || current === 'search-view') ? 'none' : 'inline-flex';
 }
 
 function goBack() {
-  const current = document.querySelector('.section.active');
-  if (!current) return;
+  const current = AppState.currentSection;
   
-  if (current.id === 'products-view') {
+  if (current === 'products-view') {
     renderSubcategories(AppState.currentMarca);
-  } else if (current.id === 'subcats-view') {
+  } else if (current === 'subcats-view') {
     renderBrands();
-  } else if (current.id === 'search-view') {
+  } else if (current === 'search-view') {
     renderBrands();
   }
   
@@ -253,7 +275,7 @@ function updateThemeFromConfig(config) {
       logoEl.src = logoUrl;
       logoEl.onerror = () => { logoEl.src = FALLBACKS.LOGO_LOCAL; };
     } else {
-      logoEl.innerHTML = `<img src="${logoUrl}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
+      logoEl.innerHTML = `<img src="${escapeHtml(logoUrl)}" alt="BEBU" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">`;
     }
   }
 }
@@ -261,13 +283,11 @@ function updateThemeFromConfig(config) {
 /* =============== RENDER: BRANDS / SUBCATS / PRODUCTS =============== */
 
 function renderPromotions() {
-  // Mostrar productos que tienen promo activa y producto encontrado
   const activePromos = AppState.promos.filter(pr => pr.activo && pr.id_producto);
   const results = [];
   activePromos.forEach(pr => {
     const prod = AppState.products.find(p => String(p.id) === String(pr.id_producto));
     if (prod) {
-      // mostrar el producto con precio promocional si existe
       const copy = Object.assign({}, prod);
       if (pr.precio_promo) copy.precio = pr.precio_promo;
       results.push(copy);
@@ -278,13 +298,16 @@ function renderPromotions() {
 
 function renderBrands() {
   const container = el('brands-grid');
+  if (!container) return;
   container.innerHTML = '';
   const marcasMap = {};
+  
   AppState.products.forEach(p => {
     if (!p.marca) return;
     marcasMap[p.marca] = marcasMap[p.marca] || { count: 0, logo: '' };
     marcasMap[p.marca].count++;
   });
+  
   AppState.brands.forEach(b => {
     if (b.marca) {
       marcasMap[b.marca] = marcasMap[b.marca] || { count: 0, logo: '' };
@@ -292,20 +315,19 @@ function renderBrands() {
     }
   });
 
-  // Build ordered brand list respecting the sheet order:
   const orderedBrands = [];
-  // 1) PROMOCIONES first if any active promos
   const activePromosCount = AppState.promos.filter(pr => pr.activo).length;
+  
   if (activePromosCount > 0) {
     orderedBrands.push('__PROMOS__');
   }
-  // 2) Add brands in the order they appear in the MARCAS sheet (AppState.brands)
+  
   AppState.brands.forEach(b => {
     if (b.marca && marcasMap[b.marca] && !orderedBrands.includes(b.marca)) {
       orderedBrands.push(b.marca);
     }
   });
-  // 3) Add any remaining brands found in products (first appearance order)
+  
   const productBrandsOrder = [];
   AppState.products.forEach(p => {
     if (p.marca && !productBrandsOrder.includes(p.marca)) productBrandsOrder.push(p.marca);
@@ -322,41 +344,43 @@ function renderBrands() {
 
   const html = orderedBrands.map(marca => {
     if (marca === '__PROMOS__') {
-      // Promotions card
       return `<div class="brand-card promo-card" data-marca="PROMOCIONES" role="button" tabindex="0" data-action="promos">
-        <div class="brand-img"><div class="promo-badge">PROMOCIONES</div></div>
+        <div class="brand-img"><div class="promo-badge">🎉 PROMOCIONES</div></div>
         <div class="brand-body"><div class="brand-name">Promociones</div><div class="brand-count">${activePromosCount} promo${activePromosCount!==1?'s':''}</div></div>
       </div>`;
     }
     const logo = marcasMap[marca].logo;
     const count = marcasMap[marca].count;
-    const logoHtml = logo ? `<img src="${escapeHtml(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">` : `<div class="brand-initial">${escapeHtml(marca[0]||'?')}</div>`;
+    const logoHtml = logo ? `<img src="${escapeAttr(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">` : `<div class="brand-initial">${escapeHtml(marca.charAt(0))}</div>`;
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
       <div class="brand-img">${logoHtml}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
     </div>`;
   }).join('');
+  
   container.innerHTML = html;
-
   showSection('brands-view');
 }
 
 function renderSubcategories(marca) {
   const container = el('subcats-grid');
+  if (!container) return;
   container.innerHTML = '';
   const items = AppState.products.filter(p => p.marca === marca);
-  // Preserve sheet order and unique subcategories by first occurrence
   const subs = items.map(i => i.subcategoria).filter((v, i, self) => v && self.indexOf(v) === i);
+  
   if (subs.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">No hay líneas para ${escapeHtml(marca)}</div></div>`;
     return;
   }
+  
   container.innerHTML = subs.map(s => {
     const qty = items.filter(i => i.subcategoria === s).length;
     return `<div class="subcat-card" data-sub="${escapeAttr(s)}" role="button" tabindex="0">
       <div class="subcat-name">${escapeHtml(s)}</div><div class="subcat-count">${qty} producto${qty!==1?'s':''}</div>
     </div>`;
   }).join('');
+  
   el('subcats-label') && (el('subcats-label').textContent = `Líneas de ${marca}`);
   AppState.currentMarca = marca;
   showSection('subcats-view');
@@ -364,12 +388,15 @@ function renderSubcategories(marca) {
 
 function renderProducts(marca, subcat) {
   const container = el('products-grid');
+  if (!container) return;
   container.innerHTML = '';
   const list = AppState.products.filter(p => p.marca === marca && p.subcategoria === subcat);
+  
   if (list.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">Sin productos</div></div>`;
     return;
   }
+  
   container.innerHTML = list.map(p => {
     const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
@@ -381,12 +408,13 @@ function renderProducts(marca, subcat) {
           <div class="product-price">${fmt(p.precio)}</div>
         </div>
         <div class="product-buttons">
-          <button class="btn btn-add" data-action="add" data-id="${escapeAttr(p.id)}">Agregar</button>
-          <button class="btn btn-wa" data-action="wa" data-id="${escapeAttr(p.id)}">WhatsApp</button>
+          <button class="btn btn-add" data-action="add" data-id="${escapeAttr(p.id)}">➕ Agregar</button>
+          <button class="btn btn-wa" data-action="wa" data-id="${escapeAttr(p.id)}">💬 WhatsApp</button>
         </div>
       </div>
     </div>`;
   }).join('');
+  
   el('products-label') && (el('products-label').textContent = `${subcat} - ${list.length} producto${list.length!==1?'s':''}`);
   showSection('products-view');
 }
@@ -414,11 +442,13 @@ function handleSearchInput(value) {
 function renderSearchResults(results, query) {
   const container = el('search-grid');
   if (!container) return;
+  
   if (results.length === 0) {
     container.innerHTML = `<div class="empty-state"><div class="ei">Sin resultados para "${escapeHtml(query)}"</div></div>`;
     showSection('search-view');
     return;
   }
+  
   container.innerHTML = results.map(p => {
     const img = p.imagen ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">` : '';
     return `<div class="product-card" data-id="${escapeAttr(p.id)}">
@@ -430,12 +460,13 @@ function renderSearchResults(results, query) {
           <div class="product-price">${fmt(p.precio)}</div>
         </div>
         <div class="product-buttons">
-          <button class="btn btn-add" data-action="add" data-id="${escapeAttr(p.id)}">Agregar</button>
-          <button class="btn btn-wa" data-action="wa" data-id="${escapeAttr(p.id)}">WhatsApp</button>
+          <button class="btn btn-add" data-action="add" data-id="${escapeAttr(p.id)}">➕ Agregar</button>
+          <button class="btn btn-wa" data-action="wa" data-id="${escapeAttr(p.id)}">💬 WhatsApp</button>
         </div>
       </div>
     </div>`;
   }).join('');
+  
   el('search-count-label') && (el('search-count-label').textContent = `${results.length} resultado${results.length!==1?'s':''}`);
   showSection('search-view');
 }
@@ -444,12 +475,23 @@ function renderSearchResults(results, query) {
 
 function addToCart(productId, qty = 1) {
   const id = String(productId);
+  const prod = AppState.products.find(p => String(p.id) === id);
+  
+  if (!prod) {
+    showToast('Producto no encontrado');
+    return;
+  }
+  
   const existing = AppState.cart.find(it => it.id === id);
-  if (existing) existing.qty += qty;
-  else AppState.cart.push({ id, qty });
+  if (existing) {
+    existing.qty += qty;
+  } else {
+    AppState.cart.push({ id, qty });
+  }
+  
   saveCartToStorage();
   renderCartDrawer();
-  showToast('Agregado al carrito');
+  showToast(`${prod.descripcion} agregado al carrito`);
 }
 
 function updateCartQty(idx, delta) {
@@ -470,18 +512,31 @@ function removeCartItem(idx) {
 function computeCartTotals() {
   const items = [];
   let subtotal = 0;
+  
   AppState.cart.forEach(cartItem => {
     const prod = AppState.products.find(p => String(p.id) === String(cartItem.id));
     if (!prod) return;
-    const promo = AppState.promos.find(pr => String(pr.id_producto) === String(prod.id) && pr.activo && pr.precio_promo && pr.cantidad > 0);
+    
+    // FIX: Check if product has active promo
+    const promo = AppState.promos.find(pr => 
+      String(pr.id_producto) === String(prod.id) && 
+      pr.activo && 
+      pr.precio_promo && 
+      pr.cantidad > 0
+    );
+    
     let unitPrice = prod.precio;
     let promoApplied = null;
+    
+    // Apply promo only if quantity meets minimum
     if (promo && cartItem.qty >= promo.cantidad) {
       unitPrice = promo.precio_promo;
       promoApplied = promo;
     }
+    
     const subtotalItem = unitPrice * cartItem.qty;
     subtotal += subtotalItem;
+    
     items.push({
       id: prod.id,
       qty: cartItem.qty,
@@ -494,6 +549,7 @@ function computeCartTotals() {
 
   const envio = AppState.envioActivo ? (parsePrice(AppState.config['COSTO_ENVIO'] || AppState.config['COSTOENVIO'] || '') || FALLBACKS.COSTO_ENVIO) : 0;
   const total = subtotal + envio;
+  
   return { items, subtotal, envio, total };
 }
 
@@ -502,28 +558,32 @@ function computeCartTotals() {
 function renderCartDrawer() {
   const wrapper = el('lista-carrito-modal');
   if (!wrapper) return;
+  
   if (!AppState.cart || AppState.cart.length === 0) {
-    wrapper.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">Carrito vacío</div><p>Tu carrito está vacío</p></div>`;
+    wrapper.innerHTML = `<div class="cart-empty"><div class="cart-empty-icon">🛒</div><p>Tu carrito está vacío</p></div>`;
     updateCartCounter();
     updateTotalsInModal(0, 0, 0);
     return;
   }
+  
   const { items, subtotal, envio, total } = computeCartTotals();
+  
   const htmlItems = items.map((it, idx) => {
     return `<div class="cart-item" data-idx="${idx}">
       <div class="cart-item-info">
         <div class="cart-item-brand">${escapeHtml(it.product.marca)} - ${escapeHtml(it.product.subcategoria)}</div>
         <div class="cart-item-name">${escapeHtml(it.product.descripcion)}</div>
-        <div class="cart-item-price">${fmt(it.unitPrice)} c/u ${it.promoApplied ? '<span class="promo-inline">Promo</span>' : ''}</div>
+        <div class="cart-item-price">${fmt(it.unitPrice)} c/u ${it.promoApplied ? '<span class="promo-inline">🎉 Promo</span>' : ''}</div>
       </div>
       <div class="cart-item-controls">
-        <button class="qty-btn" data-action="dec" data-idx="${idx}">-</button>
+        <button class="qty-btn" data-action="dec" data-idx="${idx}" aria-label="Disminuir cantidad">−</button>
         <span class="qty-num">${it.qty}</span>
-        <button class="qty-btn" data-action="inc" data-idx="${idx}">+</button>
-        <button class="del-btn" data-action="del" data-idx="${idx}">x</button>
+        <button class="qty-btn" data-action="inc" data-idx="${idx}" aria-label="Aumentar cantidad">+</button>
+        <button class="del-btn" data-action="del" data-idx="${idx}" aria-label="Eliminar producto">✕</button>
       </div>
     </div>`;
   }).join('');
+  
   wrapper.innerHTML = `<div class="cart-items">${htmlItems}</div>`;
   
   const btnDireccion = el('btn-abrir-direccion');
@@ -540,6 +600,7 @@ function updateTotalsInModal(subtotal, envio, total) {
   const envioVal = el('envio-valor');
   const linea = el('linea-envio');
   const totalEl = el('total-final-modal');
+  
   if (subtotalEl) subtotalEl.textContent = fmt(subtotal);
   if (envioVal) envioVal.textContent = fmt(envio);
   if (linea) linea.style.display = envio ? 'flex' : 'none';
@@ -550,8 +611,12 @@ function updateCartCounter() {
   const counter = el('contador-carrito');
   if (!counter) return;
   const n = AppState.cart.reduce((s, it) => s + it.qty, 0);
-  if (n > 0) { counter.textContent = n > 9 ? '9+' : String(n); counter.style.display = 'inline-flex'; }
-  else { counter.style.display = 'none'; }
+  if (n > 0) { 
+    counter.textContent = n > 9 ? '9+' : String(n); 
+    counter.style.display = 'inline-flex'; 
+  } else { 
+    counter.style.display = 'none'; 
+  }
 }
 
 /* ================== MODAL DIRECCION =================== */
@@ -579,13 +644,16 @@ function guardarDireccion() {
     return;
   }
   closeDireccionModal();
-  showToast('Dirección guardada');
+  showToast('Dirección guardada ✓');
 }
 
 /* ================== WHATSAPP CHECKOUT ================= */
 
 function sendOrderWhatsApp() {
-  if (!AppState.cart || AppState.cart.length === 0) { showToast('El carrito está vacío'); return; }
+  if (!AppState.cart || AppState.cart.length === 0) { 
+    showToast('El carrito está vacío'); 
+    return; 
+  }
   
   if (AppState.envioActivo && !AppState.direccion) {
     openDireccionModal();
@@ -596,33 +664,33 @@ function sendOrderWhatsApp() {
   const { items, subtotal, envio, total } = computeCartTotals();
   const lines = [];
   
-  lines.push('PEDIDO BEBU');
+  lines.push('🛍️ PEDIDO BEBU STORE');
   lines.push('');
-  lines.push('DETALLE DEL PEDIDO');
+  lines.push('📦 DETALLE DEL PEDIDO');
   items.forEach(it => {
     lines.push(`${it.qty}x ${it.product.descripcion} - ${fmt(it.unitPrice)} c/u = ${fmt(it.subtotal)}`);
   });
   lines.push('');
-  lines.push('RESUMEN DE PAGO');
+  lines.push('💳 RESUMEN DE PAGO');
   lines.push(`Subtotal: ${fmt(subtotal)}`);
   if (envio) lines.push(`Envío: ${fmt(envio)}`);
   lines.push(`TOTAL: ${fmt(total)}`);
   lines.push('');
   
   if (AppState.envioActivo) {
-    lines.push('ENVÍO A DOMICILIO');
+    lines.push('📍 ENVÍO A DOMICILIO');
     lines.push(`Dirección: ${AppState.direccion}`);
     lines.push('');
   }
   
   if (AppState.transferencia) {
-    lines.push('FORMA DE PAGO');
+    lines.push('🏦 FORMA DE PAGO');
     lines.push('Transferencia bancaria');
     lines.push('Alias: TIENDABEBU');
     lines.push('');
   }
   
-  lines.push('Por confirmar');
+  lines.push('✅ Por confirmar');
 
   const text = encodeURIComponent(lines.join('\n'));
   const url = `https://wa.me/${phone}?text=${text}`;
@@ -654,9 +722,6 @@ function showToast(msg, t = 2000) {
   setTimeout(() => toast.remove(), t);
 }
 
-function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
-function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
-
 /* =================== EVENTS BINDING =================== */
 
 function bindUI() {
@@ -677,18 +742,22 @@ function bindUI() {
         renderSubcategories(marca);
         return;
       }
+      
       const subCard = e.target.closest('.subcat-card');
       if (subCard) {
         const sub = subCard.getAttribute('data-sub');
         renderProducts(AppState.currentMarca, sub);
         return;
       }
+      
       const btn = e.target.closest('button[data-action]');
       if (btn) {
         const action = btn.getAttribute('data-action');
         const id = btn.getAttribute('data-id');
-        if (action === 'add') addToCart(id, 1);
-        else if (action === 'wa') {
+        
+        if (action === 'add') {
+          addToCart(id, 1);
+        } else if (action === 'wa') {
           const p = AppState.products.find(pp => String(pp.id) === String(id));
           if (!p) return showToast('Producto no encontrado');
           const msg = `Hola, me interesa: ${p.descripcion} - ${fmt(p.precio)}`;
@@ -713,7 +782,7 @@ function bindUI() {
   document.addEventListener('click', e => {
     if (e.target.closest('.close-btn')) closeCartModal();
     if (e.target.closest('.btn-vaciar-carrito')) {
-      if (confirm('Vaciar carrito?')) {
+      if (confirm('¿Vaciar carrito?')) {
         AppState.cart = [];
         saveCartToStorage();
         renderCartDrawer();
@@ -799,8 +868,9 @@ async function bootstrap() {
 
     loadCartFromStorage();
     bindUI();
+    
     const brandsGrid = el('brands-grid');
-    if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">Cargando...</div>`;
+    if (brandsGrid) brandsGrid.innerHTML = `<div class="loading">⏳ Cargando...</div>`;
 
     const data = await loadAllData();
     AppState.products = data.productos || [];
@@ -813,9 +883,9 @@ async function bootstrap() {
     updateCartCounter();
 
   } catch (err) {
-    console.error('Bootstrap error', err);
+    console.error('Bootstrap error:', err);
     const container = el('brands-grid');
-    if (container) container.innerHTML = `<div class="empty-state"><div class="ei">Error al cargar. Revisa la consola.</div></div>`;
+    if (container) container.innerHTML = `<div class="empty-state"><div class="ei">⚠️ Error al cargar. Revisa la consola.</div></div>`;
   }
 }
 
