@@ -242,9 +242,10 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   background: linear-gradient(135deg, var(--bg-light), #ebe7d8);
-  padding: 4px;
-  min-height: 100px;
+  padding: 8px;
+  min-height: 120px;
   border-bottom: 1px solid var(--border-light);
+  overflow: visible;
 }
 
 .brand-img img {
@@ -254,12 +255,14 @@ img { max-width: 100%; display: block; }
   width: auto;
   height: auto;
   filter: drop-shadow(0 1px 2px rgba(0,0,0,0.08));
+  display: block;
+  visibility: visible;
 }
 
 .brand-initial {
   font-weight: 900;
   color: var(--accent-1);
-  font-size: 28px;
+  font-size: 32px;
   font-family: var(--font-heading);
   text-shadow: 0 1px 3px rgba(0,0,0,0.08);
 }
@@ -334,14 +337,14 @@ img { max-width: 100%; display: block; }
   justify-content: center;
   background: linear-gradient(135deg, var(--bg-warm), #ddd7cc);
   overflow: hidden;
-  min-height: 100px;
+  min-height: 120px;
   border-bottom: 1px solid var(--border-light);
-  padding: 2px;
+  padding: 4px;
 }
 
 .product-img img {
-  max-width: 99%;
-  max-height: 99%;
+  max-width: 98%;
+  max-height: 98%;
   object-fit: contain;
   width: auto;
   height: auto;
@@ -468,7 +471,7 @@ img { max-width: 100%; display: block; }
 }
 
 .brand-card.promo-card .brand-img {
-  min-height: 80px;
+  min-height: 100px;
   background: linear-gradient(135deg, #fff5f0, #fffbf8);
 }
 
