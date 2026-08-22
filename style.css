@@ -258,8 +258,15 @@ img { max-width: 100%; display: block; }
 }
 
 .content {
-  max-height: calc(100vh - 250px);
+  max-height: calc(100vh - 200px);
   overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+@media (max-width: 768px) {
+  .content {
+    max-height: calc(100vh - 180px);
+  }
 }
 
 .section {
@@ -1001,144 +1008,9 @@ img { max-width: 100%; display: block; }
 }
 
 .loading {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 60px 20px;
   text-align: center;
+  font-size: 20px;
+  padding: 40px 20px;
   color: var(--muted);
-  font-size: 15px;
-  font-weight: 600;
-}
-
-/* =================== UTILITIES =================== */
-.hidden {
-  display: none !important;
-}
-
-.active {
-  display: block !important;
-}
-
-.btn-ghost {
-  background: var(--card);
-  border: 2px solid var(--border);
-  padding: 8px 12px;
-  border-radius: 8px;
-  cursor: pointer;
-  font-weight: 700;
-  font-size: 12px;
-  font-family: var(--font-ui);
-  transition: all 0.2s ease;
-  box-shadow: var(--shadow-sm);
-}
-
-.btn-ghost:hover {
-  background: var(--bg-light);
-  border-color: var(--accent-1);
-  box-shadow: var(--shadow);
-}
-
-/* =================== RESPONSIVE =================== */
-@media (max-width: 768px) {
-  .header-content-row {
-    min-height: 60px;
-    gap: 12px;
-  }
-  
-  .header-left-group,
-  .header-right-group {
-    min-width: 80px;
-  }
-  
-  .logo-app-pro {
-    height: 48px;
-  }
-  
-  .modal-card {
-    width: 95vw;
-    padding: 16px;
-  }
-  
-  .cart-items {
-    max-height: 350px;
-  }
-}
-
-@media (max-width: 480px) {
-  .header-content-row {
-    min-height: 56px;
-    gap: 8px;
-    padding: 0 8px;
-  }
-  
-  .btn-control-volver,
-  .btn-control-carrito {
-    padding: 9px 14px;
-    font-size: 12px;
-  }
-  
-  .logo-app-pro {
-    height: 44px;
-    max-width: 100px;
-  }
-  
-  .buscador-container {
-    padding: 0 8px;
-  }
-  
-  .buscador-container input {
-    font-size: 13px;
-    padding: 10px 14px;
-  }
-  
-  .main-container {
-    margin: 12px auto 0;
-    padding: 0 8px;
-    padding-bottom: 40px;
-  }
-  
-  .brands-grid,
-  .products-grid,
-  .search-results-grid {
-    gap: 10px;
-  }
-  
-  .modal-card,
-  .modal-card-small {
-    width: 98vw;
-    padding: 14px;
-    border-radius: 16px;
-  }
-  
-  .product-body {
-    min-height: 110px;
-  }
-  
-  .product-buttons {
-    gap: 4px;
-  }
-  
-  .btn {
-    padding: 9px 10px;
-    font-size: 11px;
-  }
-  
-  .bebu-toast {
-    bottom: 12vh;
-    left: 12px;
-    right: 12px;
-    font-size: 13px;
-    padding: 12px 14px;
-  }
-}
-
-/* =================== ACCESSIBILITY =================== */
-@media (prefers-reduced-motion: reduce) {
-  * {
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.01ms !important;
-  }
+  font-weight: 900;
 }
