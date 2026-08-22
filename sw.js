@@ -1,6 +1,6 @@
 'use strict';
 
-const SW_VERSION = '2026.08.21_v2';
+const SW_VERSION = '2026.08.22_v3';
 const CACHE_PREFIX = 'bebu';
 const STATIC_CACHE = `${CACHE_PREFIX}-static-${SW_VERSION}`;
 const RUNTIME_CACHE = `${CACHE_PREFIX}-runtime-${SW_VERSION}`;
@@ -70,7 +70,7 @@ async function trimCache(cacheName, maxEntries) {
       await cache.delete(keys[i]);
     }
   } catch (e) {
-    console.warn('trimCache error', e);
+    console.warn('[SW] trimCache error', e);
   }
 }
 
@@ -79,7 +79,7 @@ async function putInCache(cacheName, request, response) {
     const cache = await caches.open(cacheName);
     await cache.put(request, response.clone());
   } catch (e) {
-    console.warn('putInCache error', e);
+    console.warn('[SW] putInCache error', e);
   }
 }
 
@@ -100,11 +100,10 @@ self.addEventListener('install', event => {
       try {
         const cache = await caches.open(STATIC_CACHE);
         await cache.addAll(APP_SHELL);
-        // Activate new SW immediately
         await self.skipWaiting();
         log('App shell cached and skipWaiting called');
       } catch (e) {
-        console.warn('SW install: cache.addAll failed', e);
+        console.warn('[SW] install: cache.addAll failed', e);
       }
     })()
   );
@@ -125,13 +124,12 @@ self.addEventListener('activate', event => {
 
         await self.clients.claim();
 
-        // Notify clients that a new version is active/available
         const clientsList = await self.clients.matchAll({ includeUncontrolled: true });
         for (const client of clientsList) {
           client.postMessage({ type: 'NEW_VERSION', version: SW_VERSION });
         }
       } catch (e) {
-        console.warn('activate error', e);
+        console.warn('[SW] activate error', e);
       }
     })()
   );
@@ -179,7 +177,10 @@ self.addEventListener('fetch', event => {
         log('Navigation network failed, serving cached index.html if available', err.message);
         const cachedIndex = await matchCache(RUNTIME_CACHE, '/index.html') || await caches.match('/index.html');
         if (cachedIndex) return cachedIndex;
-        return new Response('<h1>Offline</h1><p>Contenido no disponible.</p>', { headers: { 'Content-Type': 'text/html' }, status: 503});
+        return new Response('<h1>Offline</h1><p>Contenido no disponible.</p>', { 
+          headers: { 'Content-Type': 'text/html' }, 
+          status: 503 
+        });
       }
     })());
     return;
@@ -258,7 +259,7 @@ self.addEventListener('sync', (event) => {
         await new Promise(res => setTimeout(res, 500));
         log('Background sync: cart sync complete');
       } catch (e) {
-        console.warn('Background sync error', e);
+        console.warn('[SW] Background sync error', e);
       }
     })());
   }
@@ -267,7 +268,7 @@ self.addEventListener('sync', (event) => {
 self.addEventListener('push', (event) => {
   log('push received');
   let payload = {
-    title: 'BEBU Store',
+    title: '🎉 BEBU Store',
     body: 'Tienes una notificación',
     icon: '/logo.png',
     badge: '/logo.png',
@@ -343,7 +344,7 @@ self.addEventListener('message', (event) => {
         await cache.addAll(msg.urls);
         log('CACHE_URLS done');
       } catch (e) {
-        console.warn('CACHE_URLS failed', e);
+        console.warn('[SW] CACHE_URLS failed', e);
       }
     })());
     return;
@@ -363,10 +364,8 @@ self.addEventListener('message', (event) => {
   }
 
   if (msg.type === 'CHECK_NEW_VERSION') {
-    // If there's a waiting worker, notify clients that a new version is available
     try {
       if (self.registration && self.registration.waiting) {
-        // Notify all clients
         (async () => {
           const list = await clients.matchAll({ includeUncontrolled: true });
           for (const c of list) {
@@ -375,7 +374,7 @@ self.addEventListener('message', (event) => {
         })();
       }
     } catch (e) {
-      // ignore
+      console.warn('[SW] CHECK_NEW_VERSION error', e);
     }
     return;
   }
@@ -388,7 +387,7 @@ async function notifyClientsNewVersion() {
       client.postMessage({ type: 'NEW_VERSION', version: SW_VERSION });
     }
   } catch (e) {
-    console.warn('notifyClientsNewVersion failed', e);
+    console.warn('[SW] notifyClientsNewVersion failed', e);
   }
 }
 
