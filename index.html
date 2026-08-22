@@ -4,91 +4,113 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <meta name="theme-color" content="#EBE7D8" />
-  <meta name="description" content="BEBU Store - Catálogo profesional de productos para bebés." />
-  <title>BEBU Store - Catálogo Profesional</title>
+  <meta name="description" content="BEBU Store - Catálogo profesional de productos para bebés. Tienda online con marcas confiables." />
+  <meta name="keywords" content="bebés, tienda online, productos para bebés, BEBU Store" />
+  <title>BEBU Store - Catálogo Profesional de Productos para Bebés</title>
 
   <link href="https://fonts.googleapis.com/css2?family=More+Sugar&family=Poppins:wght@400;600;700;800&display=swap" rel="stylesheet">
 
   <link rel="stylesheet" href="style.css" />
   <link rel="manifest" href="/manifest.json" />
   <link rel="icon" type="image/png" sizes="192x192" href="/logo.png" />
+  <link rel="apple-touch-icon" href="/logo.png" />
 </head>
 <body>
-  <div id="update-banner" class="hidden" role="status" aria-live="polite">
+  <!-- Update banner for new versions -->
+  <div id="update-banner" class="hidden" role="status" aria-live="polite" aria-label="Nueva versión disponible">
     <div class="update-inner">
-      <span>Nueva versión disponible</span>
-      <button id="btn-update-now" class="btn-ghost">Actualizar</button>
-      <button id="btn-update-later" class="btn-ghost">Cerrar</button>
+      <span>✨ Nueva versión disponible</span>
+      <button id="btn-update-now" class="btn-ghost" aria-label="Actualizar a nueva versión">Actualizar</button>
+      <button id="btn-update-later" class="btn-ghost" aria-label="Cerrar notificación de actualización">Cerrar</button>
     </div>
   </div>
 
+  <!-- Header / Navigation -->
   <header class="header-pro" role="banner">
     <div class="header-content-row">
       <div class="header-left-group">
-        <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver">VOLVER</button>
+        <button id="btn-volver" class="btn-control-volver" style="display:none" aria-label="Volver a la pantalla anterior">
+          ← VOLVER
+        </button>
       </div>
 
       <div class="header-center-group">
-        <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store" loading="lazy">
+        <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store - Logo" loading="lazy">
       </div>
 
       <div class="header-right-group">
-        <button id="btn-carrito-header" class="btn-control-carrito" aria-label="Abrir carrito">
-          Carrito <span id="contador-carrito" class="badge-carrito" style="display:none">0</span>
+        <button id="btn-carrito-header" class="btn-control-carrito" aria-label="Abrir carrito de compras">
+          🛒 Carrito <span id="contador-carrito" class="badge-carrito" style="display:none">0</span>
         </button>
       </div>
     </div>
 
     <div class="buscador-container">
-      <input id="buscador" type="text" placeholder="Buscar productos, marcas o categorías..." aria-label="Buscar productos" autocomplete="off">
+      <input 
+        id="buscador" 
+        type="text" 
+        placeholder="🔍 Buscar productos, marcas o categorías..." 
+        aria-label="Buscador de productos" 
+        autocomplete="off">
     </div>
   </header>
 
+  <!-- Main content area -->
   <main id="app-container" class="main-container content" role="main">
-    <section id="brands-view" class="section active">
+    
+    <!-- Brands view -->
+    <section id="brands-view" class="section active" aria-label="Vista de marcas">
       <div class="sec-label">Marcas</div>
-      <div id="brands-grid" class="brands-grid"></div>
+      <div id="brands-grid" class="brands-grid" role="region" aria-label="Grid de marcas disponibles"></div>
     </section>
 
-    <section id="subcats-view" class="section">
+    <!-- Subcategories view -->
+    <section id="subcats-view" class="section" aria-label="Vista de líneas de productos">
       <div class="sec-label" id="subcats-label">Líneas</div>
-      <div id="subcats-grid" class="subcats-grid"></div>
+      <div id="subcats-grid" class="subcats-grid" role="region" aria-label="Grid de líneas de productos"></div>
     </section>
 
-    <section id="products-view" class="section">
+    <!-- Products view -->
+    <section id="products-view" class="section" aria-label="Vista de productos">
       <div class="sec-label" id="products-label">Productos</div>
-      <div id="products-grid" class="products-grid"></div>
+      <div id="products-grid" class="products-grid" role="region" aria-label="Grid de productos"></div>
     </section>
 
-    <section id="search-view" class="section">
+    <!-- Search results view -->
+    <section id="search-view" class="section" aria-label="Resultados de búsqueda">
       <div class="sec-label" id="search-count-label">Resultados</div>
-      <div id="search-grid" class="search-results-grid"></div>
+      <div id="search-grid" class="search-results-grid" role="region" aria-label="Grid de resultados de búsqueda"></div>
     </section>
   </main>
 
-  <div id="modal-carrito" class="modal-overlay" role="dialog" aria-hidden="true" style="display:none">
+  <!-- Cart modal -->
+  <div id="modal-carrito" class="modal-overlay" role="dialog" aria-labelledby="modal-titulo" aria-hidden="true" style="display:none">
     <div class="modal-card" role="document">
       <div class="modal-header">
-        <h2 id="modal-titulo">Tu Pedido Actual</h2>
-        <button class="close-btn" aria-label="Cerrar modal">&times;</button>
+        <h2 id="modal-titulo">🛍️ Tu Pedido Actual</h2>
+        <button class="close-btn" aria-label="Cerrar modal del carrito">&times;</button>
       </div>
 
-      <div id="lista-carrito-modal" class="modal-body-list"></div>
+      <div id="lista-carrito-modal" class="modal-body-list" role="region" aria-label="Lista de productos en el carrito"></div>
 
+      <!-- Checkout controls -->
       <div class="checkout-controls">
         <label class="checkbox-label">
           <input type="checkbox" id="switch-envio" aria-label="Incluir envío a domicilio">
-          Envío a domicilio
+          📍 Envío a domicilio
         </label>
 
         <label class="checkbox-label">
-          <input type="checkbox" id="switch-transferencia" aria-label="Pago por transferencia">
-          Pago por Transferencia
+          <input type="checkbox" id="switch-transferencia" aria-label="Pago por transferencia bancaria">
+          🏦 Pago por Transferencia
         </label>
 
-        <button id="btn-abrir-direccion" class="btn-secondary" style="display:none">Ingresar Dirección</button>
+        <button id="btn-abrir-direccion" class="btn-secondary" style="display:none" aria-label="Ingresar dirección de envío">
+          📬 Ingresar Dirección
+        </button>
       </div>
 
+      <!-- Totals breakdown -->
       <div class="totales-desglose">
         <div class="desglose-linea">
           <span>Subtotal:</span>
@@ -104,31 +126,47 @@
         </div>
       </div>
 
-      <button id="btn-enviar-whatsapp" class="btn-checkout green">Enviar Pedido por WhatsApp</button>
-      <button class="btn-vaciar-carrito btn-checkout back">Vaciar Carrito</button>
+      <!-- Action buttons -->
+      <button id="btn-enviar-whatsapp" class="btn-checkout green" aria-label="Enviar pedido por WhatsApp">
+        ✅ Enviar Pedido por WhatsApp
+      </button>
+      <button class="btn-vaciar-carrito btn-checkout back" aria-label="Vaciar todo el carrito">
+        🗑️ Vaciar Carrito
+      </button>
     </div>
   </div>
 
-  <div id="modal-direccion" class="modal-overlay" role="dialog" aria-hidden="true" style="display:none">
+  <!-- Address modal -->
+  <div id="modal-direccion" class="modal-overlay" role="dialog" aria-labelledby="modal-direccion-titulo" aria-hidden="true" style="display:none">
     <div class="modal-card-small" role="document">
       <div class="modal-header">
-        <h2>Ingresar Dirección</h2>
-        <button id="close-direccion-btn" class="close-btn" aria-label="Cerrar">&times;</button>
+        <h2 id="modal-direccion-titulo">📍 Ingresar Dirección</h2>
+        <button id="close-direccion-btn" class="close-btn" aria-label="Cerrar modal de dirección">&times;</button>
       </div>
 
       <div class="modal-body-direccion">
-        <input id="input-direccion" type="text" placeholder="Ingresa tu dirección completa" aria-label="Dirección de envío">
+        <input 
+          id="input-direccion" 
+          type="text" 
+          placeholder="Ej: Calle Principal 123, Apartamento 4B" 
+          aria-label="Dirección de envío completa">
       </div>
 
       <div class="modal-footer">
-        <button id="btn-guardar-direccion" class="btn-checkout green">Guardar Dirección</button>
-        <button id="close-direccion-btn-2" class="btn-checkout back">Cancelar</button>
+        <button id="btn-guardar-direccion" class="btn-checkout green" aria-label="Guardar dirección ingresada">
+          ✓ Guardar Dirección
+        </button>
+        <button id="close-direccion-btn-2" class="btn-checkout back" aria-label="Cancelar sin guardar">
+          ✗ Cancelar
+        </button>
       </div>
     </div>
   </div>
 
+  <!-- Scripts -->
   <script src="app.js" defer></script>
 
+  <!-- Service Worker & PWA -->
   <script>
     (function() {
       if ('serviceWorker' in navigator) {
@@ -140,24 +178,25 @@
             const newSW = reg.installing;
             newSW.addEventListener('statechange', () => {
               if (newSW.state === 'installed' && navigator.serviceWorker.controller) {
-                console.log('Service worker updated');
+                console.log('[PWA] Service worker actualizado');
               }
             });
           });
-        }).catch(err => console.warn('SW registration failed:', err));
+        }).catch(err => console.warn('[PWA] Registro de SW fallido:', err));
       }
 
       navigator.serviceWorker && navigator.serviceWorker.addEventListener && navigator.serviceWorker.addEventListener('message', (ev) => {
         const data = ev.data || {};
         if (data && data.type === 'NEW_VERSION') {
           const banner = document.getElementById('update-banner');
-          if (banner) banner.classList.remove('hidden'); /* FIX: show banner when new version available */
+          if (banner) banner.classList.remove('hidden');
         }
       });
 
       document.addEventListener('DOMContentLoaded', () => {
         const btnNow = document.getElementById('btn-update-now');
         const btnLater = document.getElementById('btn-update-later');
+        
         if (btnNow) btnNow.addEventListener('click', () => {
           if (navigator.serviceWorker.controller) {
             navigator.serviceWorker.getRegistration().then(reg => {
@@ -168,6 +207,7 @@
           }
           setTimeout(() => location.reload(true), 800);
         });
+        
         if (btnLater) btnLater.addEventListener('click', () => {
           const banner = document.getElementById('update-banner');
           banner && banner.classList.add('hidden');
