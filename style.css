@@ -1,5 +1,4 @@
-
-/* BEBU Store - style.css (versión profesional mejorada v3.1 - Light Theme) */
+/* BEBU Store - style.css (versión profesional mejorada v3.2 - Light Theme) */
 
 :root {
   --brand-text: #6A5A5B;
@@ -253,8 +252,9 @@ img { max-width: 100%; display: block; }
 /* =================== MAIN CONTENT =================== */
 .main-container, .content {
   max-width: var(--max-width);
-  margin: 20px auto;
+  margin: 20px auto 0;
   padding: 0 var(--container-pad);
+  padding-bottom: 40px;
 }
 
 .content {
@@ -1094,8 +1094,9 @@ img { max-width: 100%; display: block; }
   }
   
   .main-container {
-    margin: 12px auto;
+    margin: 12px auto 0;
     padding: 0 8px;
+    padding-bottom: 40px;
   }
   
   .brands-grid,
