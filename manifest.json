@@ -1,33 +1,93 @@
 {
   "id": "/",
-  "name": "BEBU Store - Tienda Online",
+  "name": "BEBU Store - Tienda Online Profesional",
   "short_name": "BEBU Store",
-  "description": "Tienda online profesional de productos para bebés.",
+  "description": "Tienda online profesional de productos para bebés. Navega marcas, busca productos y realiza pedidos por WhatsApp.",
   "lang": "es-AR",
   "start_url": "/index.html",
   "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#EBE7D8",
-  "theme_color": "#EBE7D8",
+  "theme_color": "#98CCE0",
   "prefer_related_applications": false,
   "categories": ["shopping"],
+  "screenshots": [
+    {
+      "src": "/logo.png",
+      "sizes": "540x720",
+      "type": "image/png",
+      "form_factor": "narrow"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "1280x720",
+      "type": "image/png",
+      "form_factor": "wide"
+    }
+  ],
   "icons": [
-    { "src": "/logo.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
-    { "src": "/logo.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/logo.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
   ],
   "shortcuts": [
     {
       "name": "Ver Marcas",
       "short_name": "Marcas",
+      "description": "Navega todas las marcas disponibles",
       "url": "/index.html?section=brands",
-      "icons": [{ "src": "/logo.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     },
     {
       "name": "Mi Carrito",
       "short_name": "Carrito",
+      "description": "Revisa tu carrito de compras",
       "url": "/index.html?section=cart",
-      "icons": [{ "src": "/logo.png", "sizes": "192x192", "type": "image/png" }]
+      "icons": [
+        {
+          "src": "/logo.png",
+          "sizes": "192x192",
+          "type": "image/png"
+        }
+      ]
     }
-  ]
+  ],
+  "share_target": {
+    "action": "/share",
+    "method": "POST",
+    "enctype": "application/x-www-form-urlencoded",
+    "params": {
+      "title": "title",
+      "text": "text",
+      "url": "url"
+    }
+  }
 }
