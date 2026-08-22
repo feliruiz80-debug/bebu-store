@@ -106,6 +106,14 @@ function parsePrice(raw) {
 function escapeHtml(s) { return String(s || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function escapeAttr(s) { return String(s || '').replace(/"/g,'&quot;'); }
 
+function mapKeysLower(obj) {
+  const out = {};
+  Object.keys(obj || {}).forEach(k => {
+    out[k.toString().trim().toLowerCase().replace(/\s+/g, '_')] = obj[k];
+  });
+  return out;
+}
+
 /* ================= DATA LAYER ================= */
 
 async function fetchSheetTab(gid) {
@@ -144,12 +152,15 @@ async function loadAllData() {
       }
     });
 
+    // ARREGLADO: Leer correctamente los logos del Sheets
     const marcas = (marcasRaw || []).map(r => {
       const lower = mapKeysLower(r);
-      return {
-        marca: (lower['marca'] || lower['name'] || '').toString().trim().toUpperCase(),
-        logo: (lower['url_logo'] || lower['url-logo'] || lower['logo'] || '').toString().trim()
-      };
+      const marca = (lower['marca'] || lower['name'] || '').toString().trim().toUpperCase();
+      const logo = (lower['url_logo'] || lower['url-logo'] || lower['logo'] || '').toString().trim();
+      
+      console.log(`[Marca] ${marca} -> Logo: ${logo || 'SIN LOGO'}`); // Debug
+      
+      return { marca, logo };
     }).filter(m => m.marca);
 
     const productos = (productosRaw || []).map(r => {
@@ -183,14 +194,6 @@ async function loadAllData() {
   }
 }
 
-function mapKeysLower(obj) {
-  const out = {};
-  Object.keys(obj || {}).forEach(k => {
-    out[k.toString().trim().toLowerCase().replace(/\s+/g, '_')] = obj[k];
-  });
-  return out;
-}
-
 /* ================= APP STATE ================= */
 
 const AppState = {
@@ -201,7 +204,7 @@ const AppState = {
   cart: [],
   navigationStack: [],
   currentMarca: null,
-  currentSection: 'brands', // Track current section
+  currentSection: 'brands',
   envioActivo: false,
   transferencia: false,
   direccion: ''
@@ -308,10 +311,14 @@ function renderBrands() {
     marcasMap[p.marca].count++;
   });
   
+  // ARREGLADO: Asignar logos correctamente del array de marcas
   AppState.brands.forEach(b => {
-    if (b.marca) {
-      marcasMap[b.marca] = marcasMap[b.marca] || { count: 0, logo: '' };
-      if (b.logo) marcasMap[b.marca].logo = b.logo;
+    if (b.marca && b.logo) {
+      if (!marcasMap[b.marca]) {
+        marcasMap[b.marca] = { count: 0, logo: b.logo };
+      } else {
+        marcasMap[b.marca].logo = b.logo;
+      }
     }
   });
 
@@ -351,9 +358,17 @@ function renderBrands() {
     }
     const logo = marcasMap[marca].logo;
     const count = marcasMap[marca].count;
-    const logoHtml = logo ? `<img src="${escapeAttr(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.src='${FALLBACKS.LOGO_LOCAL}'">` : `<div class="brand-initial">${escapeHtml(marca.charAt(0))}</div>`;
+    
+    // ARREGLADO: Si hay logo, mostrar imagen. Si no, mostrar inicial
+    const logoHtml = logo && logo.length > 0 
+      ? `<img src="${escapeAttr(logo)}" alt="${escapeHtml(marca)}" loading="lazy" onerror="this.style.display='none'; this.nextElementSibling.style.display='block';">` 
+      : '';
+    const initialHtml = !logo || logo.length === 0
+      ? `<div class="brand-initial" style="display:block;">${escapeHtml(marca.charAt(0))}</div>`
+      : `<div class="brand-initial" style="display:none;">${escapeHtml(marca.charAt(0))}</div>`;
+    
     return `<div class="brand-card" data-marca="${escapeAttr(marca)}" role="button" tabindex="0">
-      <div class="brand-img">${logoHtml}</div>
+      <div class="brand-img">${logoHtml}${initialHtml}</div>
       <div class="brand-body"><div class="brand-name">${escapeHtml(marca)}</div><div class="brand-count">${count} producto${count!==1?'s':''}</div></div>
     </div>`;
   }).join('');
@@ -517,7 +532,6 @@ function computeCartTotals() {
     const prod = AppState.products.find(p => String(p.id) === String(cartItem.id));
     if (!prod) return;
     
-    // FIX: Check if product has active promo
     const promo = AppState.promos.find(pr => 
       String(pr.id_producto) === String(prod.id) && 
       pr.activo && 
@@ -528,7 +542,6 @@ function computeCartTotals() {
     let unitPrice = prod.precio;
     let promoApplied = null;
     
-    // Apply promo only if quantity meets minimum
     if (promo && cartItem.qty >= promo.cantidad) {
       unitPrice = promo.precio_promo;
       promoApplied = promo;
@@ -877,6 +890,8 @@ async function bootstrap() {
     AppState.brands = (data.marcas || []).map(m => ({ marca: m.marca, logo: m.logo }));
     AppState.promos = data.promos || [];
     AppState.config = data.config || {};
+
+    console.log('AppState.brands:', AppState.brands); // Debug
 
     updateThemeFromConfig(AppState.config);
     renderBrands();
