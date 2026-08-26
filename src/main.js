@@ -54,13 +54,6 @@ function applyTheme(config) {
   }
 }
 
-function syncHeaderSpacer() {
-  const header = el('site-header');
-  const spacer = el('header-spacer');
-  if (!header || !spacer) return;
-  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 2}px`;
-}
-
 function goBack() {
   const current = document.querySelector('.section.active');
   if (!current) return;
@@ -200,8 +193,6 @@ function setupPwa() {
 async function bootstrap() {
   loadCartFromStorage();
   bindUI();
-  syncHeaderSpacer();
-  window.addEventListener('resize', syncHeaderSpacer, { passive: true });
   setupPwa();
   updateCartCounter();
 
