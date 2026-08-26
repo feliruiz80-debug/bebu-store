@@ -88,48 +88,29 @@ img { max-width: 100%; display: block; }
   right: 0;
   z-index: 1100;
   padding-top: env(safe-area-inset-top, 0px);
-  background: rgba(255, 255, 255, 0.22);
-  backdrop-filter: blur(12px) saturate(1.05);
-  -webkit-backdrop-filter: blur(12px) saturate(1.05);
-  box-shadow: 0 8px 20px rgba(80, 60, 40, 0.04);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.28) 0%,
+    rgba(255, 255, 255, 0.12) 58%,
+    rgba(255, 255, 255, 0) 100%
+  );
+  backdrop-filter: blur(10px) saturate(1.04);
+  -webkit-backdrop-filter: blur(10px) saturate(1.04);
+  box-shadow: none;
+  border: none;
 }
 
 .header-inner {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 10px var(--container-pad) 12px;
+  padding: 10px var(--container-pad) 18px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .header-divider {
-  height: 1px;
-  width: 100%;
-  background:
-    linear-gradient(
-      90deg,
-      transparent 0%,
-      rgba(255, 255, 255, 0.2) 12%,
-      rgba(106, 90, 91, 0.16) 35%,
-      rgba(106, 90, 91, 0.28) 50%,
-      rgba(106, 90, 91, 0.16) 65%,
-      rgba(255, 255, 255, 0.2) 88%,
-      transparent 100%
-    );
-  position: relative;
-}
-
-.header-divider::after {
-  content: "";
-  position: absolute;
-  left: 50%;
-  top: 50%;
-  width: 46px;
-  height: 1px;
-  transform: translate(-50%, -50%);
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
-  box-shadow: 0 0 10px rgba(255, 255, 255, 0.55);
+  display: none;
 }
 
 .brand-mark {
