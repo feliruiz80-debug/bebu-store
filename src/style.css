@@ -7,6 +7,7 @@
   --accent-2: #FEBFAC;
   --accent-3: #F7CDA1;
   --accent-4: #A4D2BB;
+  --danger: #fa5e5b;
   --card: #ffffff;
   --muted: #7a7a7a;
   --border: #e8e3d6;
@@ -53,6 +54,7 @@ img { max-width: 100%; display: block; }
 }
 
 .header-content-row {
+  position: relative;
   max-width: var(--max-width);
   margin: 0 auto;
   padding: 0 var(--container-pad);
@@ -60,32 +62,30 @@ img { max-width: 100%; display: block; }
   justify-content: space-between;
   align-items: center;
   gap: 16px;
+  min-height: 78px;
 }
 
-.header-left-group {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex: 0 0 auto;
-}
-
-.header-center-group {
+.header-left-group,
+.header-right-group {
+  width: 88px;
+  min-width: 88px;
+  flex: 0 0 88px;
   display: flex;
   align-items: center;
   justify-content: center;
-  flex: 1;
+  position: relative;
 }
 
-.header-right-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex: 0 0 auto;
+.header-center-group {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
 }
 
-/* Logo: responsive adjustments */
 .logo-app-pro {
-  height: 60px;
+  height: 78px;
   width: auto;
   border-radius: 12px;
   object-fit: contain;
@@ -140,7 +140,10 @@ img { max-width: 100%; display: block; }
 }
 
 .badge-carrito {
-  background: #ff6b6b;
+  position: absolute;
+  top: -6px;
+  right: -6px;
+  background: var(--danger);
   color: #fff;
   padding: 3px 8px;
   border-radius: 999px;
@@ -218,6 +221,9 @@ img { max-width: 100%; display: block; }
   overflow: hidden;
   box-shadow: 0 6px 18px rgba(10,10,10,0.04);
   transition: transform 0.14s, box-shadow 0.14s;
+}
+
+.brand-card, .subcat-card {
   cursor: pointer;
 }
 
@@ -346,6 +352,14 @@ img { max-width: 100%; display: block; }
   font-size: 14px;
 }
 
+.price-old {
+  text-decoration: line-through;
+  color: var(--muted);
+  font-weight: 700;
+  font-size: 12px;
+  margin-right: 4px;
+}
+
 .product-buttons {
   display: flex;
   gap: 6px;
@@ -395,12 +409,16 @@ img { max-width: 100%; display: block; }
 .modal-overlay {
   position: fixed;
   inset: 0;
-  display: flex;
+  display: none;
   align-items: center;
   justify-content: center;
   background: rgba(0,0,0,0.38);
   z-index: 1400;
   padding: 20px;
+}
+
+.modal-overlay.is-open {
+  display: flex;
 }
 
 .modal-card {
@@ -759,11 +777,26 @@ img { max-width: 100%; display: block; }
   background: var(--bg-warm);
 }
 
+.skeleton-card {
+  min-height: 180px;
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--border);
+  background: linear-gradient(90deg, #efece1 25%, #faf8f2 50%, #efece1 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+}
+
+@keyframes shimmer {
+  from { background-position: 200% 0; }
+  to { background-position: -200% 0; }
+}
+
 @media (min-width: 720px) {
   .brands-grid {
     grid-template-columns: repeat(3, 1fr);
   }
-  .products-grid {
+  .products-grid,
+  .search-results-grid {
     grid-template-columns: repeat(3, 1fr);
   }
 }
@@ -773,7 +806,8 @@ img { max-width: 100%; display: block; }
     grid-template-columns: repeat(4, 1fr);
     gap: 18px;
   }
-  .products-grid {
+  .products-grid,
+  .search-results-grid {
     grid-template-columns: repeat(4, 1fr);
   }
 }
@@ -840,25 +874,7 @@ img { max-width: 100%; display: block; }
   color: #ff8b6b;
 }
 
-/* Keep rest of layout consistent */
-
-/* --- PARCHE MÍNIMO: evita que el logo se mueva, posiciona badge y bordes blancos --- */
-.header-content-row { position: relative; }
-.header-left-group, .header-right-group {
-  width: 84px;
-  min-width: 84px;
-  flex: 0 0 84px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+.brand-card:focus-visible,
+.subcat-card:focus-visible {
+  outline: var(--focus-ring);
 }
-.header-center-group {
-  position: absolute;
-  left: 50%;
-  top: 12px; /* ajustar si querés más/menos separación vertical */
-  transform: translateX(-50%);
-  pointer-events: none;
-}
-.logo-app-pro { height: 78px; transition: height 180ms ease, transform 180ms ease; }
-.header-right-group { position: relative; } /* para que badge absoluto se posicione respecto al botón */
-.badge-carrito { position: absolute; top: -6px; right: -6px; }
