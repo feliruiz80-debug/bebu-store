@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
   <meta name="theme-color" content="#EBE7D8" />
   <meta name="description" content="BEBU Store — catálogo de productos para bebés." />
   <title>BEBU Store</title>
@@ -20,22 +20,25 @@
     </div>
   </div>
 
-  <header class="header-pro" role="banner">
-    <div class="header-content-row">
-      <div class="header-left-group">
-        <button id="btn-volver" class="btn-control-volver" type="button" hidden aria-label="Volver">Volver</button>
+  <header class="header-pro" role="banner" style="--collapse: 0">
+    <div class="header-shell">
+      <div class="header-content-row">
+        <div class="header-side header-left-group">
+          <button id="btn-volver" class="btn-header-icon" type="button" hidden aria-label="Volver">←</button>
+        </div>
+        <div class="header-center-group">
+          <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store" width="140" height="56" />
+        </div>
+        <div class="header-side header-right-group">
+          <button id="btn-carrito-header" class="btn-header-icon btn-header-cart" type="button" aria-label="Abrir carrito" aria-expanded="false">
+            <span class="cart-emoji" aria-hidden="true">🛒</span>
+            <span id="contador-carrito" class="badge-carrito" hidden>0</span>
+          </button>
+        </div>
       </div>
-      <div class="header-center-group">
-        <img id="logo-global" class="logo-app-pro" src="/logo.png" alt="BEBU Store" />
+      <div class="buscador-container">
+        <input id="buscador" type="search" placeholder="Buscar productos, marcas o categorías..." aria-label="Buscar productos" autocomplete="off" enterkeyhint="search" />
       </div>
-      <div class="header-right-group">
-        <button id="btn-carrito-header" class="btn-control-carrito" type="button" aria-label="Abrir carrito" aria-expanded="false">
-          Carrito <span id="contador-carrito" class="badge-carrito" hidden>0</span>
-        </button>
-      </div>
-    </div>
-    <div class="buscador-container">
-      <input id="buscador" type="search" placeholder="Buscar productos, marcas o categorías..." aria-label="Buscar productos" autocomplete="off" />
     </div>
   </header>
 

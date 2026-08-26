@@ -51,23 +51,31 @@ function applyTheme(config) {
 function setupStickyHeader() {
   const header = document.querySelector('.header-pro');
   if (!header) return;
-  const COLLAPSE_AT = 28;
-  const EXPAND_AT = 8;
-  let collapsed = false;
 
-  const sync = () => {
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    if (!collapsed && y > COLLAPSE_AT) {
-      collapsed = true;
-      header.classList.add('is-collapsed');
-    } else if (collapsed && y <= EXPAND_AT) {
-      collapsed = false;
-      header.classList.remove('is-collapsed');
-    }
+  const RANGE = 72;
+  let ticking = false;
+  let last = -1;
+
+  const apply = (y) => {
+    const progress = Math.min(1, Math.max(0, y / RANGE));
+    const rounded = Math.round(progress * 100) / 100;
+    if (rounded === last) return;
+    last = rounded;
+    header.style.setProperty('--collapse', String(rounded));
+    header.classList.toggle('is-collapsed', rounded > 0.85);
   };
 
-  window.addEventListener('scroll', sync, { passive: true });
-  sync();
+  const onScroll = () => {
+    if (ticking) return;
+    ticking = true;
+    requestAnimationFrame(() => {
+      apply(window.scrollY || document.documentElement.scrollTop || 0);
+      ticking = false;
+    });
+  };
+
+  window.addEventListener('scroll', onScroll, { passive: true });
+  apply(window.scrollY || 0);
 }
 
 function goBack() {
