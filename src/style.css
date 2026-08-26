@@ -75,6 +75,28 @@ img { max-width: 100%; display: block; }
 .update-inner { display: flex; gap: 12px; align-items: center; }
 
 /* ========== CONTENT CHROME ========== */
+.brand-mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 0 10px;
+  min-height: 52px;
+}
+
+.logo-app {
+  height: 52px;
+  width: auto;
+  max-width: 48px;
+  object-fit: contain;
+  object-position: center;
+  display: block;
+  margin: 0 auto;
+  background: transparent;
+  user-select: none;
+  -webkit-user-drag: none;
+  filter: drop-shadow(0 4px 10px rgba(80, 60, 40, 0.12));
+}
+
 .sec-head {
   display: flex;
   align-items: center;

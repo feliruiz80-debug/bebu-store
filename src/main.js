@@ -1,4 +1,5 @@
 import './style.css';
+import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
@@ -37,6 +38,15 @@ function applyTheme(config) {
   for (let i = 1; i <= 6; i++) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
+  }
+
+  const logoLocal = el('logo-local');
+  if (logoLocal) {
+    logoLocal.src = FALLBACKS.LOGO_LOCAL;
+    logoLocal.onerror = () => {
+      logoLocal.onerror = null;
+      logoLocal.src = FALLBACKS.LOGO_LOCAL;
+    };
   }
 }
 
