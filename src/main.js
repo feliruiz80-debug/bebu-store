@@ -65,7 +65,7 @@ function setupStickyHeader() {
   const rangePx = () => {
     const styles = getComputedStyle(root);
     const expanded = styles.getPropertyValue('--header-expanded').trim() || '50svh';
-    const compact = parseFloat(styles.getPropertyValue('--header-compact')) || 122;
+    const compact = parseFloat(styles.getPropertyValue('--header-compact')) || 118;
     // Measure actual expanded height via temporary spacer / probe
     const probe = el('header-spacer');
     const expandedPx = probe ? probe.getBoundingClientRect().height : window.innerHeight * 0.5;

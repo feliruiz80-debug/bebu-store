@@ -25,7 +25,7 @@
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --collapse: 0;
   --header-expanded: 50svh;
-  --header-compact: 122px;
+  --header-compact: 118px;
   --header-h: calc(var(--header-expanded) - (var(--header-expanded) - var(--header-compact)) * var(--collapse));
 }
 
@@ -100,9 +100,10 @@ img { max-width: 100%; display: block; }
 .header-top {
   position: relative;
   z-index: 2;
-  display: flex;
+  display: grid;
+  grid-template-columns: 44px 1fr 44px;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 12px;
   min-height: 44px;
   flex-shrink: 0;
 }
@@ -117,43 +118,51 @@ img { max-width: 100%; display: block; }
 .header-left-group { justify-content: flex-start; }
 .header-right-group { justify-content: flex-end; position: relative; }
 
+.header-center-group {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+}
+
 .header-logo-area {
   position: absolute;
   left: var(--container-pad);
   right: var(--container-pad);
-  top: calc(10px + env(safe-area-inset-top, 0px));
+  top: calc(54px + env(safe-area-inset-top, 0px));
   bottom: calc(10px + (52px * var(--collapse)));
   display: grid;
   place-items: center;
   pointer-events: none;
   z-index: 1;
+  opacity: calc(1 - var(--collapse));
 }
 
 .logo-hero,
 .logo-compact {
-  grid-area: 1 / 1;
   object-fit: contain;
   object-position: center;
   user-select: none;
   -webkit-user-drag: none;
   pointer-events: none;
+  background: transparent;
 }
 
 .logo-hero {
   width: min(78vw, 340px);
   max-height: min(28svh, 220px);
   height: auto;
-  opacity: calc(1 - var(--collapse));
-  transform: scale(calc(1 - 0.18 * var(--collapse)));
+  transform: scale(calc(1 - 0.12 * var(--collapse)));
   filter: blur(calc(1.5px * var(--collapse)));
 }
 
 .logo-compact {
-  height: 40px;
+  height: 44px;
   width: auto;
-  max-width: 120px;
+  max-width: 36px;
   opacity: var(--collapse);
-  transform: scale(calc(0.9 + 0.1 * var(--collapse)));
+  transform: scale(calc(0.92 + 0.08 * var(--collapse)));
+  mix-blend-mode: normal;
 }
 
 .btn-header-icon {
