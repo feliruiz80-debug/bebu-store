@@ -23,7 +23,7 @@
   --focus-ring: 3px solid rgba(154, 206, 224, 0.28);
   --font-heading: "More Sugar", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --header-h: 0px;
+  --header-h: 88px;
   --bottom-nav-h: 58px;
   --glass: rgba(255, 255, 255, 0.4);
   --glass-strong: rgba(255, 255, 255, 0.62);
@@ -74,12 +74,76 @@ img { max-width: 100%; display: block; }
 #update-banner.hidden { display: none !important; }
 .update-inner { display: flex; gap: 12px; align-items: center; }
 
-/* ========== CONTENT CHROME ========== */
+/* ========== PREMIUM PASTEL HEADER ========== */
+.header-spacer {
+  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
+  flex-shrink: 0;
+  pointer-events: none;
+}
+
+.site-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1100;
+  padding-top: env(safe-area-inset-top, 0px);
+  background:
+    linear-gradient(
+      120deg,
+      rgba(164, 210, 187, 0.42) 0%,
+      rgba(152, 204, 224, 0.38) 38%,
+      rgba(254, 191, 172, 0.34) 72%,
+      rgba(247, 205, 161, 0.36) 100%
+    );
+  backdrop-filter: blur(18px) saturate(1.15);
+  -webkit-backdrop-filter: blur(18px) saturate(1.15);
+  box-shadow: 0 10px 28px rgba(80, 60, 40, 0.05);
+}
+
+.header-inner {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 10px var(--container-pad) 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.header-divider {
+  height: 1px;
+  width: 100%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.15) 12%,
+      rgba(106, 90, 91, 0.18) 35%,
+      rgba(152, 204, 224, 0.55) 50%,
+      rgba(106, 90, 91, 0.18) 65%,
+      rgba(255, 255, 255, 0.15) 88%,
+      transparent 100%
+    );
+  position: relative;
+}
+
+.header-divider::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 1px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.55);
+}
+
 .brand-mark {
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 0 6px;
+  margin: 0;
   min-height: 0;
   background: transparent;
   border: none;
@@ -87,7 +151,7 @@ img { max-width: 100%; display: block; }
 }
 
 .logo-app {
-  height: 56px;
+  height: 52px;
   width: auto;
   max-width: none;
   object-fit: contain;
@@ -101,7 +165,7 @@ img { max-width: 100%; display: block; }
   outline: none;
   user-select: none;
   -webkit-user-drag: none;
-  filter: none;
+  filter: drop-shadow(0 6px 14px rgba(80, 60, 40, 0.1));
 }
 
 .sec-head {
@@ -197,7 +261,7 @@ img { max-width: 100%; display: block; }
 .main-container, .content {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: calc(2px + env(safe-area-inset-top, 0px)) var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 88px);
+  padding: 12px var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 88px);
   position: relative;
   z-index: 1;
 }
