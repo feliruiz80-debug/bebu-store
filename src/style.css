@@ -23,6 +23,7 @@
   --focus-ring: 3px solid rgba(154, 206, 224, 0.28);
   --font-heading: "More Sugar", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-price: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --header-h: 88px;
   --bottom-nav-h: 58px;
   --glass: rgba(255, 255, 255, 0.4);
@@ -455,6 +456,7 @@ img { max-width: 100%; display: block; }
 }
 
 .product-brand {
+  font-family: var(--font-ui);
   font-size: 10px;
   font-weight: 900;
   color: var(--accent-1);
@@ -463,6 +465,7 @@ img { max-width: 100%; display: block; }
 }
 
 .product-name {
+  font-family: var(--font-ui);
   font-weight: 900;
   font-size: 13px;
   color: var(--brand-text);
@@ -475,18 +478,22 @@ img { max-width: 100%; display: block; }
 }
 
 .product-price {
+  font-family: var(--font-price);
   font-weight: 900;
   color: var(--accent-4);
   margin-top: 6px;
   font-size: 14px;
+  font-variant-numeric: tabular-nums;
 }
 
 .price-old {
+  font-family: var(--font-price);
   text-decoration: line-through;
   color: var(--muted);
   font-weight: 700;
   font-size: 12px;
   margin-right: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .product-buttons {
@@ -865,8 +872,15 @@ img { max-width: 100%; display: block; }
   display: flex;
   justify-content: space-between;
   padding: 6px 0;
+  font-family: var(--font-ui);
   font-weight: 800;
   font-size: 13px;
+}
+
+.desglose-linea span:last-child,
+.total-modal span:last-child {
+  font-family: var(--font-price);
+  font-variant-numeric: tabular-nums;
 }
 
 .total-modal {
@@ -938,6 +952,7 @@ img { max-width: 100%; display: block; }
 }
 
 .cart-item-name {
+  font-family: var(--font-ui);
   font-weight: 900;
   font-size: 13px;
   color: var(--brand-text);
@@ -945,12 +960,15 @@ img { max-width: 100%; display: block; }
 }
 
 .cart-item-price {
+  font-family: var(--font-price);
   font-size: 12px;
   color: var(--muted);
   margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
 .promo-inline {
+  font-family: var(--font-ui);
   background: var(--accent-2);
   color: #6A5A5B;
   padding: 2px 6px;
