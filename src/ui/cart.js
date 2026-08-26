@@ -135,8 +135,9 @@ export function openCartModal() {
 
 export function closeCartModal() {
   closeOverlay(el('modal-carrito'));
-  const searchOpen = el('modal-buscar')?.classList.contains('is-open');
-  setBottomNav(searchOpen ? 'search' : 'home');
+  if (el('modal-promos')?.classList.contains('is-open')) setBottomNav('promos');
+  else if (el('modal-buscar')?.classList.contains('is-open')) setBottomNav('search');
+  else setBottomNav('home');
 }
 
 export function openDireccionModal() {

@@ -4,7 +4,7 @@ import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
 import { renderBrands, renderSubcategories } from './ui/brands.js';
-import { renderProducts, renderPromotions, handleSearchInput, openSearchModal, closeSearchModal } from './ui/catalog.js';
+import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal } from './ui/catalog.js';
 import {
   addToCart,
   updateCartQty,
@@ -90,7 +90,9 @@ function bindUI() {
     bindActivate(app, '.brand-card', (card) => {
       const marca = card.getAttribute('data-marca');
       if (marca === 'PROMOCIONES' || card.dataset.action === 'promos') {
-        renderPromotions();
+        closeCartModal();
+        closeSearchModal();
+        openPromosModal();
         return;
       }
       AppState.currentMarca = marca;
@@ -102,12 +104,14 @@ function bindUI() {
     bindProductActions(app);
   }
   bindProductActions(el('modal-buscar'));
+  bindProductActions(el('modal-promos'));
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeDireccionModal();
       closeCartModal();
       closeSearchModal();
+      closePromosModal();
     }
   });
 
@@ -115,11 +119,15 @@ function bindUI() {
   el('btn-volver-products')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
   el('btn-cerrar-buscar')?.addEventListener('click', closeSearchModal);
+  el('btn-cerrar-promos')?.addEventListener('click', closePromosModal);
   el('modal-carrito')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-carrito') closeCartModal();
   });
   el('modal-buscar')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-buscar') closeSearchModal();
+  });
+  el('modal-promos')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-promos') closePromosModal();
   });
 
   el('bottom-nav')?.addEventListener('click', (e) => {
@@ -129,6 +137,7 @@ function bindUI() {
     if (nav === 'home') {
       closeCartModal();
       closeSearchModal();
+      closePromosModal();
       const searchInput = el('buscador');
       if (searchInput) searchInput.value = '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -136,13 +145,21 @@ function bindUI() {
       setBottomNav('home');
       return;
     }
+    if (nav === 'promos') {
+      closeCartModal();
+      closeSearchModal();
+      openPromosModal();
+      return;
+    }
     if (nav === 'search') {
       closeCartModal();
+      closePromosModal();
       openSearchModal({ focus: true });
       return;
     }
     if (nav === 'cart') {
       closeSearchModal();
+      closePromosModal();
       openCartModal();
     }
   });

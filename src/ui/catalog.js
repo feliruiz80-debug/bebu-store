@@ -20,7 +20,30 @@ export function openSearchModal({ focus = true, query } = {}) {
 
 export function closeSearchModal() {
   closeOverlay(el('modal-buscar'));
-  if (!el('modal-carrito')?.classList.contains('is-open')) setBottomNav('home');
+  if (
+    !el('modal-carrito')?.classList.contains('is-open') &&
+    !el('modal-promos')?.classList.contains('is-open')
+  ) {
+    setBottomNav('home');
+  }
+}
+
+export function openPromosModal() {
+  const modal = el('modal-promos');
+  if (!modal) return;
+  renderPromotions();
+  openOverlay(modal);
+  setBottomNav('promos');
+}
+
+export function closePromosModal() {
+  closeOverlay(el('modal-promos'));
+  if (
+    !el('modal-carrito')?.classList.contains('is-open') &&
+    !el('modal-buscar')?.classList.contains('is-open')
+  ) {
+    setBottomNav('home');
+  }
 }
 
 export function renderProducts(marca, subcat) {
@@ -38,20 +61,30 @@ export function renderProducts(marca, subcat) {
 
 export function renderPromotions() {
   const results = [];
+  const seen = new Set();
   AppState.promos
     .filter((pr) => pr.activo && pr.id_producto)
     .forEach((pr) => {
       const prod = AppState.products.find((p) => idsMatch(p.id, pr.id_producto));
-      if (prod) results.push(prod);
+      if (!prod || seen.has(prod.id)) return;
+      seen.add(prod.id);
+      results.push(prod);
     });
-  const modal = el('modal-buscar');
-  if (modal) {
-    openOverlay(modal);
-    setBottomNav('search');
+
+  const container = el('promos-grid');
+  const label = el('promos-count-label');
+  if (!container) return;
+
+  if (!results.length) {
+    container.innerHTML = `<div class="empty-state"><p>No hay promociones activas</p></div>`;
+    if (label) label.textContent = 'Sin promociones';
+    return;
   }
-  const input = el('buscador');
-  if (input) input.value = '';
-  renderSearchResults(results, 'Promociones');
+
+  container.innerHTML = results.map(productCardHtml).join('');
+  if (label) {
+    label.textContent = `${results.length} promo${results.length !== 1 ? 's' : ''} activa${results.length !== 1 ? 's' : ''}`;
+  }
 }
 
 export function renderSearchResults(results, query) {

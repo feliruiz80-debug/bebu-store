@@ -1075,9 +1075,9 @@ img { max-width: 100%; display: block; }
   bottom: 8px;
   transform: translateX(-50%);
   z-index: 1300;
-  width: min(360px, calc(100% - 28px));
+  width: min(400px, calc(100% - 24px));
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(4, 1fr);
   align-items: center;
   gap: 2px;
   padding: 6px;
@@ -1161,7 +1161,7 @@ img { max-width: 100%; display: block; }
 
 @media (min-width: 900px) {
   .bottom-nav {
-    width: min(400px, calc(100% - 40px));
+    width: min(440px, calc(100% - 40px));
   }
   .modal-overlay {
     align-items: center;

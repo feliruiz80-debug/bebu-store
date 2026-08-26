@@ -62,6 +62,12 @@
       </span>
       <span class="bottom-nav-label">Inicio</span>
     </button>
+    <button type="button" class="bottom-nav-btn" data-nav="promos" aria-label="Promociones">
+      <span class="bottom-nav-ico" aria-hidden="true">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><path d="M12 3l2.2 4.5 5 .7-3.6 3.5.9 5L12 14.8 7.5 16.7l.9-5L4.8 8.2l5-.7L12 3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+      </span>
+      <span class="bottom-nav-label">Promos</span>
+    </button>
     <button type="button" class="bottom-nav-btn" data-nav="search" aria-label="Buscador">
       <span class="bottom-nav-ico" aria-hidden="true">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M20 20l-3.2-3.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
@@ -76,6 +82,18 @@
       <span id="contador-nav-carrito" class="badge-nav" hidden>0</span>
     </button>
   </nav>
+
+  <div id="modal-promos" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="promos-titulo" aria-hidden="true">
+    <div class="modal-card cart-sheet search-sheet" role="document">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="modal-header">
+        <h2 id="promos-titulo">Promos</h2>
+        <button id="btn-cerrar-promos" class="close-btn" type="button" aria-label="Cerrar promociones">&times;</button>
+      </div>
+      <div class="sec-label" id="promos-count-label">Promociones activas</div>
+      <div id="promos-grid" class="search-results-grid modal-search-grid"></div>
+    </div>
+  </div>
 
   <div id="modal-buscar" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="buscar-titulo" aria-hidden="true">
     <div class="modal-card cart-sheet search-sheet" role="document">

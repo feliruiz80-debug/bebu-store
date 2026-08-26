@@ -24,7 +24,7 @@ export function showSection(id) {
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
   window.scrollTo({ top: 0, behavior: 'auto' });
-  if (!el('modal-buscar')?.classList.contains('is-open') && !el('modal-carrito')?.classList.contains('is-open')) {
+  if (!el('modal-buscar')?.classList.contains('is-open') && !el('modal-carrito')?.classList.contains('is-open') && !el('modal-promos')?.classList.contains('is-open')) {
     setBottomNav('home');
   }
 }
