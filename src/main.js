@@ -54,49 +54,11 @@ function applyTheme(config) {
   }
 }
 
-function setupStickyHeader() {
-  const root = document.documentElement;
+function syncHeaderSpacer() {
   const header = el('site-header');
-  if (!header) return;
-
-  let ticking = false;
-  let last = -1;
-
-  const rangePx = () => {
-    const styles = getComputedStyle(root);
-    const expanded = styles.getPropertyValue('--header-expanded').trim() || '50svh';
-    const compact = parseFloat(styles.getPropertyValue('--header-compact')) || 108;
-    // Measure actual expanded height via temporary spacer / probe
-    const probe = el('header-spacer');
-    const expandedPx = probe ? probe.getBoundingClientRect().height : window.innerHeight * 0.5;
-    return Math.max(80, expandedPx - compact);
-  };
-
-  const apply = () => {
-    const y = window.scrollY || document.documentElement.scrollTop || 0;
-    const progress = Math.min(1, Math.max(0, y / rangePx()));
-    const rounded = Math.round(progress * 100) / 100;
-    if (rounded === last) return;
-    last = rounded;
-    root.style.setProperty('--collapse', String(rounded));
-    header.classList.toggle('is-collapsed', rounded > 0.55);
-  };
-
-  const onScroll = () => {
-    if (ticking) return;
-    ticking = true;
-    requestAnimationFrame(() => {
-      apply();
-      ticking = false;
-    });
-  };
-
-  window.addEventListener('scroll', onScroll, { passive: true });
-  window.addEventListener('resize', () => {
-    last = -1;
-    onScroll();
-  }, { passive: true });
-  apply();
+  const spacer = el('header-spacer');
+  if (!header || !spacer) return;
+  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
 }
 
 function goBack() {
@@ -227,7 +189,8 @@ function setupPwa() {
 async function bootstrap() {
   loadCartFromStorage();
   bindUI();
-  setupStickyHeader();
+  syncHeaderSpacer();
+  window.addEventListener('resize', syncHeaderSpacer, { passive: true });
   setupPwa();
   updateCartCounter();
 
