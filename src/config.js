@@ -16,6 +16,34 @@ export const FALLBACKS = {
   LOGO_LOCAL: '/logo.png'
 };
 
+/** Home sections: 1 Pañales, 2 Algodón & Óleo, 3 Toallas (centered). */
+export const HOME_SECTIONS = [
+  {
+    id: 'panales',
+    title: 'Pañales',
+    subtitle: 'Pampers · Huggies · Babysec',
+    accent: 'var(--accent-1)',
+    marcas: ['PAMPERS', 'HUGGIES', 'BABYSEC'],
+    excludeSubcat: /toalla/i
+  },
+  {
+    id: 'algodon-oleo',
+    title: 'Algodón & Óleo',
+    subtitle: 'Duffy · Estrella',
+    accent: 'var(--accent-3)',
+    marcas: ['DUFFY', 'ESTRELLA'],
+    excludeSubcat: /toalla/i
+  },
+  {
+    id: 'toallas',
+    title: 'Toallas',
+    subtitle: 'Húmedas y cuidado',
+    accent: 'var(--accent-2)',
+    center: true,
+    matchSubcat: /toalla/i
+  }
+];
+
 export const LS = {
   CART: 'bebu:cart:v2',
   SHEET_CACHE: `bebu:sheetcache:${CACHE_VERSION}`

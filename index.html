@@ -31,8 +31,18 @@
   <div class="header-spacer" id="header-spacer" aria-hidden="true"></div>
 
   <main id="app-container" class="main-container content" role="main">
-    <section id="brands-view" class="section active">
-      <div class="sec-label">Marcas</div>
+    <section id="home-view" class="section active">
+      <div class="sec-label">Secciones</div>
+      <div id="sections-grid" class="sections-grid"></div>
+    </section>
+    <section id="brands-view" class="section">
+      <div class="sec-head">
+        <button id="btn-volver-brands" class="btn-volver" type="button" aria-label="Volver">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 18l-6-6 6-6" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Volver
+        </button>
+        <div class="sec-label" id="brands-label">Marcas</div>
+      </div>
       <div id="brands-grid" class="brands-grid"></div>
     </section>
     <section id="subcats-view" class="section">

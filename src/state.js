@@ -8,6 +8,7 @@ export const AppState = {
   config: {},
   errors: {},
   cart: [],
+  currentSeccion: null,
   currentMarca: null,
   envioActivo: false,
   transferencia: false,

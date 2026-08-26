@@ -3,7 +3,7 @@ import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
-import { renderBrands, renderSubcategories } from './ui/brands.js';
+import { renderHomeSections, renderBrands, renderSubcategories } from './ui/brands.js';
 import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal } from './ui/catalog.js';
 import {
   addToCart,
@@ -82,7 +82,11 @@ function goBack() {
     return true;
   }
   if (current.id === 'subcats-view') {
-    renderBrands();
+    renderBrands(AppState.currentSeccion);
+    return true;
+  }
+  if (current.id === 'brands-view') {
+    renderHomeSections();
     return true;
   }
   return false;
@@ -113,6 +117,11 @@ function bindUI() {
 
   const app = el('app-container');
   if (app) {
+    bindActivate(app, '.section-card', (card) => {
+      const sectionId = card.getAttribute('data-section');
+      AppState.currentSeccion = sectionId;
+      renderBrands(sectionId);
+    });
     bindActivate(app, '.brand-card', (card) => {
       const marca = card.getAttribute('data-marca');
       if (marca === 'PROMOCIONES' || card.dataset.action === 'promos') {
@@ -141,6 +150,7 @@ function bindUI() {
     }
   });
 
+  el('btn-volver-brands')?.addEventListener('click', goBack);
   el('btn-volver')?.addEventListener('click', goBack);
   el('btn-volver-products')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
@@ -167,7 +177,7 @@ function bindUI() {
       const searchInput = el('buscador');
       if (searchInput) searchInput.value = '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
-      renderBrands();
+      renderHomeSections();
       setBottomNav('home');
       return;
     }
@@ -250,8 +260,8 @@ async function bootstrap() {
   setupPwa();
   updateCartCounter();
 
-  const brandsGrid = el('brands-grid');
-  if (brandsGrid) brandsGrid.innerHTML = skeletonCards(8);
+  const sectionsGrid = el('sections-grid');
+  if (sectionsGrid) sectionsGrid.innerHTML = skeletonCards(3);
 
   try {
     const data = await loadAllData();
@@ -261,15 +271,15 @@ async function bootstrap() {
     AppState.config = data.config;
     AppState.errors = data.errors;
     applyTheme(AppState.config);
-    renderBrands();
+    renderHomeSections();
     updateCartCounter();
     if (Object.keys(data.errors).length) {
       showToast(`No se pudo leer: ${Object.keys(data.errors).join(', ')}`, 4000);
     }
   } catch (err) {
     console.error(err);
-    if (brandsGrid) {
-      brandsGrid.innerHTML =
+    if (sectionsGrid) {
+      sectionsGrid.innerHTML =
         '<div class="empty-state"><p>Error al cargar el catálogo. Revisá que el Sheet esté publicado para la web.</p></div>';
     }
   }

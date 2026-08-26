@@ -2,6 +2,7 @@ import { AppState } from '../state.js';
 import { el, showSection, openOverlay, closeOverlay, setBottomNav } from '../lib/dom.js';
 import { escapeHtml, idsMatch } from '../lib/format.js';
 import { productCardHtml } from './products.js';
+import { productsForSection } from './brands.js';
 
 function isSearchOpen() {
   return el('modal-buscar')?.classList.contains('is-open');
@@ -48,7 +49,7 @@ export function closePromosModal() {
 
 export function renderProducts(marca, subcat) {
   const container = el('products-grid');
-  const list = AppState.products.filter((p) => p.marca === marca && p.subcategoria === subcat);
+  const list = productsForSection().filter((p) => p.marca === marca && p.subcategoria === subcat);
   if (!list.length) {
     container.innerHTML = `<div class="empty-state"><p>Sin productos</p></div>`;
   } else {
