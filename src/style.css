@@ -103,9 +103,9 @@ img { max-width: 100%; display: block; }
 }
 
 .logo-app {
-  height: 56px;
+  height: 48px;
   width: auto;
-  max-width: 52px;
+  max-width: min(220px, 62vw);
   object-fit: contain;
   object-position: center;
   display: block;

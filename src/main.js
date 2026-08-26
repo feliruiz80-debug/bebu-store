@@ -43,12 +43,11 @@ function applyTheme(config) {
   const sheetLogo = String(config.URL_LOGO_APP || '')
     .trim()
     .replace(/\s+$/g, '');
-  // Header uses local logo.png for now; Sheet logo kept available for later.
-  void sheetLogo;
   const logoLocal = el('logo-local');
   if (logoLocal) {
-    logoLocal.src = FALLBACKS.LOGO_LOCAL;
+    logoLocal.src = sheetLogo || FALLBACKS.LOGO_LOCAL;
     logoLocal.onerror = () => {
+      logoLocal.onerror = null;
       logoLocal.src = FALLBACKS.LOGO_LOCAL;
     };
   }
