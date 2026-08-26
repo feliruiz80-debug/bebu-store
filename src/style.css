@@ -367,8 +367,8 @@ img { max-width: 100%; display: block; }
 .section-bubble--lg {
   width: 92px;
   height: 92px;
-  right: -10px;
-  top: -18px;
+  right: -6px;
+  top: -22px;
   opacity: 0.9;
   animation-delay: 0s;
 }
@@ -376,8 +376,8 @@ img { max-width: 100%; display: block; }
 .section-bubble--md {
   width: 54px;
   height: 54px;
-  right: 58px;
-  top: 28px;
+  right: 78px;
+  top: 8px;
   opacity: 0.72;
   animation-delay: 0.7s;
   animation-duration: 6.2s;
@@ -386,26 +386,26 @@ img { max-width: 100%; display: block; }
 .section-bubble--sm {
   width: 28px;
   height: 28px;
-  right: 28px;
-  top: 78px;
+  right: 36px;
+  top: 88px;
   opacity: 0.58;
   animation-delay: 1.3s;
   animation-duration: 4.8s;
 }
 
 .section-card--center .section-bubble--lg {
-  right: 12%;
-  top: -22px;
+  right: 8%;
+  top: -24px;
 }
 
 .section-card--center .section-bubble--md {
-  right: 38%;
-  top: 18px;
+  right: 46%;
+  top: 4px;
 }
 
 .section-card--center .section-bubble--sm {
-  right: 28%;
-  top: 72px;
+  right: 30%;
+  top: 86px;
 }
 
 @keyframes sectionBubbleFloat {
