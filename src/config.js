@@ -16,7 +16,7 @@ export const FALLBACKS = {
   LOGO_LOCAL: '/logo.png'
 };
 
-/** Home sections ordered by purchase volume: Pañales > Algodón > Toallas. */
+/** Home sections: Pañales hero; Algodones & Toallas equal size. */
 export const HOME_SECTIONS = [
   {
     id: 'panales',
@@ -24,6 +24,7 @@ export const HOME_SECTIONS = [
     subtitle: 'Lo más elegido · Pampers · Huggies · Babysec · Duffy',
     accent: 'var(--accent-1)',
     size: 'hero',
+    motif: 'panales',
     marcas: ['PAMPERS', 'HUGGIES', 'BABYSEC', 'DUFFY'],
     excludeSubcat: /toalla/i
   },
@@ -33,15 +34,17 @@ export const HOME_SECTIONS = [
     subtitle: 'Estrella',
     accent: 'var(--accent-3)',
     size: 'primary',
+    motif: 'algodones',
     marcas: ['ESTRELLA'],
     excludeSubcat: /toalla/i
   },
   {
     id: 'toallas',
     title: 'Toallas',
-    subtitle: 'También disponible',
+    subtitle: 'Húmedas y cuidado',
     accent: 'var(--accent-2)',
-    size: 'compact',
+    size: 'primary',
+    motif: 'toallas',
     matchSubcat: /toalla/i
   }
 ];

@@ -27,14 +27,13 @@ export function renderHomeSections() {
   container.innerHTML = HOME_SECTIONS.map((section) => {
     const qty = productsForSection(section).length;
     const size = section.size || 'primary';
-    const bubbles =
-      size === 'compact'
-        ? `<span class="section-bubble section-bubble--md"></span>`
-        : `<span class="section-bubble section-bubble--lg"></span>
-        <span class="section-bubble section-bubble--md"></span>
-        <span class="section-bubble section-bubble--sm"></span>`;
+    const motif = section.motif || section.id;
     return `<button type="button" class="section-card section-card--${escapeAttr(size)}" data-section="${escapeAttr(section.id)}" style="--section-accent: ${section.accent}">
-      <span class="section-bubbles" aria-hidden="true">${bubbles}</span>
+      <span class="section-motif section-motif--${escapeAttr(motif)}" aria-hidden="true">
+        <span class="motif-item motif-item--1"></span>
+        <span class="motif-item motif-item--2"></span>
+        <span class="motif-item motif-item--3"></span>
+      </span>
       <span class="section-card-title">${escapeHtml(section.title)}</span>
       <span class="section-card-sub">${escapeHtml(section.subtitle)}</span>
       <span class="section-card-count">${qty} producto${qty !== 1 ? 's' : ''}</span>
