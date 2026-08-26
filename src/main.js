@@ -56,29 +56,30 @@ function applyTheme(config) {
 
 function setupStickyHeader() {
   const root = document.documentElement;
-  const hero = el('header-hero');
-  const bar = el('header-bar');
-  if (!hero || !bar) return;
+  const header = el('site-header');
+  if (!header) return;
 
   let ticking = false;
   let last = -1;
 
-  const measureBar = () => {
-    root.style.setProperty('--header-bar-h', `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+  const rangePx = () => {
+    const styles = getComputedStyle(root);
+    const expanded = styles.getPropertyValue('--header-expanded').trim() || '50svh';
+    const compact = parseFloat(styles.getPropertyValue('--header-compact')) || 122;
+    // Measure actual expanded height via temporary spacer / probe
+    const probe = el('header-spacer');
+    const expandedPx = probe ? probe.getBoundingClientRect().height : window.innerHeight * 0.5;
+    return Math.max(80, expandedPx - compact);
   };
 
   const apply = () => {
-    measureBar();
-    const barBottom = bar.getBoundingClientRect().bottom;
-    const heroRect = hero.getBoundingClientRect();
-    const total = Math.max(1, heroRect.height);
-    // 0 = hero fully below bar, 1 = hero fully scrolled away
-    const visible = Math.min(total, Math.max(0, heroRect.bottom - barBottom));
-    const progress = 1 - visible / total;
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    const progress = Math.min(1, Math.max(0, y / rangePx()));
     const rounded = Math.round(progress * 100) / 100;
     if (rounded === last) return;
     last = rounded;
     root.style.setProperty('--collapse', String(rounded));
+    header.classList.toggle('is-collapsed', rounded > 0.55);
   };
 
   const onScroll = () => {
@@ -95,7 +96,6 @@ function setupStickyHeader() {
     last = -1;
     onScroll();
   }, { passive: true });
-  measureBar();
   apply();
 }
 
