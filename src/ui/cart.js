@@ -1,7 +1,7 @@
 import { FALLBACKS } from '../config.js';
 import { AppState, saveCartToStorage, findProduct, findPromo } from '../state.js';
-import { el, openOverlay, closeOverlay, showToast } from '../lib/dom.js';
-import { fmt, escapeHtml, parsePrice } from '../lib/format.js';
+import { el, openOverlay, closeOverlay, showToast, setBottomNav } from '../lib/dom.js';
+import { fmt, escapeHtml, escapeAttr, parsePrice } from '../lib/format.js';
 import { linePrice } from '../lib/sheet.js';
 
 export function addToCart(productId, qty = 1) {
@@ -62,15 +62,18 @@ export function computeCartTotals() {
 }
 
 export function updateCartCounter() {
-  const counter = el('contador-carrito');
-  if (!counter) return;
   const n = AppState.cart.reduce((s, it) => s + it.qty, 0);
-  if (n > 0) {
-    counter.textContent = n > 9 ? '9+' : String(n);
-    counter.hidden = false;
-  } else {
-    counter.hidden = true;
-  }
+  const label = n > 9 ? '9+' : String(n);
+  ['contador-carrito', 'contador-nav-carrito'].forEach((id) => {
+    const counter = el(id);
+    if (!counter) return;
+    if (n > 0) {
+      counter.textContent = label;
+      counter.hidden = false;
+    } else {
+      counter.hidden = true;
+    }
+  });
 }
 
 function updateTotalsInModal(subtotal, envio, total) {
@@ -95,8 +98,12 @@ export function renderCartDrawer() {
   }
   const { items, subtotal, envio, total } = computeCartTotals();
   wrapper.innerHTML = `<div class="cart-items">${items
-    .map(
-      (it, idx) => `<div class="cart-item" data-idx="${idx}">
+    .map((it, idx) => {
+      const thumb = it.product.imagen
+        ? `<img class="cart-thumb" src="${escapeAttr(it.product.imagen)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+        : `<div class="cart-thumb cart-thumb-fallback">${escapeHtml((it.product.marca || '?')[0])}</div>`;
+      return `<div class="cart-item" data-idx="${idx}">
+      ${thumb}
       <div class="cart-item-info">
         <div class="cart-item-brand">${escapeHtml(it.product.marca)} · ${escapeHtml(it.product.subcategoria)}</div>
         <div class="cart-item-name">${escapeHtml(it.product.descripcion)}</div>
@@ -108,8 +115,8 @@ export function renderCartDrawer() {
         <button class="qty-btn" type="button" data-action="inc" data-idx="${idx}" aria-label="Sumar">+</button>
         <button class="del-btn" type="button" data-action="del" data-idx="${idx}" aria-label="Quitar">×</button>
       </div>
-    </div>`
-    )
+    </div>`;
+    })
     .join('')}</div>`;
 
   const btnDireccion = el('btn-abrir-direccion');
@@ -124,11 +131,14 @@ export function openCartModal() {
   renderCartDrawer();
   openOverlay(modal);
   el('btn-carrito-header')?.setAttribute('aria-expanded', 'true');
+  setBottomNav('cart');
 }
 
 export function closeCartModal() {
   closeOverlay(el('modal-carrito'));
   el('btn-carrito-header')?.setAttribute('aria-expanded', 'false');
+  const searchOpen = document.getElementById('search-view')?.classList.contains('active');
+  setBottomNav(searchOpen ? 'search' : 'home');
 }
 
 export function openDireccionModal() {

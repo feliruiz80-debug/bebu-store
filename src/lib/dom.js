@@ -27,6 +27,17 @@ export function showSection(id) {
   if (btnVolver) {
     btnVolver.hidden = id === 'brands-view' || id === 'search-view';
   }
+  const nav = id === 'search-view' ? 'search' : 'home';
+  setBottomNav(nav);
+}
+
+export function setBottomNav(name) {
+  $all('.bottom-nav-btn').forEach((btn) => {
+    const active = btn.getAttribute('data-nav') === name;
+    btn.classList.toggle('is-active', active);
+    if (active) btn.setAttribute('aria-current', 'page');
+    else btn.removeAttribute('aria-current');
+  });
 }
 
 export function openOverlay(node) {

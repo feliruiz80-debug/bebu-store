@@ -2,7 +2,7 @@ import './style.css';
 import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
-import { el, bindActivate, showToast } from './lib/dom.js';
+import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
 import { renderBrands, renderSubcategories } from './ui/brands.js';
 import { renderProducts, renderPromotions, handleSearchInput } from './ui/catalog.js';
 import {
@@ -155,6 +155,30 @@ function bindUI() {
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
   el('modal-carrito')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-carrito') closeCartModal();
+  });
+
+  el('bottom-nav')?.addEventListener('click', (e) => {
+    const btn = e.target.closest('[data-nav]');
+    if (!btn) return;
+    const nav = btn.getAttribute('data-nav');
+    if (nav === 'home') {
+      closeCartModal();
+      const searchInput = el('buscador');
+      if (searchInput) searchInput.value = '';
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      renderBrands();
+      setBottomNav('home');
+      return;
+    }
+    if (nav === 'search') {
+      closeCartModal();
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      setBottomNav('search');
+      const input = el('buscador');
+      setTimeout(() => input?.focus(), 280);
+      return;
+    }
+    if (nav === 'cart') openCartModal();
   });
 
   el('btn-vaciar-carrito')?.addEventListener('click', () => {

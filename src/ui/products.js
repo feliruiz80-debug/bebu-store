@@ -24,7 +24,7 @@ export function productCardHtml(p) {
       </div>
       <div class="product-buttons">
         <button class="btn btn-add" type="button" data-action="add" data-id="${escapeAttr(p.id)}">Agregar</button>
-        <button class="btn btn-wa" type="button" data-action="wa" data-id="${escapeAttr(p.id)}">WhatsApp</button>
+        <button class="btn btn-wa" type="button" data-action="wa" data-id="${escapeAttr(p.id)}" aria-label="Consultar por WhatsApp">WA</button>
       </div>
     </div>
   </article>`;
