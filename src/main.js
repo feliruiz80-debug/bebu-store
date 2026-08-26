@@ -20,6 +20,7 @@ import {
   updateCartCounter
 } from './ui/cart.js';
 import { waForProduct } from './ui/products.js';
+import { bindSheetDismiss, bindBackSwipe } from './lib/gestures.js';
 import { registerSW } from 'virtual:pwa-register';
 
 function applyTheme(config) {
@@ -51,10 +52,33 @@ function applyTheme(config) {
 }
 
 function goBack() {
+  if (el('modal-direccion')?.classList.contains('is-open')) {
+    closeDireccionModal();
+    return true;
+  }
+  if (el('modal-carrito')?.classList.contains('is-open')) {
+    closeCartModal();
+    return true;
+  }
+  if (el('modal-buscar')?.classList.contains('is-open')) {
+    closeSearchModal();
+    return true;
+  }
+  if (el('modal-promos')?.classList.contains('is-open')) {
+    closePromosModal();
+    return true;
+  }
   const current = document.querySelector('.section.active');
-  if (!current) return;
-  if (current.id === 'products-view') renderSubcategories(AppState.currentMarca);
-  else renderBrands();
+  if (!current) return false;
+  if (current.id === 'products-view') {
+    renderSubcategories(AppState.currentMarca);
+    return true;
+  }
+  if (current.id === 'subcats-view') {
+    renderBrands();
+    return true;
+  }
+  return false;
 }
 
 function bindProductActions(root) {
@@ -188,6 +212,14 @@ function bindUI() {
   el('close-direccion-btn-2')?.addEventListener('click', closeDireccionModal);
   el('input-direccion')?.addEventListener('keydown', (e) => {
     if (e.key === 'Enter') guardarDireccion();
+  });
+
+  bindSheetDismiss(el('modal-buscar'), closeSearchModal);
+  bindSheetDismiss(el('modal-promos'), closePromosModal);
+  bindSheetDismiss(el('modal-carrito'), closeCartModal);
+  bindSheetDismiss(el('modal-direccion'), closeDireccionModal);
+  bindBackSwipe(() => {
+    goBack();
   });
 }
 
