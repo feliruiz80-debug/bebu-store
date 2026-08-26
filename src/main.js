@@ -39,30 +39,40 @@ function applyTheme(config) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-  const logoEl = el('logo-global');
-  if (logoEl) {
-    logoEl.src = FALLBACKS.LOGO_LOCAL;
-    logoEl.onerror = () => {
-      logoEl.src = FALLBACKS.LOGO_LOCAL;
+
+  const sheetLogo = String(config.URL_LOGO_APP || '').trim() || FALLBACKS.LOGO_LOCAL;
+  const logoSheet = el('logo-sheet');
+  const logoLocal = el('logo-local');
+  if (logoLocal) logoLocal.src = FALLBACKS.LOGO_LOCAL;
+  if (logoSheet) {
+    logoSheet.src = sheetLogo;
+    logoSheet.onerror = () => {
+      logoSheet.src = FALLBACKS.LOGO_LOCAL;
     };
   }
 }
 
+function easeInOutCubic(t) {
+  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+}
+
 function setupStickyHeader() {
-  const header = document.querySelector('.header-pro');
+  const header = el('site-header') || document.querySelector('.header-pro');
+  const root = document.documentElement;
   if (!header) return;
 
-  const RANGE = 72;
   let ticking = false;
   let last = -1;
 
   const apply = (y) => {
-    const progress = Math.min(1, Math.max(0, y / RANGE));
-    const rounded = Math.round(progress * 100) / 100;
+    const range = Math.max(140, window.innerHeight * 0.45);
+    const raw = Math.min(1, Math.max(0, y / range));
+    const progress = easeInOutCubic(raw);
+    const rounded = Math.round(progress * 200) / 200;
     if (rounded === last) return;
     last = rounded;
-    header.style.setProperty('--collapse', String(rounded));
-    header.classList.toggle('is-collapsed', rounded > 0.85);
+    root.style.setProperty('--collapse', String(rounded));
+    header.classList.toggle('is-collapsed', rounded > 0.88);
   };
 
   const onScroll = () => {
@@ -75,6 +85,10 @@ function setupStickyHeader() {
   };
 
   window.addEventListener('scroll', onScroll, { passive: true });
+  window.addEventListener('resize', () => {
+    last = -1;
+    onScroll();
+  }, { passive: true });
   apply(window.scrollY || 0);
 }
 
