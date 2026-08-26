@@ -91,7 +91,7 @@ img { max-width: 100%; display: block; }
   background: linear-gradient(
     180deg,
     rgba(255, 255, 255, 0.28) 0%,
-    rgba(255, 255, 255, 0.12) 58%,
+    rgba(255, 255, 255, 0.14) 62%,
     rgba(255, 255, 255, 0) 100%
   );
   backdrop-filter: blur(10px) saturate(1.04);
@@ -103,14 +103,39 @@ img { max-width: 100%; display: block; }
 .header-inner {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 10px var(--container-pad) 18px;
+  padding: 10px var(--container-pad) 12px;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
 .header-divider {
-  display: none;
+  height: 1px;
+  width: 100%;
+  background:
+    linear-gradient(
+      90deg,
+      transparent 0%,
+      rgba(255, 255, 255, 0.2) 12%,
+      rgba(106, 90, 91, 0.16) 35%,
+      rgba(106, 90, 91, 0.28) 50%,
+      rgba(106, 90, 91, 0.16) 65%,
+      rgba(255, 255, 255, 0.2) 88%,
+      transparent 100%
+    );
+  position: relative;
+}
+
+.header-divider::after {
+  content: "";
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46px;
+  height: 1px;
+  transform: translate(-50%, -50%);
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.95), transparent);
+  box-shadow: 0 0 10px rgba(255, 255, 255, 0.55);
 }
 
 .brand-mark {
