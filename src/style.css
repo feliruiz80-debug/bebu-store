@@ -23,7 +23,7 @@
   --focus-ring: 3px solid rgba(154, 206, 224, 0.28);
   --font-heading: "More Sugar", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --header-h: 72px;
+  --header-h: 68px;
   --bottom-nav-h: 40px;
   --glass: rgba(255, 255, 255, 0.4);
   --glass-strong: rgba(255, 255, 255, 0.62);
@@ -48,11 +48,7 @@ body {
   margin: 0;
   font-family: var(--font-ui);
   color: var(--brand-text);
-  background:
-    radial-gradient(900px 520px at 12% -8%, rgba(152, 204, 224, 0.34), transparent 58%),
-    radial-gradient(780px 460px at 92% 8%, rgba(254, 191, 172, 0.28), transparent 55%),
-    radial-gradient(700px 420px at 50% 100%, rgba(164, 210, 187, 0.22), transparent 60%),
-    linear-gradient(180deg, #f3efe4 0%, var(--bg-warm) 42%, #e6e1d2 100%);
+  background: var(--bg-warm);
   overflow-x: clip;
   overscroll-behavior-y: none;
 }
@@ -92,30 +88,16 @@ img { max-width: 100%; display: block; }
   right: 0;
   z-index: 1100;
   padding-top: env(safe-area-inset-top, 0px);
-  background: rgba(247, 244, 236, 0.92);
-  border-bottom: 1px solid rgba(212, 206, 191, 0.55);
-  box-shadow: 0 6px 18px rgba(80, 60, 40, 0.05);
-  backdrop-filter: blur(22px) saturate(1.2);
-  -webkit-backdrop-filter: blur(22px) saturate(1.2);
-  isolation: isolate;
-  transform: translateZ(0);
-}
-
-.site-header::after {
-  content: "";
-  position: absolute;
-  left: 0;
-  right: 0;
-  bottom: -1px;
-  height: 1px;
-  background: rgba(255, 255, 255, 0.65);
+  background: transparent;
+  border: none;
+  box-shadow: none;
   pointer-events: none;
 }
 
 .header-panel {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 10px var(--container-pad) 12px;
+  padding: 8px var(--container-pad) 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -127,13 +109,14 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 52px;
+  min-height: 56px;
+  pointer-events: auto;
 }
 
 .logo-app {
-  height: 52px;
+  height: 56px;
   width: auto;
-  max-width: 48px;
+  max-width: 52px;
   object-fit: contain;
   object-position: center;
   display: block;
@@ -141,6 +124,7 @@ img { max-width: 100%; display: block; }
   background: transparent;
   user-select: none;
   -webkit-user-drag: none;
+  filter: drop-shadow(0 6px 14px rgba(80, 60, 40, 0.12));
 }
 
 .sec-head {
@@ -1098,12 +1082,12 @@ img { max-width: 100%; display: block; }
   padding: 0;
   padding-bottom: env(safe-area-inset-bottom, 0px);
   border-radius: 0;
-  background: rgba(255, 255, 255, 0.55);
+  background: rgba(235, 231, 216, 0.82);
   border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.55);
-  box-shadow: 0 -8px 28px rgba(80, 60, 40, 0.06);
-  backdrop-filter: var(--glass-blur);
-  -webkit-backdrop-filter: var(--glass-blur);
+  border-top: 1px solid rgba(255, 255, 255, 0.35);
+  box-shadow: none;
+  backdrop-filter: blur(16px) saturate(1.1);
+  -webkit-backdrop-filter: blur(16px) saturate(1.1);
 }
 
 .bottom-nav-btn {
@@ -1205,7 +1189,6 @@ img { max-width: 100%; display: block; }
   body {
     background: var(--bg-warm);
   }
-  .site-header,
   .search-field,
   .btn-volver,
   .brand-card,
