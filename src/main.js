@@ -58,7 +58,9 @@ function syncHeaderSpacer() {
   const header = el('site-header');
   const spacer = el('header-spacer');
   if (!header || !spacer) return;
-  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  spacer.style.height = `${h}px`;
+  document.documentElement.style.setProperty('--header-offset', `${h}px`);
 }
 
 function goBack() {
