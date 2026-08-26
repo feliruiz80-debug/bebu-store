@@ -91,10 +91,10 @@ img { max-width: 100%; display: block; }
   background:
     linear-gradient(
       120deg,
-      rgba(164, 210, 187, 0.42) 0%,
-      rgba(152, 204, 224, 0.38) 38%,
-      rgba(254, 191, 172, 0.34) 72%,
-      rgba(247, 205, 161, 0.36) 100%
+      rgba(186, 228, 238, 0.55) 0%,
+      rgba(152, 204, 224, 0.48) 42%,
+      rgba(170, 216, 232, 0.44) 72%,
+      rgba(198, 232, 242, 0.5) 100%
     );
   backdrop-filter: blur(18px) saturate(1.15);
   -webkit-backdrop-filter: blur(18px) saturate(1.15);
