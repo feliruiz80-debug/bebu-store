@@ -28,7 +28,11 @@ export function renderHomeSections() {
     const qty = productsForSection(section).length;
     const centerClass = section.center ? ' section-card--center' : '';
     return `<button type="button" class="section-card${centerClass}" data-section="${escapeAttr(section.id)}" style="--section-accent: ${section.accent}">
-      <span class="section-card-glow" aria-hidden="true"></span>
+      <span class="section-bubbles" aria-hidden="true">
+        <span class="section-bubble section-bubble--lg"></span>
+        <span class="section-bubble section-bubble--md"></span>
+        <span class="section-bubble section-bubble--sm"></span>
+      </span>
       <span class="section-card-title">${escapeHtml(section.title)}</span>
       <span class="section-card-sub">${escapeHtml(section.subtitle)}</span>
       <span class="section-card-count">${qty} producto${qty !== 1 ? 's' : ''}</span>

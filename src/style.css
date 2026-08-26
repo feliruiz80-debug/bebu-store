@@ -310,7 +310,7 @@ img { max-width: 100%; display: block; }
   border: var(--card-border);
   border-radius: var(--radius-lg);
   padding: 22px 16px 18px;
-  min-height: 148px;
+  min-height: 156px;
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -321,7 +321,7 @@ img { max-width: 100%; display: block; }
   color: var(--brand-text);
   font-family: var(--font-ui);
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.62), rgba(255, 255, 255, 0.24));
+    linear-gradient(160deg, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.28) 55%, color-mix(in srgb, var(--section-accent, var(--accent-1)) 12%, transparent));
   box-shadow: var(--card-shadow);
   backdrop-filter: var(--glass-card);
   -webkit-backdrop-filter: var(--glass-card);
@@ -335,25 +335,85 @@ img { max-width: 100%; display: block; }
   inset: 0;
   border-radius: inherit;
   pointer-events: none;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.4), transparent 48%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.42), transparent 48%);
   z-index: 0;
 }
 
-.section-card-glow {
+.section-bubbles {
   position: absolute;
-  right: -18%;
-  top: -28%;
-  width: 140px;
-  height: 140px;
-  border-radius: 50%;
-  background: var(--section-accent, var(--accent-1));
-  opacity: 0.28;
-  filter: blur(8px);
+  inset: 0;
   z-index: 0;
   pointer-events: none;
+  overflow: hidden;
 }
 
-.section-card > *:not(.section-card-glow) {
+.section-bubble {
+  position: absolute;
+  border-radius: 50%;
+  background:
+    radial-gradient(
+      circle at 32% 28%,
+      rgba(255, 255, 255, 0.92) 0%,
+      color-mix(in srgb, var(--section-accent, var(--accent-1)) 55%, white) 42%,
+      color-mix(in srgb, var(--section-accent, var(--accent-1)) 70%, transparent) 72%,
+      transparent 100%
+    );
+  box-shadow:
+    inset 0 -6px 14px rgba(255, 255, 255, 0.35),
+    0 10px 22px color-mix(in srgb, var(--section-accent, var(--accent-1)) 22%, transparent);
+  animation: sectionBubbleFloat 5.5s ease-in-out infinite;
+}
+
+.section-bubble--lg {
+  width: 92px;
+  height: 92px;
+  right: -10px;
+  top: -18px;
+  opacity: 0.9;
+  animation-delay: 0s;
+}
+
+.section-bubble--md {
+  width: 54px;
+  height: 54px;
+  right: 58px;
+  top: 28px;
+  opacity: 0.72;
+  animation-delay: 0.7s;
+  animation-duration: 6.2s;
+}
+
+.section-bubble--sm {
+  width: 28px;
+  height: 28px;
+  right: 28px;
+  top: 78px;
+  opacity: 0.58;
+  animation-delay: 1.3s;
+  animation-duration: 4.8s;
+}
+
+.section-card--center .section-bubble--lg {
+  right: 12%;
+  top: -22px;
+}
+
+.section-card--center .section-bubble--md {
+  right: 38%;
+  top: 18px;
+}
+
+.section-card--center .section-bubble--sm {
+  right: 28%;
+  top: 72px;
+}
+
+@keyframes sectionBubbleFloat {
+  0%, 100% { transform: translateY(0) scale(1); }
+  50% { transform: translateY(-6px) scale(1.04); }
+}
+
+.section-card > *:not(.section-bubbles) {
   position: relative;
   z-index: 1;
 }
@@ -366,11 +426,15 @@ img { max-width: 100%; display: block; }
   box-shadow: var(--card-shadow-hover);
 }
 
+.section-card:hover .section-bubble--lg {
+  transform: translateY(-4px) scale(1.06);
+}
+
 .section-card--center {
   grid-column: 1 / -1;
   width: min(100%, 280px);
   justify-self: center;
-  min-height: 132px;
+  min-height: 138px;
 }
 
 .section-card-title {
@@ -394,6 +458,12 @@ img { max-width: 100%; display: block; }
   letter-spacing: 0.06em;
   color: var(--brand-text);
   opacity: 0.72;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section-bubble {
+    animation: none;
+  }
 }
 
 .subcats-grid {

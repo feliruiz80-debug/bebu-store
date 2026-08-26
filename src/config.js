@@ -21,17 +21,17 @@ export const HOME_SECTIONS = [
   {
     id: 'panales',
     title: 'Pañales',
-    subtitle: 'Pampers · Huggies · Babysec',
+    subtitle: 'Pampers · Huggies · Babysec · Duffy',
     accent: 'var(--accent-1)',
-    marcas: ['PAMPERS', 'HUGGIES', 'BABYSEC'],
+    marcas: ['PAMPERS', 'HUGGIES', 'BABYSEC', 'DUFFY'],
     excludeSubcat: /toalla/i
   },
   {
     id: 'algodon-oleo',
     title: 'Algodón & Óleo',
-    subtitle: 'Duffy · Estrella',
+    subtitle: 'Estrella',
     accent: 'var(--accent-3)',
-    marcas: ['DUFFY', 'ESTRELLA'],
+    marcas: ['ESTRELLA'],
     excludeSubcat: /toalla/i
   },
   {
