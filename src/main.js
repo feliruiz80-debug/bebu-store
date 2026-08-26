@@ -39,14 +39,35 @@ function applyTheme(config) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-  const logoUrl = config.URL_LOGO_APP || FALLBACKS.LOGO_LOCAL;
   const logoEl = el('logo-global');
   if (logoEl) {
-    logoEl.src = logoUrl;
+    logoEl.src = FALLBACKS.LOGO_LOCAL;
     logoEl.onerror = () => {
       logoEl.src = FALLBACKS.LOGO_LOCAL;
     };
   }
+}
+
+function setupStickyHeader() {
+  const header = document.querySelector('.header-pro');
+  if (!header) return;
+  const COLLAPSE_AT = 28;
+  const EXPAND_AT = 8;
+  let collapsed = false;
+
+  const sync = () => {
+    const y = window.scrollY || document.documentElement.scrollTop || 0;
+    if (!collapsed && y > COLLAPSE_AT) {
+      collapsed = true;
+      header.classList.add('is-collapsed');
+    } else if (collapsed && y <= EXPAND_AT) {
+      collapsed = false;
+      header.classList.remove('is-collapsed');
+    }
+  };
+
+  window.addEventListener('scroll', sync, { passive: true });
+  sync();
 }
 
 function goBack() {
@@ -154,6 +175,7 @@ function setupPwa() {
 async function bootstrap() {
   loadCartFromStorage();
   bindUI();
+  setupStickyHeader();
   setupPwa();
   updateCartCounter();
 
