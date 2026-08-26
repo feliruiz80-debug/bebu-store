@@ -79,8 +79,8 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  margin: 0 0 10px;
-  min-height: 52px;
+  margin: 0 0 6px;
+  min-height: 48px;
 }
 
 .logo-app {
@@ -190,7 +190,7 @@ img { max-width: 100%; display: block; }
 .main-container, .content {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: calc(12px + env(safe-area-inset-top, 0px)) var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 88px);
+  padding: calc(2px + env(safe-area-inset-top, 0px)) var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 88px);
   position: relative;
   z-index: 1;
 }
