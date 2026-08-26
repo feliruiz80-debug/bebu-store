@@ -24,7 +24,7 @@
   --font-heading: "More Sugar", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --header-h: 68px;
-  --bottom-nav-h: 40px;
+  --bottom-nav-h: 58px;
   --glass: rgba(255, 255, 255, 0.4);
   --glass-strong: rgba(255, 255, 255, 0.62);
   --glass-soft: rgba(255, 255, 255, 0.28);
@@ -1057,26 +1057,24 @@ img { max-width: 100%; display: block; }
 /* ========== BOTTOM NAV ========== */
 .bottom-nav {
   position: fixed;
-  left: 0;
-  right: 0;
-  bottom: 0;
+  left: 50%;
+  bottom: calc(10px + env(safe-area-inset-bottom, 0px));
+  transform: translateX(-50%);
   z-index: 1300;
-  width: 100%;
-  max-width: none;
-  transform: none;
+  width: min(360px, calc(100% - 28px));
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  align-items: end;
-  gap: 0;
-  padding: 0;
-  padding-bottom: env(safe-area-inset-bottom, 0px);
-  border-radius: 0;
-  background: rgba(235, 231, 216, 0.82);
-  border: none;
-  border-top: 1px solid rgba(255, 255, 255, 0.35);
-  box-shadow: none;
-  backdrop-filter: blur(16px) saturate(1.1);
-  -webkit-backdrop-filter: blur(16px) saturate(1.1);
+  align-items: center;
+  gap: 2px;
+  padding: 6px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.38);
+  border: 1px solid rgba(255, 255, 255, 0.55);
+  box-shadow:
+    0 10px 30px rgba(80, 60, 40, 0.12),
+    inset 0 1px 0 rgba(255, 255, 255, 0.65);
+  backdrop-filter: blur(22px) saturate(1.35);
+  -webkit-backdrop-filter: blur(22px) saturate(1.35);
 }
 
 .bottom-nav-btn {
@@ -1085,16 +1083,16 @@ img { max-width: 100%; display: block; }
   border: none;
   background: transparent;
   color: var(--muted);
-  border-radius: 10px;
-  min-height: 36px;
-  height: 36px;
-  margin: 2px 4px;
+  border-radius: 999px;
+  min-height: 44px;
+  height: 44px;
+  margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  gap: 0;
+  gap: 1px;
   cursor: pointer;
   font-family: var(--font-ui);
   transition: background 0.18s ease, color 0.18s ease, transform 0.12s ease;
@@ -1107,7 +1105,8 @@ img { max-width: 100%; display: block; }
 
 .bottom-nav-btn.is-active {
   color: var(--brand-text);
-  background: rgba(152, 204, 224, 0.28);
+  background: rgba(255, 255, 255, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.7);
 }
 
 .bottom-nav-ico {
@@ -1131,7 +1130,7 @@ img { max-width: 100%; display: block; }
 
 .badge-nav {
   position: absolute;
-  top: 0;
+  top: 2px;
   right: calc(50% - 14px);
   min-width: 14px;
   height: 14px;
@@ -1143,16 +1142,12 @@ img { max-width: 100%; display: block; }
   font-weight: 800;
   line-height: 14px;
   text-align: center;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.95);
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.7);
 }
 
 @media (min-width: 900px) {
   .bottom-nav {
-    left: 50%;
-    right: auto;
-    width: min(480px, 100%);
-    transform: translateX(-50%);
-    border-radius: 18px 18px 0 0;
+    width: min(400px, calc(100% - 40px));
   }
   .modal-overlay {
     align-items: center;
