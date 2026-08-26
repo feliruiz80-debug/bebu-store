@@ -17,6 +17,20 @@ export function showToast(msg, t = 2200) {
   setTimeout(() => toast.remove(), t);
 }
 
+export function setHeaderChrome({ title = 'Marcas', showBack = false } = {}) {
+  const titleEl = el('header-title');
+  const back = el('btn-volver');
+  const header = el('site-header');
+  const spacer = el('header-spacer');
+  if (titleEl) titleEl.textContent = title;
+  if (back) back.hidden = !showBack;
+  if (header && spacer) {
+    requestAnimationFrame(() => {
+      spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
+    });
+  }
+}
+
 export function showSection(id) {
   $all('.section').forEach((s) => s.classList.remove('active'));
   const sec = el(id);
@@ -24,6 +38,20 @@ export function showSection(id) {
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
   window.scrollTo({ top: 0, behavior: 'auto' });
+
+  if (id === 'brands-view') setHeaderChrome({ title: 'Marcas', showBack: false });
+  else if (id === 'subcats-view' || id === 'products-view') {
+    const back = el('btn-volver');
+    if (back) back.hidden = false;
+    const header = el('site-header');
+    const spacer = el('header-spacer');
+    if (header && spacer) {
+      requestAnimationFrame(() => {
+        spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
+      });
+    }
+  }
+
   if (!el('modal-buscar')?.classList.contains('is-open') && !el('modal-carrito')?.classList.contains('is-open') && !el('modal-promos')?.classList.contains('is-open')) {
     setBottomNav('home');
   }

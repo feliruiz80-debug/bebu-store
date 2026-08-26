@@ -55,6 +55,13 @@ function applyTheme(config) {
   }
 }
 
+function syncHeaderSpacer() {
+  const header = el('site-header');
+  const spacer = el('header-spacer');
+  if (!header || !spacer) return;
+  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
+}
+
 function goBack() {
   const current = document.querySelector('.section.active');
   if (!current) return;
@@ -116,7 +123,6 @@ function bindUI() {
   });
 
   el('btn-volver')?.addEventListener('click', goBack);
-  el('btn-volver-products')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
   el('btn-cerrar-buscar')?.addEventListener('click', closeSearchModal);
   el('btn-cerrar-promos')?.addEventListener('click', closePromosModal);
@@ -211,6 +217,8 @@ function setupPwa() {
 async function bootstrap() {
   loadCartFromStorage();
   bindUI();
+  syncHeaderSpacer();
+  window.addEventListener('resize', syncHeaderSpacer, { passive: true });
   setupPwa();
   updateCartCounter();
 

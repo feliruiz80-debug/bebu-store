@@ -1,5 +1,5 @@
 import { AppState } from '../state.js';
-import { el, showSection } from '../lib/dom.js';
+import { el, showSection, setHeaderChrome } from '../lib/dom.js';
 import { escapeHtml, escapeAttr } from '../lib/format.js';
 import { FALLBACKS } from '../config.js';
 
@@ -33,6 +33,7 @@ export function renderBrands() {
   if (!ordered.length) {
     const err = AppState.errors.Productos;
     container.innerHTML = `<div class="empty-state"><p>${err ? 'No se pudo leer Productos. Publicá el Sheet para la web.' : 'No hay marcas disponibles.'}</p></div>`;
+    setHeaderChrome({ title: 'Marcas', showBack: false });
     showSection('brands-view');
     return;
   }
@@ -56,6 +57,7 @@ export function renderBrands() {
     })
     .join('');
 
+  setHeaderChrome({ title: 'Marcas', showBack: false });
   showSection('brands-view');
 }
 
@@ -67,6 +69,7 @@ export function renderSubcategories(marca) {
 
   if (!subs.length) {
     container.innerHTML = `<div class="empty-state"><p>No hay líneas para ${escapeHtml(marca)}</p></div>`;
+    setHeaderChrome({ title: `Líneas de ${marca}`, showBack: true });
     showSection('subcats-view');
     return;
   }
@@ -81,7 +84,6 @@ export function renderSubcategories(marca) {
     })
     .join('');
 
-  const label = el('subcats-label');
-  if (label) label.textContent = `Líneas de ${marca}`;
+  setHeaderChrome({ title: `Líneas de ${marca}`, showBack: true });
   showSection('subcats-view');
 }

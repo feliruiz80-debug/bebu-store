@@ -1,5 +1,5 @@
 import { AppState } from '../state.js';
-import { el, showSection, openOverlay, closeOverlay, setBottomNav } from '../lib/dom.js';
+import { el, showSection, openOverlay, closeOverlay, setBottomNav, setHeaderChrome } from '../lib/dom.js';
 import { escapeHtml, idsMatch } from '../lib/format.js';
 import { productCardHtml } from './products.js';
 
@@ -54,8 +54,12 @@ export function renderProducts(marca, subcat) {
   } else {
     container.innerHTML = list.map(productCardHtml).join('');
   }
-  const label = el('products-label');
+  const label = el('header-title');
   if (label) label.textContent = `${subcat} · ${list.length} producto${list.length !== 1 ? 's' : ''}`;
+  setHeaderChrome({
+    title: `${subcat} · ${list.length} producto${list.length !== 1 ? 's' : ''}`,
+    showBack: true
+  });
   showSection('products-view');
 }
 
