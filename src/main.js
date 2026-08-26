@@ -58,7 +58,8 @@ function syncHeaderSpacer() {
   const header = el('site-header');
   const spacer = el('header-spacer');
   if (!header || !spacer) return;
-  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+  // +1 avoids hairline overlap when rubber-banding at the top
+  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 1}px`;
 }
 
 function goBack() {
