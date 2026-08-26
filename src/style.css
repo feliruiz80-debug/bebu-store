@@ -528,27 +528,41 @@ img { max-width: 100%; display: block; }
 .search-sheet {
   display: flex;
   flex-direction: column;
-  max-height: min(92vh, 860px);
+  height: min(88vh, 760px);
+  max-height: min(88vh, 760px);
   overflow: hidden;
-  padding-bottom: calc(12px + env(safe-area-inset-bottom, 0px));
+  padding-bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+}
+
+.search-sheet .sheet-handle,
+.search-sheet .modal-header,
+.search-sheet .buscador-container,
+.search-sheet .sec-label {
+  flex-shrink: 0;
 }
 
 .search-sheet .buscador-container {
-  flex-shrink: 0;
   margin: 0 0 12px;
 }
 
 .search-sheet .sec-label {
-  flex-shrink: 0;
   margin-bottom: 10px;
 }
 
 .modal-search-grid {
-  flex: 1;
-  min-height: 220px;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-x: hidden;
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding-bottom: 8px;
+  overscroll-behavior: contain;
+  padding: 2px 2px 20px;
+  align-content: start;
+}
+
+.modal-search-grid .product-card {
+  min-height: 0;
+  height: auto;
 }
 
 .sheet-handle {
