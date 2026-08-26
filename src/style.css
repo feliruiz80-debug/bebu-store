@@ -300,7 +300,7 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   justify-content: center;
-  background: linear-gradient(180deg, rgba(255, 255, 255, 0.18), rgba(255, 255, 255, 0.04));
+  background: transparent;
   padding: 12px;
   min-height: 140px;
 }
@@ -322,8 +322,8 @@ img { max-width: 100%; display: block; }
 
 .brand-body {
   padding: 14px;
-  background: rgba(255, 255, 255, 0.12);
-  border-top: 1px solid rgba(255, 255, 255, 0.28);
+  background: rgba(255, 255, 255, 0.82);
+  border-top: 1px solid rgba(212, 206, 191, 0.55);
 }
 
 .brand-name {
