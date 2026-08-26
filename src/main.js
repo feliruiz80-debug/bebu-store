@@ -43,9 +43,11 @@ function applyTheme(config) {
   const sheetLogo = String(config.URL_LOGO_APP || '')
     .trim()
     .replace(/\s+$/g, '');
+  // Keep Sheet logo available; header uses local brand mark.
+  void sheetLogo;
   const logoLocal = el('logo-local');
   if (logoLocal) {
-    logoLocal.src = sheetLogo || FALLBACKS.LOGO_LOCAL;
+    logoLocal.src = FALLBACKS.LOGO_LOCAL;
     logoLocal.onerror = () => {
       logoLocal.onerror = null;
       logoLocal.src = FALLBACKS.LOGO_LOCAL;
