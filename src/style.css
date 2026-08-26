@@ -1058,7 +1058,7 @@ img { max-width: 100%; display: block; }
 .bottom-nav {
   position: fixed;
   left: 50%;
-  bottom: 4px;
+  bottom: 8px;
   transform: translateX(-50%);
   z-index: 1300;
   width: min(360px, calc(100% - 28px));
