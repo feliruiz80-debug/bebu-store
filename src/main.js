@@ -62,12 +62,6 @@ function syncHeaderSpacer() {
   spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
 }
 
-function syncHeaderScrollState() {
-  const header = el('site-header');
-  if (!header) return;
-  header.classList.toggle('is-scrolled', window.scrollY > 16);
-}
-
 function goBack() {
   const current = document.querySelector('.section.active');
   if (!current) return;
@@ -224,9 +218,7 @@ async function bootstrap() {
   loadCartFromStorage();
   bindUI();
   syncHeaderSpacer();
-  syncHeaderScrollState();
   window.addEventListener('resize', syncHeaderSpacer, { passive: true });
-  window.addEventListener('scroll', syncHeaderScrollState, { passive: true });
   setupPwa();
   updateCartCounter();
 
