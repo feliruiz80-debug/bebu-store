@@ -80,21 +80,28 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   margin: 0 0 6px;
-  min-height: 48px;
+  min-height: 0;
+  background: transparent;
+  border: none;
+  box-shadow: none;
 }
 
 .logo-app {
-  height: 52px;
+  height: 56px;
   width: auto;
-  max-width: 48px;
+  max-width: none;
   object-fit: contain;
   object-position: center;
   display: block;
   margin: 0 auto;
+  padding: 0;
+  border: none;
   background: transparent;
+  box-shadow: none;
+  outline: none;
   user-select: none;
   -webkit-user-drag: none;
-  filter: drop-shadow(0 4px 10px rgba(80, 60, 40, 0.12));
+  filter: none;
 }
 
 .sec-head {
