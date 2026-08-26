@@ -40,46 +40,52 @@ function applyTheme(config) {
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
 
-  const sheetLogo = String(config.URL_LOGO_APP || '').trim() || FALLBACKS.LOGO_LOCAL;
+  const sheetLogo = String(config.URL_LOGO_APP || '')
+    .trim()
+    .replace(/\s+$/g, '');
   const logoSheet = el('logo-sheet');
   const logoLocal = el('logo-local');
   if (logoLocal) logoLocal.src = FALLBACKS.LOGO_LOCAL;
   if (logoSheet) {
-    logoSheet.src = sheetLogo;
+    logoSheet.src = sheetLogo || FALLBACKS.LOGO_LOCAL;
     logoSheet.onerror = () => {
       logoSheet.src = FALLBACKS.LOGO_LOCAL;
     };
   }
 }
 
-function easeInOutCubic(t) {
-  return t < 0.5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
-}
-
 function setupStickyHeader() {
-  const header = el('site-header') || document.querySelector('.header-pro');
   const root = document.documentElement;
-  if (!header) return;
+  const hero = el('header-hero');
+  const bar = el('header-bar');
+  if (!hero || !bar) return;
 
   let ticking = false;
   let last = -1;
 
-  const apply = (y) => {
-    const range = Math.max(140, window.innerHeight * 0.45);
-    const raw = Math.min(1, Math.max(0, y / range));
-    const progress = easeInOutCubic(raw);
-    const rounded = Math.round(progress * 200) / 200;
+  const measureBar = () => {
+    root.style.setProperty('--header-bar-h', `${Math.ceil(bar.getBoundingClientRect().height)}px`);
+  };
+
+  const apply = () => {
+    measureBar();
+    const barBottom = bar.getBoundingClientRect().bottom;
+    const heroRect = hero.getBoundingClientRect();
+    const total = Math.max(1, heroRect.height);
+    // 0 = hero fully below bar, 1 = hero fully scrolled away
+    const visible = Math.min(total, Math.max(0, heroRect.bottom - barBottom));
+    const progress = 1 - visible / total;
+    const rounded = Math.round(progress * 100) / 100;
     if (rounded === last) return;
     last = rounded;
     root.style.setProperty('--collapse', String(rounded));
-    header.classList.toggle('is-collapsed', rounded > 0.88);
   };
 
   const onScroll = () => {
     if (ticking) return;
     ticking = true;
     requestAnimationFrame(() => {
-      apply(window.scrollY || document.documentElement.scrollTop || 0);
+      apply();
       ticking = false;
     });
   };
@@ -89,7 +95,8 @@ function setupStickyHeader() {
     last = -1;
     onScroll();
   }, { passive: true });
-  apply(window.scrollY || 0);
+  measureBar();
+  apply();
 }
 
 function goBack() {
