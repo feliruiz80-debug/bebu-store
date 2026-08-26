@@ -25,7 +25,7 @@
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --collapse: 0;
   --header-expanded: 48svh;
-  --header-compact: 118px;
+  --header-compact: 108px;
   --header-h: calc(var(--header-expanded) - (var(--header-expanded) - var(--header-compact)) * var(--collapse));
   --bottom-nav-h: 72px;
   --glass: rgba(255, 255, 255, 0.72);
@@ -94,56 +94,26 @@ img { max-width: 100%; display: block; }
   margin: 0 auto;
   height: 100%;
   padding:
-    calc(10px + env(safe-area-inset-top, 0px))
+    calc(12px + env(safe-area-inset-top, 0px))
     var(--container-pad)
     10px;
   display: flex;
   flex-direction: column;
 }
 
-.header-top {
-  position: relative;
-  z-index: 2;
-  display: grid;
-  grid-template-columns: 44px 1fr 44px;
-  align-items: center;
-  column-gap: 12px;
-  min-height: 44px;
-  flex-shrink: 0;
-}
-
-.header-side {
-  display: flex;
-  align-items: center;
-  width: 44px;
-  height: 44px;
-}
-
-.header-left-group { justify-content: flex-start; }
-.header-right-group { justify-content: flex-end; position: relative; }
-
-.header-center-group {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-}
-
 .header-logo-area {
-  position: absolute;
-  left: var(--container-pad);
-  right: var(--container-pad);
-  top: calc(54px + env(safe-area-inset-top, 0px));
-  bottom: calc(10px + (52px * var(--collapse)));
+  position: relative;
+  flex: 1;
+  min-height: 0;
   display: grid;
   place-items: center;
   pointer-events: none;
   z-index: 1;
-  opacity: calc(1 - var(--collapse));
 }
 
 .logo-hero,
 .logo-compact {
+  grid-area: 1 / 1;
   object-fit: contain;
   object-position: center;
   user-select: none;
@@ -153,86 +123,61 @@ img { max-width: 100%; display: block; }
 }
 
 .logo-hero {
-  width: min(78vw, 340px);
-  max-height: min(28svh, 220px);
-  height: auto;
-  transform: scale(calc(1 - 0.12 * var(--collapse)));
-  filter: blur(calc(1.5px * var(--collapse)));
+  width: auto;
+  height: min(28svh, 200px);
+  max-width: min(62vw, 220px);
+  opacity: calc(1 - var(--collapse));
+  transform: scale(calc(1 - 0.15 * var(--collapse)));
 }
 
 .logo-compact {
   height: 44px;
   width: auto;
-  max-width: 36px;
+  max-width: 40px;
   opacity: var(--collapse);
-  transform: scale(calc(0.92 + 0.08 * var(--collapse)));
-  mix-blend-mode: normal;
+  transform: scale(calc(0.9 + 0.1 * var(--collapse)));
 }
 
-.btn-header-icon {
-  width: 44px;
-  height: 44px;
-  padding: 0;
-  border-radius: 14px;
-  border: 1px solid rgba(212, 206, 191, 0.7);
-  background: rgba(255, 255, 255, 0.9);
+.btn-header-icon,
+.btn-header-cart,
+.badge-carrito,
+.header-top,
+.header-side,
+.header-center-group {
+  /* removed from header UI */
+}
+
+.sec-toolbar {
+  display: flex;
+  align-items: center;
+  margin: 0 0 10px;
+}
+
+.sec-toolbar[hidden] {
+  display: none !important;
+}
+
+.btn-volver {
+  appearance: none;
+  border: 1px solid rgba(212, 206, 191, 0.9);
+  background: rgba(255, 255, 255, 0.92);
   color: var(--brand-text);
+  border-radius: 999px;
+  min-height: 38px;
+  padding: 0 14px 0 10px;
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  font-size: 18px;
+  gap: 4px;
+  font-family: var(--font-ui);
+  font-size: 13px;
   font-weight: 700;
-  line-height: 1;
+  cursor: pointer;
   box-shadow: 0 4px 14px rgba(80, 60, 40, 0.06);
-  transition: background 0.15s ease, border-color 0.15s ease, transform 0.12s ease;
   -webkit-tap-highlight-color: transparent;
 }
 
-.btn-header-icon:hover {
-  background: #faf8f2;
-  border-color: var(--accent-1);
-}
-
-.btn-header-icon:active {
-  transform: scale(0.96);
-}
-
-.btn-header-icon:focus-visible {
-  outline: var(--focus-ring);
-}
-
-.btn-header-cart {
-  background: linear-gradient(180deg, var(--accent-1), #6fb7cf);
-  border-color: transparent;
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(111, 183, 207, 0.35);
-  position: relative;
-}
-
-.btn-header-cart .cart-emoji { display: none; }
-
-.cart-emoji {
-  font-size: 18px;
-  line-height: 1;
-  display: block;
-}
-
-.badge-carrito {
-  position: absolute;
-  top: -5px;
-  right: -5px;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
-  background: var(--danger);
-  color: #fff;
-  border-radius: 999px;
-  font-weight: 800;
-  font-size: 10px;
-  line-height: 18px;
-  text-align: center;
-  box-shadow: 0 0 0 2px #fff;
+.btn-volver:active {
+  transform: scale(0.97);
 }
 
 .buscador-container {
@@ -297,7 +242,8 @@ img { max-width: 100%; display: block; }
 
 @media (min-width: 900px) {
   .logo-hero {
-    width: min(42vw, 400px);
+    height: min(26svh, 220px);
+    max-width: 240px;
   }
 }
 

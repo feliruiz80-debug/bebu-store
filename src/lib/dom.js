@@ -23,10 +23,9 @@ export function showSection(id) {
   if (sec) sec.classList.add('active');
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
-  const btnVolver = el('btn-volver');
-  if (btnVolver) {
-    btnVolver.hidden = id === 'brands-view' || id === 'search-view';
-  }
+  const toolbar = el('sec-toolbar');
+  const showBack = id === 'subcats-view' || id === 'products-view';
+  if (toolbar) toolbar.hidden = !showBack;
   const nav = id === 'search-view' ? 'search' : 'home';
   setBottomNav(nav);
 }

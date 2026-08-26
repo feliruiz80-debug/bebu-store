@@ -43,13 +43,13 @@ function applyTheme(config) {
   const sheetLogo = String(config.URL_LOGO_APP || '')
     .trim()
     .replace(/\s+$/g, '');
-  const logoSheet = el('logo-sheet');
+  // Header uses local logo.png for now; Sheet logo kept available for later.
+  void sheetLogo;
   const logoLocal = el('logo-local');
-  if (logoLocal) logoLocal.src = FALLBACKS.LOGO_LOCAL;
-  if (logoSheet) {
-    logoSheet.src = sheetLogo || FALLBACKS.LOGO_LOCAL;
-    logoSheet.onerror = () => {
-      logoSheet.src = FALLBACKS.LOGO_LOCAL;
+  if (logoLocal) {
+    logoLocal.src = FALLBACKS.LOGO_LOCAL;
+    logoLocal.onerror = () => {
+      logoLocal.src = FALLBACKS.LOGO_LOCAL;
     };
   }
 }
@@ -65,7 +65,7 @@ function setupStickyHeader() {
   const rangePx = () => {
     const styles = getComputedStyle(root);
     const expanded = styles.getPropertyValue('--header-expanded').trim() || '50svh';
-    const compact = parseFloat(styles.getPropertyValue('--header-compact')) || 118;
+    const compact = parseFloat(styles.getPropertyValue('--header-compact')) || 108;
     // Measure actual expanded height via temporary spacer / probe
     const probe = el('header-spacer');
     const expandedPx = probe ? probe.getBoundingClientRect().height : window.innerHeight * 0.5;
@@ -150,7 +150,6 @@ function bindUI() {
     }
   });
 
-  el('btn-carrito-header')?.addEventListener('click', openCartModal);
   el('btn-volver')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
   el('modal-carrito')?.addEventListener('click', (e) => {

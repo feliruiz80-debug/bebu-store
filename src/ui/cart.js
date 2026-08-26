@@ -64,7 +64,7 @@ export function computeCartTotals() {
 export function updateCartCounter() {
   const n = AppState.cart.reduce((s, it) => s + it.qty, 0);
   const label = n > 9 ? '9+' : String(n);
-  ['contador-carrito', 'contador-nav-carrito'].forEach((id) => {
+  ['contador-nav-carrito'].forEach((id) => {
     const counter = el(id);
     if (!counter) return;
     if (n > 0) {
@@ -130,13 +130,11 @@ export function openCartModal() {
   const modal = el('modal-carrito');
   renderCartDrawer();
   openOverlay(modal);
-  el('btn-carrito-header')?.setAttribute('aria-expanded', 'true');
   setBottomNav('cart');
 }
 
 export function closeCartModal() {
   closeOverlay(el('modal-carrito'));
-  el('btn-carrito-header')?.setAttribute('aria-expanded', 'false');
   const searchOpen = document.getElementById('search-view')?.classList.contains('active');
   setBottomNav(searchOpen ? 'search' : 'home');
 }
