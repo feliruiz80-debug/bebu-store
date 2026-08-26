@@ -26,12 +26,6 @@
       <div class="header-logo-area">
         <img id="logo-local" class="logo-app" src="/logo.png" alt="BEBU Store" width="48" height="64" decoding="async" />
       </div>
-      <div class="buscador-container" id="buscador-wrap">
-        <label class="search-field" for="buscador">
-          <svg class="search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-          <input id="buscador" type="search" placeholder="Buscar productos, marcas..." aria-label="Buscar productos" autocomplete="off" enterkeyhint="search" />
-        </label>
-      </div>
     </div>
   </header>
 
@@ -60,10 +54,6 @@
       </div>
       <div id="products-grid" class="products-grid"></div>
     </section>
-    <section id="search-view" class="section">
-      <div class="sec-label" id="search-count-label">Resultados</div>
-      <div id="search-grid" class="search-results-grid"></div>
-    </section>
   </main>
 
   <nav class="bottom-nav" id="bottom-nav" aria-label="Navegación principal">
@@ -87,6 +77,24 @@
       <span id="contador-nav-carrito" class="badge-nav" hidden>0</span>
     </button>
   </nav>
+
+  <div id="modal-buscar" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="buscar-titulo" aria-hidden="true">
+    <div class="modal-card cart-sheet search-sheet" role="document">
+      <div class="sheet-handle" aria-hidden="true"></div>
+      <div class="modal-header">
+        <h2 id="buscar-titulo">Buscar</h2>
+        <button id="btn-cerrar-buscar" class="close-btn" type="button" aria-label="Cerrar buscador">&times;</button>
+      </div>
+      <div class="buscador-container">
+        <label class="search-field" for="buscador">
+          <svg class="search-ico" width="18" height="18" viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M20 20l-3-3" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+          <input id="buscador" type="search" placeholder="Productos, marcas, líneas..." aria-label="Buscar productos" autocomplete="off" enterkeyhint="search" />
+        </label>
+      </div>
+      <div class="sec-label" id="search-count-label">Escribí para buscar</div>
+      <div id="search-grid" class="search-results-grid modal-search-grid"></div>
+    </div>
+  </div>
 
   <div id="modal-carrito" class="modal-overlay" role="dialog" aria-modal="true" aria-labelledby="modal-titulo" aria-hidden="true">
     <div class="modal-card cart-sheet" role="document">

@@ -135,7 +135,7 @@ export function openCartModal() {
 
 export function closeCartModal() {
   closeOverlay(el('modal-carrito'));
-  const searchOpen = document.getElementById('search-view')?.classList.contains('active');
+  const searchOpen = el('modal-buscar')?.classList.contains('is-open');
   setBottomNav(searchOpen ? 'search' : 'home');
 }
 

@@ -23,8 +23,10 @@ export function showSection(id) {
   if (sec) sec.classList.add('active');
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
-  const nav = id === 'search-view' ? 'search' : 'home';
-  setBottomNav(nav);
+  window.scrollTo({ top: 0, behavior: 'auto' });
+  if (!el('modal-buscar')?.classList.contains('is-open') && !el('modal-carrito')?.classList.contains('is-open')) {
+    setBottomNav('home');
+  }
 }
 
 export function setBottomNav(name) {

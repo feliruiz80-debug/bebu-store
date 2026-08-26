@@ -4,7 +4,7 @@ import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
 import { renderBrands, renderSubcategories } from './ui/brands.js';
-import { renderProducts, renderPromotions, handleSearchInput } from './ui/catalog.js';
+import { renderProducts, renderPromotions, handleSearchInput, openSearchModal, closeSearchModal } from './ui/catalog.js';
 import {
   addToCart,
   updateCartQty,
@@ -58,8 +58,7 @@ function syncHeaderSpacer() {
   const header = el('site-header');
   const spacer = el('header-spacer');
   if (!header || !spacer) return;
-  // +1 avoids hairline overlap when rubber-banding at the top
-  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 1}px`;
+  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 2}px`;
 }
 
 function goBack() {
@@ -67,8 +66,22 @@ function goBack() {
   if (!current) return;
   if (current.id === 'products-view') renderSubcategories(AppState.currentMarca);
   else renderBrands();
-  const searchInput = el('buscador');
-  if (searchInput) searchInput.value = '';
+}
+
+function bindProductActions(root) {
+  if (!root) return;
+  root.addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-action]');
+    if (!btn || !root.contains(btn)) return;
+    const action = btn.getAttribute('data-action');
+    const id = btn.getAttribute('data-id');
+    if (action === 'add') addToCart(id, 1);
+    if (action === 'wa') {
+      const url = waForProduct(id);
+      if (!url) return showToast('Producto no encontrado');
+      window.open(url, '_blank');
+    }
+  });
 }
 
 function bindUI() {
@@ -92,32 +105,27 @@ function bindUI() {
     bindActivate(app, '.subcat-card', (card) => {
       renderProducts(AppState.currentMarca, card.getAttribute('data-sub'));
     });
-    app.addEventListener('click', (e) => {
-      const btn = e.target.closest('button[data-action]');
-      if (!btn) return;
-      const action = btn.getAttribute('data-action');
-      const id = btn.getAttribute('data-id');
-      if (action === 'add') addToCart(id, 1);
-      if (action === 'wa') {
-        const url = waForProduct(id);
-        if (!url) return showToast('Producto no encontrado');
-        window.open(url, '_blank');
-      }
-    });
+    bindProductActions(app);
   }
+  bindProductActions(el('modal-buscar'));
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       closeDireccionModal();
       closeCartModal();
+      closeSearchModal();
     }
   });
 
   el('btn-volver')?.addEventListener('click', goBack);
   el('btn-volver-products')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
+  el('btn-cerrar-buscar')?.addEventListener('click', closeSearchModal);
   el('modal-carrito')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-carrito') closeCartModal();
+  });
+  el('modal-buscar')?.addEventListener('click', (e) => {
+    if (e.target.id === 'modal-buscar') closeSearchModal();
   });
 
   el('bottom-nav')?.addEventListener('click', (e) => {
@@ -126,6 +134,7 @@ function bindUI() {
     const nav = btn.getAttribute('data-nav');
     if (nav === 'home') {
       closeCartModal();
+      closeSearchModal();
       const searchInput = el('buscador');
       if (searchInput) searchInput.value = '';
       window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -135,13 +144,13 @@ function bindUI() {
     }
     if (nav === 'search') {
       closeCartModal();
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      setBottomNav('search');
-      const input = el('buscador');
-      setTimeout(() => input?.focus(), 280);
+      openSearchModal({ focus: true });
       return;
     }
-    if (nav === 'cart') openCartModal();
+    if (nav === 'cart') {
+      closeSearchModal();
+      openCartModal();
+    }
   });
 
   el('btn-vaciar-carrito')?.addEventListener('click', () => {
