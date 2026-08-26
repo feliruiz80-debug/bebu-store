@@ -1,5 +1,4 @@
 import './style.css';
-import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
@@ -39,27 +38,6 @@ function applyTheme(config) {
     const key = `COLOR_${i}`;
     if (config[key]) root.style.setProperty(`--color-${i}`, config[key]);
   }
-
-  const sheetLogo = String(config.URL_LOGO_APP || '')
-    .trim()
-    .replace(/\s+$/g, '');
-  // Keep Sheet logo available; header uses local brand mark.
-  void sheetLogo;
-  const logoLocal = el('logo-local');
-  if (logoLocal) {
-    logoLocal.src = FALLBACKS.LOGO_LOCAL;
-    logoLocal.onerror = () => {
-      logoLocal.onerror = null;
-      logoLocal.src = FALLBACKS.LOGO_LOCAL;
-    };
-  }
-}
-
-function syncHeaderSpacer() {
-  const header = el('site-header');
-  const spacer = el('header-spacer');
-  if (!header || !spacer) return;
-  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height) + 8}px`;
 }
 
 function goBack() {
@@ -123,6 +101,7 @@ function bindUI() {
   });
 
   el('btn-volver')?.addEventListener('click', goBack);
+  el('btn-volver-products')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
   el('btn-cerrar-buscar')?.addEventListener('click', closeSearchModal);
   el('btn-cerrar-promos')?.addEventListener('click', closePromosModal);
@@ -217,8 +196,6 @@ function setupPwa() {
 async function bootstrap() {
   loadCartFromStorage();
   bindUI();
-  syncHeaderSpacer();
-  window.addEventListener('resize', syncHeaderSpacer, { passive: true });
   setupPwa();
   updateCartCounter();
 
