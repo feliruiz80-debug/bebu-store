@@ -113,6 +113,7 @@ function bindUI() {
   });
 
   el('btn-volver')?.addEventListener('click', goBack);
+  el('btn-volver-products')?.addEventListener('click', goBack);
   el('btn-cerrar-carrito')?.addEventListener('click', closeCartModal);
   el('modal-carrito')?.addEventListener('click', (e) => {
     if (e.target.id === 'modal-carrito') closeCartModal();

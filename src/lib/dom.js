@@ -23,9 +23,6 @@ export function showSection(id) {
   if (sec) sec.classList.add('active');
   const content = document.querySelector('.content');
   if (content) content.scrollTop = 0;
-  const toolbar = el('sec-toolbar');
-  const showBack = id === 'subcats-view' || id === 'products-view';
-  if (toolbar) toolbar.hidden = !showBack;
   const nav = id === 'search-view' ? 'search' : 'home';
   setBottomNav(nav);
 }

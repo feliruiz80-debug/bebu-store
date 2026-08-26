@@ -23,9 +23,9 @@
   --focus-ring: 3px solid rgba(154, 206, 224, 0.28);
   --font-heading: "More Sugar", "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
   --font-ui: "Poppins", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
-  --header-h: 118px;
-  --bottom-nav-h: 72px;
-  --glass: rgba(255, 255, 255, 0.72);
+  --header-h: 112px;
+  --bottom-nav-h: 70px;
+  --glass: rgba(255, 255, 255, 0.86);
 }
 
 * { box-sizing: border-box; -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; }
@@ -76,24 +76,20 @@ img { max-width: 100%; display: block; }
   left: 0;
   right: 0;
   z-index: 1100;
-  background: rgba(255, 255, 255, 0.94);
+  padding-top: env(safe-area-inset-top, 0px);
+  background: #fff;
   border-bottom: 1px solid rgba(212, 206, 191, 0.85);
-  box-shadow: 0 8px 24px rgba(80, 60, 40, 0.06);
-  backdrop-filter: blur(14px) saturate(1.15);
-  -webkit-backdrop-filter: blur(14px) saturate(1.15);
+  box-shadow: 0 6px 20px rgba(80, 60, 40, 0.06);
 }
 
 .header-panel {
   max-width: var(--max-width);
   margin: 0 auto;
-  padding:
-    calc(10px + env(safe-area-inset-top, 0px))
-    var(--container-pad)
-    12px;
+  padding: 8px var(--container-pad) 10px;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
 }
 
 .header-logo-area {
@@ -101,13 +97,13 @@ img { max-width: 100%; display: block; }
   align-items: center;
   justify-content: center;
   width: 100%;
-  min-height: 52px;
+  min-height: 48px;
 }
 
 .logo-app {
-  height: 52px;
+  height: 48px;
   width: auto;
-  max-width: 48px;
+  max-width: 44px;
   object-fit: contain;
   object-position: center;
   display: block;
@@ -117,32 +113,40 @@ img { max-width: 100%; display: block; }
   -webkit-user-drag: none;
 }
 
-.sec-toolbar {
+.sec-head {
   display: flex;
   align-items: center;
-  margin: 0 0 10px;
+  gap: 10px;
+  margin: 0 0 14px;
+  min-height: 38px;
 }
 
-.sec-toolbar[hidden] {
-  display: none !important;
+.sec-head .sec-label {
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .btn-volver {
   appearance: none;
-  border: 1px solid rgba(212, 206, 191, 0.9);
-  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(212, 206, 191, 0.95);
+  background: #fff;
   color: var(--brand-text);
   border-radius: 999px;
-  min-height: 38px;
-  padding: 0 14px 0 10px;
+  min-height: 36px;
+  padding: 0 12px 0 8px;
   display: inline-flex;
   align-items: center;
-  gap: 4px;
+  gap: 2px;
   font-family: var(--font-ui);
   font-size: 13px;
   font-weight: 700;
   cursor: pointer;
-  box-shadow: 0 4px 14px rgba(80, 60, 40, 0.06);
+  flex-shrink: 0;
+  box-shadow: 0 3px 10px rgba(80, 60, 40, 0.05);
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -158,12 +162,12 @@ img { max-width: 100%; display: block; }
   display: flex;
   align-items: center;
   gap: 10px;
-  height: 44px;
+  height: 42px;
   padding: 0 14px;
   border-radius: 999px;
   border: 1px solid var(--border);
-  background: rgba(255, 255, 255, 0.98);
-  box-shadow: 0 4px 14px rgba(80, 60, 40, 0.05);
+  background: #faf8f3;
+  box-shadow: none;
 }
 
 .search-ico {
@@ -173,7 +177,7 @@ img { max-width: 100%; display: block; }
 
 .buscador-container input {
   width: 100%;
-  height: 42px;
+  height: 40px;
   padding: 0;
   border: none;
   background: transparent;
@@ -190,13 +194,14 @@ img { max-width: 100%; display: block; }
 
 .search-field:focus-within {
   border-color: var(--accent-1);
+  background: #fff;
   box-shadow: var(--focus-ring);
 }
 
 .main-container, .content {
   max-width: var(--max-width);
-  margin: 12px auto 0;
-  padding: 0 var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 24px);
+  margin: 10px auto 0;
+  padding: 0 var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 16px);
 }
 
 .section {
@@ -960,21 +965,24 @@ img { max-width: 100%; display: block; }
 /* ========== BOTTOM NAV ========== */
 .bottom-nav {
   position: fixed;
-  left: 50%;
-  bottom: calc(12px + env(safe-area-inset-bottom, 0px));
-  transform: translateX(-50%);
+  left: 0;
+  right: 0;
+  bottom: 0;
   z-index: 1300;
-  width: min(420px, calc(100% - 24px));
+  width: 100%;
+  max-width: none;
+  transform: none;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 4px;
-  padding: 8px;
-  border-radius: 28px;
-  background: var(--glass);
-  border: 1px solid rgba(255, 255, 255, 0.75);
-  box-shadow: 0 12px 36px rgba(80, 60, 40, 0.16);
-  backdrop-filter: blur(18px) saturate(1.25);
-  -webkit-backdrop-filter: blur(18px) saturate(1.25);
+  gap: 0;
+  padding: 6px 8px calc(6px + env(safe-area-inset-bottom, 0px));
+  border-radius: 0;
+  background: rgba(255, 255, 255, 0.94);
+  border: none;
+  border-top: 1px solid rgba(212, 206, 191, 0.9);
+  box-shadow: 0 -8px 28px rgba(80, 60, 40, 0.1);
+  backdrop-filter: blur(16px) saturate(1.2);
+  -webkit-backdrop-filter: blur(16px) saturate(1.2);
 }
 
 .bottom-nav-btn {
@@ -983,9 +991,9 @@ img { max-width: 100%; display: block; }
   border: none;
   background: transparent;
   color: var(--muted);
-  border-radius: 20px;
-  min-height: 56px;
-  padding: 8px 6px 6px;
+  border-radius: 16px;
+  min-height: 52px;
+  padding: 6px 4px;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -1009,8 +1017,8 @@ img { max-width: 100%; display: block; }
 .bottom-nav-ico {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
+  width: 26px;
+  height: 26px;
 }
 
 .bottom-nav-label {
@@ -1021,8 +1029,8 @@ img { max-width: 100%; display: block; }
 
 .badge-nav {
   position: absolute;
-  top: 6px;
-  right: calc(50% - 22px);
+  top: 4px;
+  right: calc(50% - 20px);
   min-width: 18px;
   height: 18px;
   padding: 0 5px;
@@ -1038,7 +1046,11 @@ img { max-width: 100%; display: block; }
 
 @media (min-width: 900px) {
   .bottom-nav {
-    width: min(480px, calc(100% - 32px));
+    left: 50%;
+    right: auto;
+    width: min(520px, 100%);
+    transform: translateX(-50%);
+    border-radius: 22px 22px 0 0;
   }
   .modal-overlay {
     align-items: center;
