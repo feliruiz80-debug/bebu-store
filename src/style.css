@@ -261,7 +261,7 @@ img { max-width: 100%; display: block; }
   top: var(--header-offset, var(--header-h));
   left: 0;
   right: 0;
-  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+  bottom: 0;
   width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
@@ -283,7 +283,7 @@ img { max-width: 100%; display: block; }
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
   overscroll-behavior: contain;
-  padding: 12px var(--container-pad) 28px;
+  padding: 12px var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 36px);
   background: var(--bg-warm);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
