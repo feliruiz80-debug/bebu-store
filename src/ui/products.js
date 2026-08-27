@@ -43,17 +43,15 @@ export function waForProduct(id) {
   const size = String(p.subcategoria || '').trim();
   const details = [brand, size ? `Talle ${size}` : ''].filter(Boolean).join(' · ');
   const msg = [
-    'Hola, soy cliente de *BEBU*.',
-    '',
-    'Me interesa consultar este producto:',
+    '*Consulta BEBU* ✅',
     '',
     `*${p.descripcion}*`,
     details,
     `Precio: *${fmt(price)}*`,
     '',
-    '¿Me confirman disponibilidad? Gracias.'
+    'Hay stock? Gracias ✨'
   ]
-    .filter((line) => line !== undefined)
+    .filter((line) => line)
     .join('\n');
   const phone = String(AppState.config.WHATSAPP || FALLBACKS.WHATSAPP).replace(/\D/g, '');
   return `https://wa.me/${phone}?text=${encodeURIComponent(msg)}`;
