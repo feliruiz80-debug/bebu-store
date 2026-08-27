@@ -171,8 +171,7 @@ export function bindBackSwipe(opts = {}) {
 
   const unlockStage = () => {
     if (!stage) return;
-    stage.classList.remove('is-swiping', 'is-page-animating');
-    stage.style.minHeight = '';
+    stage.classList.remove('is-swiping');
     stage = null;
   };
 
@@ -204,22 +203,20 @@ export function bindBackSwipe(opts = {}) {
 
     stage = document.querySelector('.content') || document.querySelector('.main-container');
     width = Math.round(stage?.getBoundingClientRect().width || window.innerWidth);
-    if (stage) {
-      stage.classList.add('is-swiping');
-      // Sin minHeight: evita el espasmo de agrandar y volver
-      stage.style.minHeight = '';
-    }
+    if (stage) stage.classList.add('is-swiping');
 
     under = node;
     under.classList.add('is-page-under', 'is-page-on');
     under.style.transition = 'none';
     under.style.pointerEvents = 'none';
     under.style.willChange = 'transform';
+    under.style.zIndex = '1';
     under.style.transform = `translate3d(${underX(0)}px, 0, 0)`;
 
     front.classList.add('is-swipe-front', 'is-swipe-dragging', 'is-page-on');
     front.style.willChange = 'transform';
     front.style.transition = 'none';
+    front.style.zIndex = '4';
   };
 
   const resetCancel = () => {

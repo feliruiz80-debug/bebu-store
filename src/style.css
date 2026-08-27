@@ -50,8 +50,8 @@ body {
   font-family: var(--font-ui);
   color: var(--brand-text);
   background: var(--bg-warm);
-  overflow-x: clip;
-  overscroll-behavior-y: none;
+  overflow: hidden;
+  overscroll-behavior: none;
 }
 img { max-width: 100%; display: block; }
 
@@ -77,9 +77,7 @@ img { max-width: 100%; display: block; }
 
 /* ========== PREMIUM PASTEL HEADER ========== */
 .header-spacer {
-  height: calc(var(--header-h) + env(safe-area-inset-top, 0px));
-  flex-shrink: 0;
-  pointer-events: none;
+  display: none;
 }
 
 .site-header {
@@ -259,71 +257,52 @@ img { max-width: 100%; display: block; }
 }
 
 .main-container, .content {
+  position: fixed;
+  top: var(--header-offset, var(--header-h));
+  left: 0;
+  right: 0;
+  bottom: calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px));
+  width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 12px var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 88px);
-  position: relative;
+  padding: 0;
   z-index: 1;
-  overflow-x: clip;
+  overflow: hidden;
+  background: var(--bg-warm);
 }
 
 .content.is-swiping {
-  overflow: hidden;
   pointer-events: none;
 }
 
 .section {
   display: none;
+  position: absolute;
+  inset: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+  padding: 12px var(--container-pad) 28px;
+  background: var(--bg-warm);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
 .section.active,
-.section.is-page-on,
-.section.is-page-under,
-.section.is-page-sheet,
-.section.is-page-base {
+.section.is-page-on {
   display: block;
 }
 
-/* Base en flujo: sostiene la altura (nada de minHeight en el contenedor) */
-.section.is-page-base {
-  position: relative;
-  z-index: 1;
-  background: var(--bg-warm);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
-}
-
-/* Sheet encima al avanzar / under al volver: absolute, tamaño natural */
-.section.is-page-sheet,
 .section.is-page-under {
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  width: 100%;
-  margin: 0;
+  z-index: 1;
   pointer-events: none;
-  background: var(--bg-warm);
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
-.section.is-page-under {
-  z-index: 1;
-}
-
-.section.is-page-sheet {
-  z-index: 5;
-}
-
+.section.is-page-sheet,
 .section.is-swipe-front,
 .section.is-swipe-dragging {
-  position: relative;
   z-index: 4;
-  background: var(--bg-warm);
-  touch-action: pan-y;
-  backface-visibility: hidden;
-  -webkit-backface-visibility: hidden;
 }
 
 .section.is-swipe-front::before,
@@ -335,14 +314,12 @@ img { max-width: 100%; display: block; }
   left: -16px;
   width: 16px;
   pointer-events: none;
+  z-index: 2;
   background: linear-gradient(to left, rgba(60, 45, 35, 0.12), transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .section.is-page-base,
-  .section.is-page-sheet,
-  .section.is-swipe-front,
-  .section.is-page-under {
+  .section {
     transition: none !important;
   }
 }

@@ -53,9 +53,11 @@ function applyTheme(config) {
 
 function syncHeaderSpacer() {
   const header = el('site-header');
+  if (!header) return;
+  const h = Math.ceil(header.getBoundingClientRect().height);
+  document.documentElement.style.setProperty('--header-offset', `${h}px`);
   const spacer = el('header-spacer');
-  if (!header || !spacer) return;
-  spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+  if (spacer) spacer.style.height = `${h}px`;
 }
 
 function getPrevSectionId() {

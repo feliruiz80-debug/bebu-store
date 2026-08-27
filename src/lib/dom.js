@@ -54,13 +54,6 @@ function clearPageMotion(node) {
   node.style.transition = '';
   node.style.opacity = '';
   node.style.boxShadow = '';
-  node.style.position = '';
-  node.style.left = '';
-  node.style.right = '';
-  node.style.top = '';
-  node.style.bottom = '';
-  node.style.width = '';
-  node.style.height = '';
   node.style.zIndex = '';
   node.style.pointerEvents = '';
   node.style.willChange = '';
@@ -79,10 +72,8 @@ function setSwipeMode(stage, on) {
   stage.classList.toggle('is-swiping', on);
 }
 
-function finishPageChrome() {
-  const content = getStage();
-  if (content?.scrollTop) content.scrollTop = 0;
-  if (window.scrollY > 1) window.scrollTo({ top: 0, behavior: 'auto' });
+function finishPageChrome(section) {
+  if (section) section.scrollTop = 0;
   if (
     !el('modal-buscar')?.classList.contains('is-open') &&
     !el('modal-carrito')?.classList.contains('is-open') &&
@@ -93,7 +84,6 @@ function finishPageChrome() {
 }
 
 function endTransition(leaving, entering, stage) {
-  // Un solo layout: sacar la que se va y dejar la nueva en flujo normal.
   $all('.section').forEach((s) => {
     if (s === entering) return;
     s.classList.remove('active');
@@ -101,16 +91,19 @@ function endTransition(leaving, entering, stage) {
   });
   clearPageMotion(entering);
   entering.classList.add('active');
+  entering.scrollTop = 0;
   setSwipeMode(stage, false);
   pageBusy = false;
-  finishPageChrome();
+  finishPageChrome(entering);
 }
 
-function prep(node, x) {
+function prep(node, x, z) {
   node.classList.add('is-page-on');
+  node.style.zIndex = String(z);
   node.style.willChange = 'transform';
   node.style.transition = 'none';
   node.style.transform = `translate3d(${Math.round(x)}px, 0, 0)`;
+  node.style.pointerEvents = 'none';
 }
 
 function animateTo(node, x, ms = PAGE_MS) {
@@ -131,11 +124,10 @@ export function showSection(id, opts = {}) {
 
   const current =
     document.querySelector('.section.active') ||
-    document.querySelector('.section.is-swipe-front') ||
-    document.querySelector('.section.is-page-base');
+    document.querySelector('.section.is-swipe-front');
 
   if (current === next) {
-    finishPageChrome();
+    finishPageChrome(next);
     return;
   }
 
@@ -154,9 +146,10 @@ export function showSection(id, opts = {}) {
       s.classList.remove('active');
     });
     next.classList.add('active');
+    next.scrollTop = 0;
     setSwipeMode(stage, false);
     pageBusy = false;
-    finishPageChrome();
+    finishPageChrome(next);
     return;
   }
 
@@ -166,18 +159,20 @@ export function showSection(id, opts = {}) {
   const underShift = Math.round(w * UNDER_RATIO);
 
   setSwipeMode(stage, true);
+  next.scrollTop = 0;
 
-  /* Gesto: seguir desde el dedo, sin tocar altura del contenedor */
   if (merged.swipeHandoff && direction === 'back') {
     const peeked = merged.peekedId ? el(merged.peekedId) : null;
     const under = peeked && peeked !== current ? peeked : next;
 
     current.classList.remove('is-swipe-dragging');
     current.classList.add('is-swipe-front', 'is-page-on');
+    current.style.zIndex = '4';
     animateTo(current, w);
 
     under.classList.add('is-page-under', 'is-page-on');
     under.classList.remove('active');
+    under.style.zIndex = '1';
     under.style.pointerEvents = 'none';
     animateTo(under, 0);
 
@@ -190,28 +185,21 @@ export function showSection(id, opts = {}) {
     return;
   }
 
-  /*
-   * Tap: la página que está en flujo (relative) sostiene la altura.
-   * La otra va absolute encima/debajo. Sin minHeight → sin espasmo.
-   */
+  /* Ambas páginas ocupan el mismo viewport fijo: solo translate, sin acomodar altura */
   if (direction === 'forward') {
-    current.classList.add('is-page-base');
-    prep(current, 0);
-
+    prep(current, 0, 2);
+    current.classList.add('is-page-under');
+    prep(next, w, 4);
     next.classList.add('is-page-sheet');
-    prep(next, w);
-
     kick(() => {
       animateTo(current, -underShift);
       animateTo(next, 0);
     });
   } else {
+    prep(next, -underShift, 2);
     next.classList.add('is-page-under');
-    prep(next, -underShift);
-
+    prep(current, 0, 4);
     current.classList.add('is-swipe-front');
-    prep(current, 0);
-
     kick(() => {
       animateTo(next, 0);
       animateTo(current, w);
