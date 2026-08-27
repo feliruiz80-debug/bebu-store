@@ -427,8 +427,15 @@ img { max-width: 100%; display: block; }
   padding: 0;
 }
 
-.carousel-card--offer .carousel-card-brand {
-  color: var(--accent-1);
+.carousel-offer-flag {
+  font-family: "Fredoka", var(--font-ui);
+  font-size: clamp(16px, 4.2vw, 20px);
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #ff5a3d;
+  flex-shrink: 0;
 }
 
 .carousel-offer-thumbs {

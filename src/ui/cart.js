@@ -203,20 +203,55 @@ export function sendOrderWhatsApp() {
 
   const phone = String(AppState.config.WHATSAPP || FALLBACKS.WHATSAPP).replace(/\D/g, '');
   const { items, subtotal, envio, total } = computeCartTotals();
-  const lines = ['PEDIDO BEBU', '', 'DETALLE DEL PEDIDO'];
-  items.forEach((it) => {
-    lines.push(`${it.qty}x ${it.product.descripcion} = ${fmt(it.subtotal)}`);
+  const lines = [
+    'Hola, soy cliente de *BEBU*.',
+    '',
+    'Quisiera confirmar el siguiente pedido:',
+    '',
+    '*Productos*'
+  ];
+
+  items.forEach((it, i) => {
+    const p = it.product;
+    const brand = String(p.marca || '').trim();
+    const size = String(p.subcategoria || '').trim();
+    const tag = it.promoApplied?.oferta
+      ? 'Oferta'
+      : it.promoApplied?.cantidad
+        ? `Promo x${it.promoApplied.cantidad}`
+        : '';
+    const details = [brand, size ? `Talle ${size}` : '', tag].filter(Boolean).join(' · ');
+    const qtyLine =
+      it.qty > 1 ? `${it.qty} un. × ${fmt(it.unitPrice)}` : `${it.qty} un.`;
+
+    lines.push(`${i + 1}. *${p.descripcion}*`);
+    if (details) lines.push(details);
+    lines.push(`${qtyLine} — *${fmt(it.subtotal)}*`, '');
   });
-  lines.push('', 'RESUMEN DE PAGO', `Subtotal: ${fmt(subtotal)}`);
-  if (envio) lines.push(`Envío: ${fmt(envio)}`);
-  lines.push(`TOTAL: ${fmt(total)}`, '');
+
+  lines.push('────────────────', '*Resumen*');
+  lines.push(`Productos: ${fmt(subtotal)}`);
+  if (envio) lines.push(`Envío a domicilio: ${fmt(envio)}`);
+  lines.push(`*Total: ${fmt(total)}*`, '');
+
+  lines.push('*Entrega*');
   if (AppState.envioActivo) {
-    lines.push('ENVÍO A DOMICILIO', `Dirección: ${AppState.direccion}`, '');
+    lines.push('Envío a domicilio');
+    if (AppState.direccion) lines.push(`Dirección: ${AppState.direccion}`);
+  } else {
+    lines.push('A coordinar');
   }
+  lines.push('');
+
+  lines.push('*Forma de pago*');
   if (AppState.transferencia) {
-    lines.push('FORMA DE PAGO', 'Transferencia bancaria', 'Alias: TIENDABEBU', '');
+    lines.push('Transferencia bancaria');
+    lines.push('Alias: TIENDABEBU');
+  } else {
+    lines.push('A coordinar');
   }
-  lines.push('Por confirmar');
+  lines.push('');
+  lines.push('Quedo atento para confirmar disponibilidad y coordinar. ¡Gracias!');
 
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
   showToast('Pedido abierto en WhatsApp. El carrito se mantiene.');

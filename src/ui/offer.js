@@ -133,7 +133,7 @@ export function offerCarouselCardHtml(items = getOfferCardItems()) {
   return `<button type="button" class="carousel-card carousel-card--offer" data-action="open-offer" aria-label="Ver oferta">
     <div class="carousel-card-img carousel-offer-thumbs">${thumbs}</div>
     <div class="carousel-card-body">
-      <div class="carousel-card-brand">Oferta</div>
+      <div class="carousel-offer-flag">OFERTA</div>
       <div class="carousel-card-name">${escapeHtml(description || 'Oferta especial')}</div>
       <div class="carousel-card-meta">
         <div class="carousel-card-pricing">
