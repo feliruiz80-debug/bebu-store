@@ -2,7 +2,7 @@ import { AppState, findPromo } from '../state.js';
 import { el, showSection } from '../lib/dom.js';
 import { escapeHtml, escapeAttr, idsMatch, fmt } from '../lib/format.js';
 import { FALLBACKS, HOME_SECTIONS } from '../config.js';
-import { linePrice } from '../lib/sheet.js';
+import { promoDisplayPrice } from '../lib/sheet.js';
 
 export function getSectionById(id) {
   return HOME_SECTIONS.find((s) => s.id === id) || null;
@@ -47,8 +47,7 @@ function sectionMotifHtml(motif) {
 
 function carouselCardHtml(p) {
   const promo = findPromo(p.id);
-  const pricing = linePrice(promo?.cantidad || 1, p.precio, promo);
-  const price = promo ? pricing.unitPrice : p.precio;
+  const price = promoDisplayPrice(promo, p.precio) ?? p.precio;
   const img = p.imagen
     ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">`
     : `<div class="carousel-card-fallback">${escapeHtml((p.marca || '?')[0])}</div>`;

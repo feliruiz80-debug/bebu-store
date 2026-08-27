@@ -158,8 +158,12 @@ export function mapPromos(rows) {
   return rows
     .map((r) => {
       const cantidad = parseInt(pick(r, 'cantidad', 'qty'), 10) || 0;
-      const precioUnidad = parsePrice(pick(r, 'precio_unidad', 'precio unitario'));
-      const precioPromo = parsePrice(pick(r, 'precio_promo', 'precio pack'));
+      const precioUnidad = parsePrice(
+        pick(r, 'precio_unidad', 'precio unitario', 'precio de unidad', 'precio_unidad_promo')
+      );
+      const precioPromo = parsePrice(
+        pick(r, 'precio_promo', 'precio promo', 'precio pack', 'precio_pack')
+      );
       return {
         id_promo: String(pick(r, 'id_promo', 'idpromo')).trim(),
         id_producto: padProductId(pick(r, 'id_producto', 'idproducto', 'product_id')),
@@ -195,6 +199,15 @@ export async function loadAllData() {
     promos: mapPromos(take(promosRes, 'Promociones')),
     errors
   };
+}
+
+export function promoDisplayPrice(promo, listPrice = 0) {
+  if (!promo || !promo.activo) return null;
+  if (promo.precio_promo != null) return promo.precio_promo;
+  if (promo.precio_unidad != null && promo.cantidad > 0) {
+    return promo.precio_unidad * promo.cantidad;
+  }
+  return listPrice;
 }
 
 export function linePrice(qty, listPrice, promo) {
