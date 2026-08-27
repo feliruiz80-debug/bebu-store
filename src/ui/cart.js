@@ -1,17 +1,28 @@
 import { FALLBACKS } from '../config.js';
 import { AppState, saveCartToStorage, findProduct, findPromo } from '../state.js';
 import { el, openOverlay, closeOverlay, showToast, setBottomNav } from '../lib/dom.js';
-import { fmt, escapeHtml, escapeAttr, parsePrice } from '../lib/format.js';
+import { fmt, escapeHtml, escapeAttr, parsePrice, idsMatch } from '../lib/format.js';
 import { linePrice } from '../lib/sheet.js';
 
 export function addToCart(productId, qty = 1) {
-  const id = String(productId);
-  const existing = AppState.cart.find((it) => it.id === id);
-  if (existing) existing.qty += qty;
-  else AppState.cart.push({ id, qty });
+  const prod = findProduct(productId);
+  if (!prod) {
+    showToast('Producto no encontrado');
+    return;
+  }
+  const promo = findPromo(prod.id);
+  const addQty = promo?.activo && promo.cantidad > 0 ? promo.cantidad : qty;
+  const id = prod.id;
+  const existing = AppState.cart.find((it) => idsMatch(it.id, id));
+  if (existing) existing.qty += addQty;
+  else AppState.cart.push({ id, qty: addQty });
   saveCartToStorage();
   renderCartDrawer();
-  showToast('Agregado al carrito');
+  showToast(
+    promo?.activo && promo.cantidad > 0
+      ? `Agregado x${promo.cantidad} al carrito`
+      : 'Agregado al carrito'
+  );
 }
 
 export function updateCartQty(idx, delta) {
@@ -107,7 +118,7 @@ export function renderCartDrawer() {
       <div class="cart-item-info">
         <div class="cart-item-brand">${escapeHtml(it.product.marca)} · ${escapeHtml(it.product.subcategoria)}</div>
         <div class="cart-item-name">${escapeHtml(it.product.descripcion)}</div>
-        <div class="cart-item-price">${fmt(it.subtotal)}${it.promoApplied ? ' <span class="promo-inline">Promo</span>' : ''}</div>
+        <div class="cart-item-price">${fmt(it.subtotal)}${it.promoApplied ? ` <span class="promo-inline">Promo x${it.promoApplied.cantidad}</span>` : ''}</div>
       </div>
       <div class="cart-item-controls">
         <button class="qty-btn" type="button" data-action="dec" data-idx="${idx}" aria-label="Restar">−</button>

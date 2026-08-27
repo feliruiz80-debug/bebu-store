@@ -48,6 +48,10 @@ function sectionMotifHtml(motif) {
 function carouselCardHtml(p) {
   const promo = findPromo(p.id);
   const price = promoDisplayPrice(promo, p.precio) ?? p.precio;
+  const promoTag =
+    promo?.activo && promo.cantidad > 0
+      ? ` <span class="promo-inline carousel-promo-tag">Promo x${promo.cantidad}</span>`
+      : '';
   const img = p.imagen
     ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">`
     : `<div class="carousel-card-fallback">${escapeHtml((p.marca || '?')[0])}</div>`;
@@ -58,7 +62,7 @@ function carouselCardHtml(p) {
       <div class="carousel-card-brand">${escapeHtml(p.marca)}</div>
       <div class="carousel-card-name">${escapeHtml(p.descripcion)}</div>
       <div class="carousel-card-meta">
-        <span class="carousel-card-price">${fmt(price)}</span>
+        <span class="carousel-card-price">${fmt(price)}${promoTag}</span>
         <button class="btn btn-add carousel-card-add" type="button" data-action="add" data-id="${escapeAttr(p.id)}">+</button>
       </div>
     </div>
@@ -202,6 +206,7 @@ function bindInfiniteCarousel(viewport, track) {
   }
 
   function onClickCapture(e) {
+    if (e.target.closest('button, a, input')) return;
     if (moved) {
       e.preventDefault();
       e.stopPropagation();
