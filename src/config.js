@@ -21,12 +21,12 @@ export const HOME_SECTIONS = [
   {
     id: 'panales',
     title: 'Pañales',
-    subtitle: 'Lo más elegido · Pampers · Huggies · Babysec · Duffy',
+    subtitle: 'Pampers · Huggies · Babysec · Duffy · Estrella',
     accent: 'var(--accent-1)',
     size: 'hero',
     motif: 'panales',
-    marcas: ['PAMPERS', 'HUGGIES', 'BABYSEC', 'DUFFY'],
-    excludeSubcat: /toalla/i
+    marcas: ['PAMPERS', 'HUGGIES', 'BABYSEC', 'DUFFY', 'ESTRELLA'],
+    excludeSubcat: /toalla|algodon|oleo|óleo/i
   },
   {
     id: 'algodon-oleo',
@@ -36,7 +36,7 @@ export const HOME_SECTIONS = [
     size: 'primary',
     motif: 'algodones',
     marcas: ['ESTRELLA'],
-    excludeSubcat: /toalla/i
+    matchSubcat: /algodon|oleo|óleo/i
   },
   {
     id: 'toallas',

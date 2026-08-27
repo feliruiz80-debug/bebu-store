@@ -11,8 +11,8 @@ export function getSectionById(id) {
 export function productsForSection(section = getSectionById(AppState.currentSeccion)) {
   if (!section) return AppState.products;
   return AppState.products.filter((p) => {
-    if (section.matchSubcat) return section.matchSubcat.test(p.subcategoria || '');
     if (section.marcas?.length && !section.marcas.includes(p.marca)) return false;
+    if (section.matchSubcat && !section.matchSubcat.test(p.subcategoria || '')) return false;
     if (section.excludeSubcat?.test(p.subcategoria || '')) return false;
     return true;
   });
@@ -94,7 +94,8 @@ let homeCarouselStop = null;
 
 function bindInfiniteCarousel(viewport, track) {
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
-  const AUTO_SPEED = prefersReduced ? 0 : 22; // px/s — lento
+  const AUTO_SPEED = prefersReduced ? 0 : 20; // px/s — lento y estable
+  const CARD_STEP = 240; // 228 card + 12 gap
   let offset = 0;
   let loopWidth = 0;
   let raf = 0;
@@ -106,35 +107,38 @@ function bindInfiniteCarousel(viewport, track) {
   let lastT = 0;
   let velocity = 0;
   let moved = false;
+  let prevTs = 0;
 
   const group = track.querySelector('.home-carousel-group');
 
   function measure() {
-    loopWidth = group ? group.getBoundingClientRect().width : track.scrollWidth / 2;
+    const count = group?.children?.length || 0;
+    // Width is deterministic from fixed card size — avoids reflow stutter as images load.
+    loopWidth = count > 0 ? count * CARD_STEP : 0;
+    if (!loopWidth && group) loopWidth = group.scrollWidth || 0;
   }
 
   function wrap() {
-    if (!loopWidth) return;
-    while (offset <= -loopWidth) offset += loopWidth;
-    while (offset > 0) offset -= loopWidth;
+    if (loopWidth <= 0) return;
+    offset = ((offset % loopWidth) + loopWidth) % loopWidth;
+    if (offset > 0) offset -= loopWidth;
   }
 
   function paint() {
     track.style.transform = `translate3d(${offset}px, 0, 0)`;
   }
 
-  let prevTs = 0;
   function frame(ts) {
     if (!prevTs) prevTs = ts;
-    const dt = Math.min(32, ts - prevTs) / 1000;
+    const dt = Math.min(24, ts - prevTs) / 1000;
     prevTs = ts;
 
     if (!dragging) {
-      if (Math.abs(velocity) > 8) {
+      if (Math.abs(velocity) > 12) {
         offset += velocity * dt;
-        velocity *= Math.pow(0.92, dt * 60);
+        velocity *= Math.pow(0.9, dt * 60);
+        if (Math.abs(velocity) < 12) velocity = 0;
       } else {
-        velocity = 0;
         offset -= AUTO_SPEED * dt;
       }
       wrap();
@@ -150,7 +154,11 @@ function bindInfiniteCarousel(viewport, track) {
     dragging = true;
     moved = false;
     pointerId = e.pointerId;
-    viewport.setPointerCapture?.(pointerId);
+    try {
+      viewport.setPointerCapture?.(pointerId);
+    } catch {
+      /* ignore */
+    }
     startX = e.clientX;
     startOffset = offset;
     lastX = e.clientX;
@@ -161,6 +169,7 @@ function bindInfiniteCarousel(viewport, track) {
 
   function onPointerMove(e) {
     if (!dragging || (pointerId != null && e.pointerId !== pointerId)) return;
+    e.preventDefault();
     const dx = e.clientX - startX;
     if (Math.abs(dx) > 4) moved = true;
     offset = startOffset + dx;
@@ -168,8 +177,9 @@ function bindInfiniteCarousel(viewport, track) {
     paint();
 
     const now = performance.now();
-    const dt = Math.max(1, now - lastT);
-    velocity = ((e.clientX - lastX) / dt) * 1000;
+    const dt = Math.max(8, now - lastT);
+    const instant = ((e.clientX - lastX) / dt) * 1000;
+    velocity = velocity * 0.7 + instant * 0.3;
     lastX = e.clientX;
     lastT = now;
   }
@@ -179,8 +189,7 @@ function bindInfiniteCarousel(viewport, track) {
     dragging = false;
     pointerId = null;
     track.classList.remove('is-dragging');
-    // Clamp residual flick so it eases back into slow cruise
-    velocity = Math.max(-420, Math.min(420, velocity));
+    velocity = Math.max(-360, Math.min(360, velocity));
   }
 
   function onClickCapture(e) {
@@ -194,6 +203,7 @@ function bindInfiniteCarousel(viewport, track) {
   measure();
   paint();
   raf = requestAnimationFrame(frame);
+
   const onResize = () => {
     measure();
     wrap();
@@ -202,9 +212,10 @@ function bindInfiniteCarousel(viewport, track) {
   window.addEventListener('resize', onResize, { passive: true });
 
   viewport.addEventListener('pointerdown', onPointerDown);
-  viewport.addEventListener('pointermove', onPointerMove);
+  viewport.addEventListener('pointermove', onPointerMove, { passive: false });
   viewport.addEventListener('pointerup', onPointerUp);
   viewport.addEventListener('pointercancel', onPointerUp);
+  viewport.addEventListener('lostpointercapture', onPointerUp);
   viewport.addEventListener('click', onClickCapture, true);
 
   return () => {
@@ -214,6 +225,7 @@ function bindInfiniteCarousel(viewport, track) {
     viewport.removeEventListener('pointermove', onPointerMove);
     viewport.removeEventListener('pointerup', onPointerUp);
     viewport.removeEventListener('pointercancel', onPointerUp);
+    viewport.removeEventListener('lostpointercapture', onPointerUp);
     viewport.removeEventListener('click', onClickCapture, true);
   };
 }
