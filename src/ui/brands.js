@@ -67,9 +67,21 @@ function carouselCardHtml(p) {
 }
 
 function pickFeaturedProducts(limit = 22) {
-  const pools = HOME_SECTIONS.map((section) => productsForSection(section));
   const out = [];
   const seen = new Set();
+
+  // Promos primero en el desfile, luego el resto mezclado por sección.
+  AppState.promos
+    .filter((pr) => pr.activo && pr.id_producto)
+    .forEach((pr) => {
+      if (out.length >= limit) return;
+      const p = AppState.products.find((prod) => idsMatch(prod.id, pr.id_producto));
+      if (!p || seen.has(p.id)) return;
+      seen.add(p.id);
+      out.push(p);
+    });
+
+  const pools = HOME_SECTIONS.map((section) => productsForSection(section));
   let i = 0;
   while (out.length < limit) {
     let added = false;
