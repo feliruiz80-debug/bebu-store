@@ -22,38 +22,29 @@ function sectionMotifHtml(motif) {
   if (motif === 'panales') {
     return `
       <span class="motif-item motif-item--1 motif-illu motif-illu--photo">
-        <img src="/illustrations/panal.png" alt="" decoding="async" draggable="false">
+        <img src="/illustrations/panal.png?v=3" alt="" decoding="async" draggable="false">
       </span>
-      <span class="motif-item motif-item--2 motif-illu motif-illu--photo">
-        <img src="/illustrations/panal.png" alt="" decoding="async" draggable="false">
-      </span>
-      <span class="motif-item motif-item--3 motif-illu motif-illu--photo motif-illu--soft">
-        <img src="/illustrations/panal.png" alt="" decoding="async" draggable="false">
+      <span class="motif-item motif-item--2 motif-illu motif-illu--photo motif-illu--soft">
+        <img src="/illustrations/panal.png?v=3" alt="" decoding="async" draggable="false">
       </span>`;
   }
 
   if (motif === 'algodones') {
     return `
       <span class="motif-item motif-item--1 motif-illu motif-illu--photo">
-        <img src="/illustrations/algodon.png" alt="" decoding="async" draggable="false">
+        <img src="/illustrations/algodon.png?v=3" alt="" decoding="async" draggable="false">
       </span>
       <span class="motif-item motif-item--2 motif-illu motif-illu--photo">
-        <img src="/illustrations/oleo.png" alt="" decoding="async" draggable="false">
-      </span>
-      <span class="motif-item motif-item--3 motif-illu motif-illu--photo motif-illu--soft">
-        <img src="/illustrations/algodon.png" alt="" decoding="async" draggable="false">
+        <img src="/illustrations/oleo.png?v=3" alt="" decoding="async" draggable="false">
       </span>`;
   }
 
   return `
     <span class="motif-item motif-item--1 motif-illu motif-illu--photo">
-      <img src="/illustrations/toallas.png" alt="" decoding="async" draggable="false">
+      <img src="/illustrations/toallas.png?v=3" alt="" decoding="async" draggable="false">
     </span>
-    <span class="motif-item motif-item--2 motif-illu motif-illu--photo">
-      <img src="/illustrations/toallas.png" alt="" decoding="async" draggable="false">
-    </span>
-    <span class="motif-item motif-item--3 motif-illu motif-illu--photo motif-illu--soft">
-      <img src="/illustrations/toallas.png" alt="" decoding="async" draggable="false">
+    <span class="motif-item motif-item--2 motif-illu motif-illu--photo motif-illu--soft">
+      <img src="/illustrations/toallas.png?v=3" alt="" decoding="async" draggable="false">
     </span>`;
 }
 

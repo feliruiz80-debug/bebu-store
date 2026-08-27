@@ -564,80 +564,56 @@ img { max-width: 100%; display: block; }
 
 /* —— Pañales —— */
 .section-motif--panales .motif-item--1 {
-  width: 128px;
-  height: 128px;
-  right: 2px;
-  top: 4px;
+  width: 72px;
+  height: 72px;
+  right: 16px;
+  top: 22px;
   animation: motifFloatA 3.6s ease-in-out infinite;
 }
 .section-motif--panales .motif-item--2 {
-  width: 86px;
-  height: 86px;
-  right: 118px;
-  top: 48px;
-  opacity: 0.88;
+  width: 44px;
+  height: 44px;
+  right: 96px;
+  top: 78px;
+  opacity: 0.72;
   animation: motifFloatB 4.1s ease-in-out infinite;
   animation-delay: 0.35s;
-}
-.section-motif--panales .motif-item--3 {
-  width: 58px;
-  height: 58px;
-  right: 54px;
-  top: 112px;
-  animation: motifFloatA 3.4s ease-in-out infinite;
-  animation-delay: 0.8s;
 }
 
 /* —— Algodones + Óleo —— */
 .section-motif--algodones .motif-item--1 {
-  width: 118px;
-  height: 118px;
-  right: 0;
-  top: 2px;
+  width: 68px;
+  height: 68px;
+  right: 14px;
+  top: 20px;
   animation: motifFloatA 4s ease-in-out infinite;
 }
 .section-motif--algodones .motif-item--2 {
-  width: 92px;
-  height: 92px;
-  right: 108px;
-  top: 36px;
-  opacity: 0.95;
+  width: 54px;
+  height: 54px;
+  right: 88px;
+  top: 72px;
+  opacity: 0.92;
   animation: motifFloatB 3.7s ease-in-out infinite;
   animation-delay: 0.3s;
-}
-.section-motif--algodones .motif-item--3 {
-  width: 56px;
-  height: 56px;
-  right: 42px;
-  top: 108px;
-  animation: motifFloatA 4.4s ease-in-out infinite;
-  animation-delay: 0.85s;
 }
 
 /* —— Toallas —— */
 .section-motif--toallas .motif-item--1 {
-  width: 122px;
-  height: 122px;
-  right: 0;
-  top: 2px;
+  width: 70px;
+  height: 70px;
+  right: 14px;
+  top: 20px;
   animation: motifFloatA 3.8s ease-in-out infinite;
 }
 .section-motif--toallas .motif-item--2 {
-  width: 82px;
-  height: 82px;
-  right: 108px;
-  top: 42px;
-  opacity: 0.9;
+  width: 42px;
+  height: 42px;
+  right: 92px;
+  top: 80px;
+  opacity: 0.72;
   animation: motifFloatB 4.2s ease-in-out infinite;
   animation-delay: 0.4s;
-}
-.section-motif--toallas .motif-item--3 {
-  width: 54px;
-  height: 54px;
-  right: 40px;
-  top: 108px;
-  animation: motifFloatA 3.5s ease-in-out infinite;
-  animation-delay: 0.9s;
 }
 
 @keyframes motifFloatA {
