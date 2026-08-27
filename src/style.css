@@ -2225,16 +2225,18 @@ html[data-font-scale="large"] {
   font-family: var(--font-price);
   font-size: 18px;
   font-weight: 700;
-  color: var(--muted);
+  color: #6a5a5b;
+  opacity: 0.72;
   text-decoration: line-through;
   font-variant-numeric: tabular-nums;
 }
 
 .offer-price-now {
   font-family: var(--font-price);
-  font-size: 32px;
+  font-size: 34px;
   font-weight: 900;
-  color: var(--accent-4);
+  color: #2f7a58;
+  text-shadow: 0 1px 0 rgba(255, 255, 255, 0.85);
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
