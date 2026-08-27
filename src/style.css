@@ -515,7 +515,7 @@ img { max-width: 100%; display: block; }
 .section-card--primary {
   min-height: 168px;
   padding: 18px 86px 16px 16px;
-  justify-content: flex-start;
+  justify-content: space-between;
   align-items: flex-start;
 }
 
@@ -525,7 +525,8 @@ img { max-width: 100%; display: block; }
 }
 
 .section-card--primary .section-card-count {
-  margin-top: 6px;
+  margin-top: auto;
+  align-self: flex-start;
 }
 
 .section-card--primary > *:not(.section-motif) {
