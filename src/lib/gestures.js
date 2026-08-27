@@ -3,9 +3,9 @@ const DISMISS_VELOCITY = 0.65;
 const EDGE_ZONE = 24;
 const BACK_RATIO = 0.28;
 const BACK_VELOCITY = 0.45;
-const UNDER_OFFSET = 0.22;
+const UNDER_RATIO = 0.18;
 const PAGE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const SNAP_MS = 280;
+const SNAP_MS = 320;
 
 function sheetEl(overlay) {
   return overlay?.querySelector('.modal-card');
@@ -152,7 +152,7 @@ export function bindBackSwipe(opts = {}) {
 
   const clearNodeMotion = (node) => {
     if (!node) return;
-    node.classList.remove('is-swipe-front', 'is-page-under', 'is-swipe-dragging', 'is-page-on');
+    node.classList.remove('is-swipe-front', 'is-page-under', 'is-swipe-dragging', 'is-page-on', 'is-page-layer');
     node.style.transform = '';
     node.style.transition = '';
     node.style.opacity = '';
@@ -163,6 +163,7 @@ export function bindBackSwipe(opts = {}) {
     node.style.top = '';
     node.style.bottom = '';
     node.style.width = '';
+    node.style.height = '';
     node.style.zIndex = '';
     node.style.pointerEvents = '';
     node.style.willChange = '';
@@ -170,10 +171,12 @@ export function bindBackSwipe(opts = {}) {
 
   const unlockStage = () => {
     if (!stage) return;
-    stage.classList.remove('is-page-animating');
+    stage.classList.remove('is-page-animating', 'is-swiping');
     stage.style.minHeight = '';
     stage = null;
   };
+
+  const underX = (p) => Math.round(-UNDER_RATIO * (1 - p) * width);
 
   const paint = () => {
     raf = 0;
@@ -181,9 +184,9 @@ export function bindBackSwipe(opts = {}) {
     const w = width || window.innerWidth;
     const x = Math.min(w, Math.max(0, pendingX));
     const p = x / w;
-    front.style.transform = `translate3d(${x}px, 0, 0)`;
+    front.style.transform = `translate3d(${Math.round(x)}px, 0, 0)`;
     if (under) {
-      under.style.transform = `translate3d(${(-UNDER_OFFSET * (1 - p) * 100).toFixed(2)}%, 0, 0)`;
+      under.style.transform = `translate3d(${underX(p)}px, 0, 0)`;
     }
   };
 
@@ -200,8 +203,11 @@ export function bindBackSwipe(opts = {}) {
     if (!node) return;
 
     stage = document.querySelector('.content') || document.querySelector('.main-container');
+    width = Math.round(stage?.getBoundingClientRect().width || window.innerWidth);
     if (stage) {
-      stage.classList.add('is-page-animating');
+      // is-swiping: la de adelante sigue en flow (no se deforma al pasar a absolute)
+      stage.classList.remove('is-page-animating');
+      stage.classList.add('is-swiping');
       stage.style.minHeight = `${Math.ceil(front.offsetHeight)}px`;
     }
 
@@ -210,7 +216,7 @@ export function bindBackSwipe(opts = {}) {
     under.style.transition = 'none';
     under.style.pointerEvents = 'none';
     under.style.willChange = 'transform';
-    under.style.transform = `translate3d(${-UNDER_OFFSET * 100}%, 0, 0)`;
+    under.style.transform = `translate3d(${underX(0)}px, 0, 0)`;
 
     front.classList.add('is-swipe-front', 'is-swipe-dragging', 'is-page-on');
     front.style.willChange = 'transform';
@@ -323,7 +329,7 @@ export function bindBackSwipe(opts = {}) {
       }
       if (snapUnder) {
         snapUnder.style.transition = ease;
-        snapUnder.style.transform = `translate3d(${-UNDER_OFFSET * 100}%, 0, 0)`;
+        snapUnder.style.transform = `translate3d(${underX(0)}px, 0, 0)`;
       }
       window.setTimeout(() => {
         if (snapFront) {

@@ -24,9 +24,12 @@ const SECTION_DEPTH = {
   'products-view': 3
 };
 
-/** Curva cercana a iOS UINavigationController */
+/** Seda / iOS */
 const PAGE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const PAGE_MS = 320;
+const PAGE_MS = 380;
+/** Parallax suave de la página de atrás (solo translate en px, sin estirar) */
+const UNDER_RATIO = 0.18;
+
 let pageBusy = false;
 let pageTimer = 0;
 let pendingShowOpts = null;
@@ -47,6 +50,7 @@ function clearPageMotion(node) {
     'is-leave-forward',
     'is-leave-back',
     'is-page-on',
+    'is-page-layer',
     'is-swipe-dragging',
     'is-swipe-front',
     'is-page-under'
@@ -61,6 +65,7 @@ function clearPageMotion(node) {
   node.style.top = '';
   node.style.bottom = '';
   node.style.width = '';
+  node.style.height = '';
   node.style.zIndex = '';
   node.style.pointerEvents = '';
   node.style.willChange = '';
@@ -70,15 +75,27 @@ function getStage() {
   return document.querySelector('.content') || document.querySelector('.main-container');
 }
 
-function lockStage(stage, heightPx) {
+function stageWidth(stage) {
+  return Math.round((stage || getStage())?.getBoundingClientRect().width || window.innerWidth);
+}
+
+function lockKeyed(stage, heightPx) {
   if (!stage) return;
+  stage.classList.remove('is-swiping');
   stage.classList.add('is-page-animating');
+  if (heightPx > 0) stage.style.minHeight = `${Math.ceil(heightPx)}px`;
+}
+
+function lockSwipe(stage, heightPx) {
+  if (!stage) return;
+  stage.classList.remove('is-page-animating');
+  stage.classList.add('is-swiping');
   if (heightPx > 0) stage.style.minHeight = `${Math.ceil(heightPx)}px`;
 }
 
 function unlockStage(stage) {
   if (!stage) return;
-  stage.classList.remove('is-page-animating');
+  stage.classList.remove('is-page-animating', 'is-swiping');
   stage.style.minHeight = '';
 }
 
@@ -111,6 +128,19 @@ function endTransition(leaving, entering, stage) {
   unlockStage(stage);
   pageBusy = false;
   finishPageChrome();
+}
+
+function setLayer(node, { z, x }) {
+  node.classList.add('is-page-on', 'is-page-layer');
+  node.style.zIndex = String(z);
+  node.style.willChange = 'transform';
+  node.style.transition = 'none';
+  node.style.transform = `translate3d(${Math.round(x)}px, 0, 0)`;
+}
+
+function animateTo(node, x, ms = PAGE_MS) {
+  node.style.transition = `transform ${ms}ms ${PAGE_EASE}`;
+  node.style.transform = `translate3d(${Math.round(x)}px, 0, 0)`;
 }
 
 export function showSection(id, opts = {}) {
@@ -152,27 +182,25 @@ export function showSection(id, opts = {}) {
 
   pageBusy = true;
   window.clearTimeout(pageTimer);
+  const w = stageWidth(stage);
 
-  /* —— Gesto: continuar desde el dedo, sin re-layout brusco —— */
+  /* —— Gesto: misma geometría (front relative, under absolute), solo px —— */
   if (merged.swipeHandoff && direction === 'back') {
     const peeked = merged.peekedId ? el(merged.peekedId) : null;
     const under = peeked && peeked !== current ? peeked : next;
-    const ease = `transform ${PAGE_MS}ms ${PAGE_EASE}`;
 
-    lockStage(stage, Math.max(current.offsetHeight, under.offsetHeight || 0));
+    lockSwipe(stage, current.offsetHeight);
 
     current.classList.remove('is-swipe-dragging');
     current.classList.add('is-swipe-front', 'is-page-on');
     current.style.willChange = 'transform';
-    current.style.transition = ease;
-    current.style.transform = 'translate3d(100%, 0, 0)';
+    animateTo(current, w);
 
     under.classList.add('is-page-under', 'is-page-on');
     under.classList.remove('active');
     under.style.willChange = 'transform';
-    under.style.transition = ease;
-    under.style.transform = 'translate3d(0, 0, 0)';
     under.style.pointerEvents = 'none';
+    animateTo(under, 0);
 
     if (next !== under && next !== current) {
       clearPageMotion(next);
@@ -183,20 +211,39 @@ export function showSection(id, opts = {}) {
     return;
   }
 
-  /* —— Tap / navegación normal —— */
+  /* —— Volver / avanzar con tap: capas fijas + translate en px (sin deformar) —— */
   const height = Math.max(current.offsetHeight, 120);
-  lockStage(stage, height);
+  lockKeyed(stage, height);
 
   clearPageMotion(current);
   clearPageMotion(next);
 
-  const leaveClass = direction === 'back' ? 'is-leave-back' : 'is-leave-forward';
-  const enterClass = direction === 'back' ? 'is-enter-back' : 'is-enter-forward';
+  const underShift = Math.round(w * UNDER_RATIO);
 
-  current.classList.add(leaveClass, 'is-page-on');
-  next.classList.add(enterClass, 'is-page-on');
+  if (direction === 'forward') {
+    // current se queda quieta detrás un poco; next entra desde la derecha
+    setLayer(current, { z: 2, x: 0 });
+    setLayer(next, { z: 3, x: w });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        animateTo(current, -underShift);
+        animateTo(next, 0);
+      });
+    });
+  } else {
+    // next (anterior) ya está detrás, quieta o casi; current se va a la derecha
+    // La página de atrás NO se escala ni se estira: solo un slide suave en px
+    setLayer(next, { z: 2, x: -underShift });
+    setLayer(current, { z: 3, x: 0 });
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        animateTo(next, 0);
+        animateTo(current, w);
+      });
+    });
+  }
 
-  pageTimer = window.setTimeout(() => endTransition(current, next, stage), PAGE_MS);
+  pageTimer = window.setTimeout(() => endTransition(current, next, stage), PAGE_MS + 16);
 }
 
 export function setBottomNav(name) {

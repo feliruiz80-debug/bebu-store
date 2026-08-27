@@ -267,10 +267,15 @@ img { max-width: 100%; display: block; }
   overflow-x: clip;
 }
 
+/* Swipe: la página de adelante sigue en el flujo → no se deforma */
+.content.is-swiping {
+  overflow: hidden;
+}
+
+/* Tap forward/back: stack absoluto limpio, solo translate */
 .content.is-page-animating {
   overflow: hidden;
   pointer-events: none;
-  touch-action: none;
 }
 
 .section {
@@ -283,9 +288,7 @@ img { max-width: 100%; display: block; }
   display: block;
 }
 
-.content.is-page-animating > .section.is-page-on,
-.content.is-page-animating > .section.is-page-under,
-.content.is-page-animating > .section.is-swipe-front {
+.content.is-page-animating > .section.is-page-layer {
   position: absolute;
   left: 0;
   right: 0;
@@ -295,80 +298,50 @@ img { max-width: 100%; display: block; }
   background: var(--bg-warm);
   backface-visibility: hidden;
   -webkit-backface-visibility: hidden;
-  transform: translateZ(0);
 }
 
-.section.is-enter-forward {
-  animation: pageInForward 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
-  z-index: 3;
-}
-
-.section.is-leave-forward {
-  animation: pageOutForward 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
-  z-index: 2;
-}
-
-.section.is-enter-back {
-  animation: pageInBack 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
-  z-index: 2;
-}
-
-.section.is-leave-back {
-  animation: pageOutBack 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
-  z-index: 3;
-}
-
+/* Página de atrás durante el gesto: absoluta, tamaño natural (sin estirar) */
 .section.is-page-under {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  width: 100%;
   z-index: 1;
+  margin: 0;
   pointer-events: none;
+  background: var(--bg-warm);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
+/* Delante en el gesto: relative = misma geometría que siempre */
 .section.is-swipe-front,
 .section.is-swipe-dragging {
+  position: relative;
   z-index: 4;
+  background: var(--bg-warm);
   touch-action: pan-y;
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
 }
 
-/* Sombra fija (no se recalcula en cada frame del gesto) */
-.section.is-swipe-front::before,
-.section.is-leave-back::before,
-.section.is-enter-forward::before {
+.section.is-swipe-front::before {
   content: "";
   position: absolute;
   top: 0;
   bottom: 0;
-  left: -18px;
-  width: 18px;
+  left: -16px;
+  width: 16px;
   pointer-events: none;
-  background: linear-gradient(to left, rgba(60, 45, 35, 0.14), transparent);
-}
-
-@keyframes pageInForward {
-  from { transform: translate3d(100%, 0, 0); }
-  to { transform: translate3d(0, 0, 0); }
-}
-
-@keyframes pageOutForward {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(-22%, 0, 0); }
-}
-
-@keyframes pageInBack {
-  from { transform: translate3d(-22%, 0, 0); }
-  to { transform: translate3d(0, 0, 0); }
-}
-
-@keyframes pageOutBack {
-  from { transform: translate3d(0, 0, 0); }
-  to { transform: translate3d(100%, 0, 0); }
+  background: linear-gradient(to left, rgba(60, 45, 35, 0.12), transparent);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .section.is-enter-forward,
-  .section.is-leave-forward,
-  .section.is-enter-back,
-  .section.is-leave-back {
-    animation: none !important;
+  .section.is-page-layer,
+  .section.is-swipe-front,
+  .section.is-page-under {
+    transition: none !important;
   }
 }
 
