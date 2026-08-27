@@ -4,11 +4,11 @@ import { el, openOverlay, closeOverlay, showToast, setBottomNav } from '../lib/d
 import { fmt, escapeHtml, escapeAttr, parsePrice, idsMatch } from '../lib/format.js';
 import { linePrice } from '../lib/sheet.js';
 
-export function addToCart(productId, qty = 1) {
+export function addToCart(productId, qty = 1, { silent = false } = {}) {
   const prod = findProduct(productId);
   if (!prod) {
-    showToast('Producto no encontrado');
-    return;
+    if (!silent) showToast('Producto no encontrado');
+    return false;
   }
   const promo = findPromo(prod.id);
   const addQty = promo?.activo && promo.cantidad > 0 ? promo.cantidad : qty;
@@ -18,11 +18,14 @@ export function addToCart(productId, qty = 1) {
   else AppState.cart.push({ id, qty: addQty });
   saveCartToStorage();
   renderCartDrawer();
-  showToast(
-    promo?.activo && promo.cantidad > 0
-      ? `Agregado x${promo.cantidad} al carrito`
-      : 'Agregado al carrito'
-  );
+  if (!silent) {
+    showToast(
+      promo?.activo && promo.cantidad > 0
+        ? `Agregado x${promo.cantidad} al carrito`
+        : 'Agregado al carrito'
+    );
+  }
+  return true;
 }
 
 export function updateCartQty(idx, delta) {
