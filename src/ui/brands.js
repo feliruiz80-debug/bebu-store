@@ -48,22 +48,25 @@ function sectionMotifHtml(motif) {
 function carouselCardHtml(p) {
   const promo = findPromo(p.id);
   const price = promoDisplayPrice(promo, p.precio) ?? p.precio;
-  const promoTag =
+  const promoQty =
     promo?.activo && promo.cantidad > 0
-      ? ` <span class="promo-inline carousel-promo-tag">Promo x${promo.cantidad}</span>`
+      ? `<span class="carousel-promo-tag">Promo x${promo.cantidad}</span>`
       : '';
   const img = p.imagen
     ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">`
     : `<div class="carousel-card-fallback">${escapeHtml((p.marca || '?')[0])}</div>`;
 
-  return `<article class="carousel-card" data-id="${escapeAttr(p.id)}">
+  return `<article class="carousel-card${promoQty ? ' carousel-card--promo' : ''}" data-id="${escapeAttr(p.id)}">
     <div class="carousel-card-img">${img}</div>
     <div class="carousel-card-body">
       <div class="carousel-card-brand">${escapeHtml(p.marca)}</div>
       <div class="carousel-card-name">${escapeHtml(p.descripcion)}</div>
       <div class="carousel-card-meta">
-        <span class="carousel-card-price">${fmt(price)}${promoTag}</span>
-        <button class="btn btn-add carousel-card-add" type="button" data-action="add" data-id="${escapeAttr(p.id)}">+</button>
+        <div class="carousel-card-pricing">
+          <span class="carousel-card-price">${fmt(price)}</span>
+          ${promoQty}
+        </div>
+        <button class="btn btn-add carousel-card-add" type="button" data-action="add" data-id="${escapeAttr(p.id)}" aria-label="Agregar al carrito">+</button>
       </div>
     </div>
   </article>`;
