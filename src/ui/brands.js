@@ -2,6 +2,7 @@ import { AppState } from '../state.js';
 import { el, showSection } from '../lib/dom.js';
 import { escapeHtml, escapeAttr, idsMatch } from '../lib/format.js';
 import { FALLBACKS, HOME_SECTIONS } from '../config.js';
+import { sectionMotifIllustrations } from './section-motifs.js';
 
 export function getSectionById(id) {
   return HOME_SECTIONS.find((s) => s.id === id) || null;
@@ -17,35 +18,6 @@ export function productsForSection(section = getSectionById(AppState.currentSecc
   });
 }
 
-/** Pick up to 3 distinct product photos for the floating home motifs. */
-export function motifProductsForSection(section, limit = 3) {
-  const withImg = productsForSection(section).filter((p) => p.imagen);
-  if (!withImg.length) return [];
-
-  const picked = [];
-  const seenUrl = new Set();
-  const seenMarca = new Set();
-
-  // Prefer brand diversity first (e.g. Pampers + Huggies + Babysec on Pañales).
-  for (const p of withImg) {
-    if (picked.length >= limit) break;
-    const url = p.imagen;
-    if (seenUrl.has(url) || seenMarca.has(p.marca)) continue;
-    seenUrl.add(url);
-    seenMarca.add(p.marca);
-    picked.push(p);
-  }
-
-  for (const p of withImg) {
-    if (picked.length >= limit) break;
-    if (seenUrl.has(p.imagen)) continue;
-    seenUrl.add(p.imagen);
-    picked.push(p);
-  }
-
-  return picked;
-}
-
 export function renderHomeSections() {
   const container = el('sections-grid');
   if (!container) return;
@@ -54,21 +26,12 @@ export function renderHomeSections() {
   AppState.currentMarca = null;
 
   container.innerHTML = HOME_SECTIONS.map((section) => {
-    const products = productsForSection(section);
-    const qty = products.length;
+    const qty = productsForSection(section).length;
     const size = section.size || 'primary';
     const motif = section.motif || section.id;
-    const motifs = motifProductsForSection(section, 3);
-    const motifHtml = motifs.length
-      ? motifs
-          .map(
-            (p, i) =>
-              `<span class="motif-item motif-item--${i + 1}">
-                <img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" decoding="async" draggable="false" onerror="this.closest('.motif-item')?.remove()">
-              </span>`
-          )
-          .join('')
-      : '';
+    const motifHtml = sectionMotifIllustrations(motif)
+      .map((svg, i) => `<span class="motif-item motif-item--${i + 1}">${svg}</span>`)
+      .join('');
 
     return `<button type="button" class="section-card section-card--${escapeAttr(size)}" data-section="${escapeAttr(section.id)}" style="--section-accent: ${section.accent}">
       <span class="section-motif section-motif--${escapeAttr(motif)}" aria-hidden="true">${motifHtml}</span>
