@@ -164,7 +164,7 @@ let homeCarouselStop = null;
 function bindInfiniteCarousel(viewport, track) {
   const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   const AUTO_SPEED = prefersReduced ? 0 : 20; // px/s — lento y estable
-  const CARD_STEP = 240; // 228 card + 12 gap
+  const CARD_STEP = 252; // 240 card + 12 gap
   let offset = 0;
   let loopWidth = 0;
   let raf = 0;
