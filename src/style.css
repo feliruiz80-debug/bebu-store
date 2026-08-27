@@ -514,11 +514,18 @@ img { max-width: 100%; display: block; }
 
 .section-card--primary {
   min-height: 168px;
-  padding-right: 86px;
+  padding: 18px 86px 16px 16px;
+  justify-content: flex-start;
+  align-items: flex-start;
 }
 
 .section-card--primary .section-card-title {
   font-size: 18px;
+  margin: 0;
+}
+
+.section-card--primary .section-card-count {
+  margin-top: 6px;
 }
 
 .section-card--primary > *:not(.section-motif) {
