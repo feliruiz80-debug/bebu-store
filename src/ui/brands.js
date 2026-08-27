@@ -32,10 +32,10 @@ function sectionMotifHtml(motif) {
   if (motif === 'algodones') {
     return `
       <span class="motif-item motif-item--1 motif-illu motif-illu--photo">
-        <img src="/illustrations/algodon.png?v=4" alt="" decoding="async" draggable="false">
+        <img src="/illustrations/algodon.png?v=5" alt="" decoding="async" draggable="false">
       </span>
       <span class="motif-item motif-item--2 motif-illu motif-illu--photo">
-        <img src="/illustrations/oleo.png?v=4" alt="" decoding="async" draggable="false">
+        <img src="/illustrations/oleo.png?v=5" alt="" decoding="async" draggable="false">
       </span>`;
   }
 
