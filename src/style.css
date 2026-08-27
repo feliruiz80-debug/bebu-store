@@ -544,7 +544,7 @@ img { max-width: 100%; display: block; }
   place-items: center;
   will-change: transform;
   color: var(--section-accent, var(--accent-1));
-  filter: drop-shadow(0 12px 18px rgba(80, 60, 40, 0.14));
+  filter: drop-shadow(0 8px 14px rgba(80, 60, 40, 0.1));
 }
 
 .motif-illu svg,
@@ -559,71 +559,73 @@ img { max-width: 100%; display: block; }
 }
 
 .motif-illu--soft {
-  opacity: 0.55;
+  opacity: 0.5;
 }
 
-/* —— Pañales —— */
+/* —— Pañales (hero card, más aire a la derecha) —— */
 .section-motif--panales .motif-item--1 {
-  width: 72px;
-  height: 72px;
-  right: 16px;
-  top: 22px;
-  animation: motifFloatA 3.6s ease-in-out infinite;
+  width: 88px;
+  height: 88px;
+  right: 22px;
+  top: 50%;
+  margin-top: -44px;
+  animation: motifSoftA 7.5s ease-in-out infinite;
 }
 .section-motif--panales .motif-item--2 {
-  width: 44px;
-  height: 44px;
-  right: 96px;
-  top: 78px;
-  opacity: 0.72;
-  animation: motifFloatB 4.1s ease-in-out infinite;
-  animation-delay: 0.35s;
+  width: 48px;
+  height: 48px;
+  right: 118px;
+  top: 28px;
+  opacity: 0.55;
+  animation: motifSoftB 8.5s ease-in-out infinite;
+  animation-delay: 1.2s;
 }
 
 /* —— Algodones + Óleo —— */
 .section-motif--algodones .motif-item--1 {
-  width: 68px;
-  height: 68px;
-  right: 14px;
-  top: 20px;
-  animation: motifFloatA 4s ease-in-out infinite;
+  width: 64px;
+  height: 64px;
+  right: 18px;
+  top: 22px;
+  animation: motifSoftA 8s ease-in-out infinite;
 }
 .section-motif--algodones .motif-item--2 {
-  width: 54px;
-  height: 54px;
-  right: 88px;
-  top: 72px;
-  opacity: 0.92;
-  animation: motifFloatB 3.7s ease-in-out infinite;
-  animation-delay: 0.3s;
+  width: 52px;
+  height: 52px;
+  right: 78px;
+  top: 78px;
+  opacity: 0.9;
+  animation: motifSoftB 9s ease-in-out infinite;
+  animation-delay: 1.6s;
 }
 
 /* —— Toallas —— */
 .section-motif--toallas .motif-item--1 {
-  width: 70px;
-  height: 70px;
-  right: 14px;
-  top: 20px;
-  animation: motifFloatA 3.8s ease-in-out infinite;
+  width: 66px;
+  height: 66px;
+  right: 16px;
+  top: 50%;
+  margin-top: -33px;
+  animation: motifSoftA 8.2s ease-in-out infinite;
 }
 .section-motif--toallas .motif-item--2 {
-  width: 42px;
-  height: 42px;
+  width: 40px;
+  height: 40px;
   right: 92px;
-  top: 80px;
-  opacity: 0.72;
-  animation: motifFloatB 4.2s ease-in-out infinite;
-  animation-delay: 0.4s;
+  top: 24px;
+  opacity: 0.5;
+  animation: motifSoftB 9.2s ease-in-out infinite;
+  animation-delay: 1.4s;
 }
 
-@keyframes motifFloatA {
-  0%, 100% { transform: translateY(0) rotate(-4deg); }
-  50% { transform: translateY(-10px) rotate(3deg); }
+@keyframes motifSoftA {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(-1.5deg); }
+  50% { transform: translate3d(0, -5px, 0) rotate(1.5deg); }
 }
 
-@keyframes motifFloatB {
-  0%, 100% { transform: translateY(0) rotate(5deg); }
-  50% { transform: translateY(-8px) rotate(-3deg); }
+@keyframes motifSoftB {
+  0%, 100% { transform: translate3d(0, 0, 0) rotate(2deg); }
+  50% { transform: translate3d(0, -4px, 0) rotate(-1deg); }
 }
 
 .section-card > *:not(.section-motif) {
