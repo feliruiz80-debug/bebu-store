@@ -44,6 +44,12 @@ export function findPromo(productId) {
   );
 }
 
+export function findOfferItem(productId) {
+  return (AppState.offerCard || []).find(
+    (it) => idsMatch(it.id_producto, productId) || idsMatch(it.id_imagen, productId)
+  );
+}
+
 export function skeletonCards(n = 8) {
   return Array.from({ length: n }, () => '<div class="skeleton-card" aria-hidden="true"></div>').join('');
 }

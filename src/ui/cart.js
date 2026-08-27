@@ -1,5 +1,5 @@
 import { FALLBACKS } from '../config.js';
-import { AppState, saveCartToStorage, findProduct, findPromo } from '../state.js';
+import { AppState, saveCartToStorage, findProduct, findPromo, findOfferItem } from '../state.js';
 import { el, openOverlay, closeOverlay, showToast, setBottomNav } from '../lib/dom.js';
 import { fmt, escapeHtml, escapeAttr, parsePrice, idsMatch } from '../lib/format.js';
 import { linePrice } from '../lib/sheet.js';
@@ -10,8 +10,10 @@ export function addToCart(productId, qty = 1, { silent = false } = {}) {
     if (!silent) showToast('Producto no encontrado');
     return false;
   }
+  const offer = findOfferItem(prod.id);
   const promo = findPromo(prod.id);
-  const addQty = promo?.activo && promo.cantidad > 0 ? promo.cantidad : qty;
+  const addQty =
+    offer || !(promo?.activo && promo.cantidad > 0) ? qty : promo.cantidad;
   const id = prod.id;
   const existing = AppState.cart.find((it) => idsMatch(it.id, id));
   if (existing) existing.qty += addQty;
@@ -19,10 +21,13 @@ export function addToCart(productId, qty = 1, { silent = false } = {}) {
   saveCartToStorage();
   renderCartDrawer();
   if (!silent) {
+    const sizeHint = String(prod.subcategoria || '').trim();
     showToast(
-      promo?.activo && promo.cantidad > 0
-        ? `Agregado x${promo.cantidad} al carrito`
-        : 'Agregado al carrito'
+      offer
+        ? `Agregado${sizeHint ? ` talle ${sizeHint}` : ''} al carrito`
+        : promo?.activo && promo.cantidad > 0
+          ? `Agregado x${promo.cantidad} al carrito`
+          : 'Agregado al carrito'
     );
   }
   return true;
@@ -55,8 +60,16 @@ export function computeCartTotals() {
   AppState.cart.forEach((cartItem) => {
     const prod = findProduct(cartItem.id);
     if (!prod) return;
+    const offer = findOfferItem(prod.id);
     const promo = findPromo(prod.id);
-    const priced = linePrice(cartItem.qty, prod.precio, promo);
+    const priced =
+      offer?.precio_oferta != null
+        ? {
+            unitPrice: offer.precio_oferta,
+            subtotal: offer.precio_oferta * cartItem.qty,
+            promoApplied: { cantidad: 0, oferta: true }
+          }
+        : linePrice(cartItem.qty, prod.precio, promo);
     subtotal += priced.subtotal;
     items.push({
       id: prod.id,
@@ -121,7 +134,7 @@ export function renderCartDrawer() {
       <div class="cart-item-info">
         <div class="cart-item-brand">${escapeHtml(it.product.marca)} · ${escapeHtml(it.product.subcategoria)}</div>
         <div class="cart-item-name">${escapeHtml(it.product.descripcion)}</div>
-        <div class="cart-item-price">${fmt(it.subtotal)}${it.promoApplied ? ` <span class="promo-inline">Promo x${it.promoApplied.cantidad}</span>` : ''}</div>
+        <div class="cart-item-price">${fmt(it.subtotal)}${it.promoApplied?.oferta ? ' <span class="promo-inline">Oferta</span>' : it.promoApplied ? ` <span class="promo-inline">Promo x${it.promoApplied.cantidad}</span>` : ''}</div>
       </div>
       <div class="cart-item-controls">
         <button class="qty-btn" type="button" data-action="dec" data-idx="${idx}" aria-label="Restar">−</button>

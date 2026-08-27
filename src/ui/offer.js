@@ -3,6 +3,8 @@ import { el, openOverlay, closeOverlay, showToast } from '../lib/dom.js';
 import { escapeHtml, escapeAttr, fmt, idsMatch } from '../lib/format.js';
 import { addToCart } from './cart.js';
 
+let selectedOfferId = '';
+
 function looksLikeUrl(raw) {
   return /^https?:\/\//i.test(String(raw || '').trim());
 }
@@ -17,6 +19,10 @@ function productForItem(item) {
     AppState.products.find((p) => idsMatch(p.id, item.id_imagen)) ||
     null
   );
+}
+
+function itemProductId(item) {
+  return productForItem(item)?.id || item.id_producto || '';
 }
 
 export function resolveOfferImage(item) {
@@ -64,19 +70,29 @@ function offerMeta(items) {
   };
 }
 
+function syncSelectedSizes() {
+  document.querySelectorAll('[data-action="pick-offer-size"]').forEach((node) => {
+    const on = idsMatch(node.getAttribute('data-id'), selectedOfferId);
+    node.classList.toggle('is-selected', on);
+    node.setAttribute('aria-pressed', on ? 'true' : 'false');
+  });
+}
+
 function sizeCardsHtml(items) {
   return items
     .map((item, idx) => {
       const product = productForItem(item);
+      const id = itemProductId(item);
       const src = resolveOfferImage(item);
-      const size = productSizeLabel(product);
+      const size = productSizeLabel(product) || `Opción ${idx + 1}`;
+      const selected = idsMatch(id, selectedOfferId) ? ' is-selected' : '';
       const img = src
-        ? `<img src="${escapeAttr(src)}" alt="${escapeAttr(size || product?.descripcion || '')}" draggable="false" onerror="this.style.display='none'">`
+        ? `<img src="${escapeAttr(src)}" alt="${escapeAttr(size)}" draggable="false" onerror="this.style.display='none'">`
         : `<div class="offer-fallback">${escapeHtml((product?.marca || '?')[0])}</div>`;
-      return `<div class="offer-size offer-size--${idx + 1}">
+      return `<button type="button" class="offer-size offer-size--${idx + 1}${selected}" data-action="pick-offer-size" data-id="${escapeAttr(id)}" aria-pressed="${selected ? 'true' : 'false'}">
         <div class="offer-size-photo">${img}</div>
-        ${size ? `<span class="offer-size-tag">${escapeHtml(size)}</span>` : ''}
-      </div>`;
+        <span class="offer-size-tag">${escapeHtml(size)}</span>
+      </button>`;
     })
     .join('');
 }
@@ -93,6 +109,7 @@ export function offerCardHtml(items = getOfferCardItems()) {
   return `<article class="offer-slide offer-slide--combo">
     <p class="offer-flag">Oferta</p>
     <div class="offer-sizes">${sizeCardsHtml(items)}</div>
+    <p class="offer-pick-hint">Elegí el talle</p>
     ${subtitle}
     <div class="offer-prices">${old}${now}</div>
     <button class="btn btn-add offer-add" type="button" data-action="buy-offer">Comprar</button>
@@ -110,6 +127,7 @@ export function offerPromoListHtml(items = getOfferCardItems()) {
     <div class="product-body">
       <div>
         <div class="product-name">${escapeHtml(description || 'Combo especial')}</div>
+        <p class="offer-pick-hint offer-pick-hint--mini">Elegí el talle</p>
         <div class="product-price">${old}${now}</div>
       </div>
       <div class="product-buttons">
@@ -147,15 +165,18 @@ export function maybeShowLaunchOffer() {
 }
 
 export function buyOfferCard() {
-  const items = getOfferCardItems();
-  const ids = items.map((item) => productForItem(item)?.id || item.id_producto).filter(Boolean);
-  let added = 0;
-  ids.forEach((id) => {
-    if (addToCart(id, 1, { silent: true })) added += 1;
-  });
-  if (added) showToast(added > 1 ? 'Agregados al carrito' : 'Agregado al carrito');
-  else showToast('Producto no encontrado');
-  closeLaunchOffer();
+  if (!selectedOfferId) {
+    showToast('Elegí un talle');
+    return;
+  }
+  const item = getOfferCardItems().find((it) => idsMatch(itemProductId(it), selectedOfferId));
+  const id = item ? itemProductId(item) : selectedOfferId;
+  const product = item ? productForItem(item) : null;
+  const size = productSizeLabel(product);
+  if (addToCart(id, 1, { silent: true })) {
+    showToast(size ? `Agregado talle ${size}` : 'Agregado al carrito');
+    closeLaunchOffer();
+  }
 }
 
 export function bindOfferModal() {
@@ -165,6 +186,12 @@ export function bindOfferModal() {
     if (e.target.id === 'modal-oferta') closeLaunchOffer();
   });
   document.addEventListener('click', (e) => {
+    const sizeBtn = e.target.closest('[data-action="pick-offer-size"]');
+    if (sizeBtn) {
+      selectedOfferId = sizeBtn.getAttribute('data-id') || '';
+      syncSelectedSizes();
+      return;
+    }
     if (e.target.closest('[data-action="buy-offer"]')) buyOfferCard();
   });
 }
