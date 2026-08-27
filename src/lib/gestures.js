@@ -1,7 +1,9 @@
 const DISMISS_DY = 110;
 const DISMISS_VELOCITY = 0.65;
 const EDGE_ZONE = 28;
-const BACK_DX = 72;
+const BACK_RATIO = 0.32;
+const BACK_VELOCITY = 0.55;
+const UNDER_OFFSET = 0.3; // 30% — estilo iOS
 
 function sheetEl(overlay) {
   return overlay?.querySelector('.modal-card');
@@ -123,43 +125,201 @@ export function bindSheetDismiss(overlay, onClose) {
   };
 }
 
-export function bindBackSwipe(onBack) {
+/**
+ * Gesto atrás estilo iOS: arrastra la página actual y se ve la anterior debajo.
+ * @param {{ onBack: Function, getPrevId: () => string|null }} opts
+ */
+export function bindBackSwipe(opts = {}) {
+  const onBack = typeof opts === 'function' ? opts : opts.onBack;
+  const getPrevId = typeof opts === 'function' ? null : opts.getPrevId;
   if (typeof onBack !== 'function') return () => {};
+
   let startX = 0;
   let startY = 0;
+  let lastX = 0;
+  let lastT = 0;
   let tracking = false;
+  let dragging = false;
+  let front = null;
+  let under = null;
+  let width = 0;
+
+  const clearNodeMotion = (node) => {
+    if (!node) return;
+    node.classList.remove('is-swipe-front', 'is-page-under', 'is-swipe-dragging', 'is-page-on');
+    node.style.transform = '';
+    node.style.transition = '';
+    node.style.boxShadow = '';
+    node.style.opacity = '';
+    node.style.position = '';
+    node.style.left = '';
+    node.style.right = '';
+    node.style.top = '';
+    node.style.bottom = '';
+    node.style.zIndex = '';
+    node.style.pointerEvents = '';
+    node.style.background = '';
+  };
+
+  const applyProgress = (x) => {
+    if (!front) return;
+    const w = width || window.innerWidth;
+    const p = Math.min(1, Math.max(0, x / w));
+    front.style.transform = `translate3d(${x}px, 0, 0)`;
+    front.style.boxShadow = p > 0.01 ? '-10px 0 32px rgba(60, 45, 35, 0.18)' : 'none';
+    if (under) {
+      const underX = -UNDER_OFFSET * (1 - p) * 100;
+      under.style.transform = `translate3d(${underX}%, 0, 0)`;
+      under.style.opacity = String(0.72 + p * 0.28);
+    }
+  };
+
+  const prepareUnder = () => {
+    if (!getPrevId || !front) return;
+    const id = getPrevId();
+    if (!id || id === front.id) return;
+    const node = document.getElementById(id);
+    if (!node) return;
+    under = node;
+    under.classList.add('is-page-under', 'is-page-on');
+    under.style.transition = 'none';
+    under.style.pointerEvents = 'none';
+    under.style.transform = `translate3d(${-UNDER_OFFSET * 100}%, 0, 0)`;
+    under.style.opacity = '0.72';
+  };
+
+  const resetCancel = () => {
+    if (front) {
+      front.classList.remove('is-swipe-dragging');
+      clearNodeMotion(front);
+      front.classList.add('active');
+    }
+    if (under) {
+      clearNodeMotion(under);
+      under.classList.remove('active');
+    }
+    front = null;
+    under = null;
+    dragging = false;
+  };
 
   const onStart = (e) => {
     const t = e.touches?.[0];
     if (!t) return;
     if (t.clientX > EDGE_ZONE) return;
     if (e.target.closest('.modal-overlay.is-open, .bottom-nav, input, textarea')) return;
+    if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    const active = document.querySelector('.section.active');
+    if (!active || active.id === 'home-view') return;
+    if (!getPrevId || !getPrevId()) return;
     startX = t.clientX;
     startY = t.clientY;
+    lastX = startX;
+    lastT = Date.now();
     tracking = true;
+    dragging = false;
+    front = active;
+    under = null;
+    width = window.innerWidth;
   };
 
   const onMove = (e) => {
-    if (!tracking) return;
+    if (!tracking || !front) return;
     const t = e.touches?.[0];
     if (!t) return;
-    const dx = t.clientX - startX;
+    const dx = Math.max(0, t.clientX - startX);
     const dy = Math.abs(t.clientY - startY);
-    if (dy > 48 && dy > dx) {
-      tracking = false;
-      return;
+    if (!dragging) {
+      if (dy > 48 && dy > dx) {
+        tracking = false;
+        front = null;
+        return;
+      }
+      if (dx < 8) return;
+      dragging = true;
+      front.classList.add('is-swipe-front', 'is-swipe-dragging', 'is-page-on');
+      front.style.transition = 'none';
+      prepareUnder();
     }
-    if (dx > 24) e.preventDefault();
+    e.preventDefault();
+    applyProgress(Math.min(width, dx));
+    lastX = t.clientX;
+    lastT = Date.now();
   };
 
   const onEnd = (e) => {
     if (!tracking) return;
     tracking = false;
+    if (!front) return;
+
     const t = e.changedTouches?.[0];
-    if (!t) return;
-    const dx = t.clientX - startX;
-    const dy = Math.abs(t.clientY - startY);
-    if (dx >= BACK_DX && dy < 64) onBack();
+    const dx = t ? Math.max(0, t.clientX - startX) : 0;
+    const dy = t ? Math.abs(t.clientY - startY) : 0;
+    const dt = Math.max(1, Date.now() - lastT);
+    const vx = t ? Math.max(0, (t.clientX - lastX) / dt) : 0;
+    const progress = dx / (width || window.innerWidth);
+    const shouldBack =
+      dragging &&
+      dy < 100 &&
+      (progress >= BACK_RATIO || (vx > BACK_VELOCITY && progress > 0.08));
+
+    if (shouldBack) {
+      const leaving = front;
+      const revealed = under;
+      const peekedId = revealed?.id || null;
+      front = null;
+      under = null;
+      dragging = false;
+
+      // showSection completa el slide manteniendo la página de atrás visible.
+      onBack({
+        swipeHandoff: true,
+        peekedId
+      });
+
+      // Si goBack no corrió (fallback), limpiar.
+      if (leaving?.classList.contains('is-swipe-front') || leaving?.classList.contains('is-swipe-dragging')) {
+        window.setTimeout(() => {
+          if (!leaving.classList.contains('active')) return;
+          clearNodeMotion(leaving);
+          if (revealed) clearNodeMotion(revealed);
+        }, 400);
+      }
+      return;
+    }
+
+    if (dragging) {
+      const snapFront = front;
+      const snapUnder = under;
+      const ease = '0.3s cubic-bezier(0.22, 1, 0.36, 1)';
+      if (snapFront) {
+        snapFront.style.transition = `transform ${ease}, box-shadow ${ease}`;
+        snapFront.style.transform = 'translate3d(0, 0, 0)';
+        snapFront.style.boxShadow = 'none';
+      }
+      if (snapUnder) {
+        snapUnder.style.transition = `transform ${ease}, opacity ${ease}`;
+        snapUnder.style.transform = `translate3d(${-UNDER_OFFSET * 100}%, 0, 0)`;
+        snapUnder.style.opacity = '0.72';
+      }
+      window.setTimeout(() => {
+        if (snapFront) {
+          snapFront.classList.remove('is-swipe-dragging');
+          clearNodeMotion(snapFront);
+          snapFront.classList.add('active');
+        }
+        if (snapUnder) {
+          clearNodeMotion(snapUnder);
+          snapUnder.classList.remove('active');
+        }
+        if (front === snapFront) front = null;
+        if (under === snapUnder) under = null;
+        dragging = false;
+      }, 300);
+      return;
+    }
+
+    resetCancel();
   };
 
   document.addEventListener('touchstart', onStart, { passive: true });

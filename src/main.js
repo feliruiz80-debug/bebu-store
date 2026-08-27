@@ -2,7 +2,7 @@ import './style.css';
 import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
-import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
+import { el, bindActivate, showToast, setBottomNav, setNextShowOpts } from './lib/dom.js';
 import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal, renderSectionProducts } from './ui/catalog.js';
 import { renderHomeSections, renderBrands, renderSubcategories, getSectionById } from './ui/brands.js';
 import {
@@ -56,6 +56,17 @@ function syncHeaderSpacer() {
   const spacer = el('header-spacer');
   if (!header || !spacer) return;
   spacer.style.height = `${Math.ceil(header.getBoundingClientRect().height)}px`;
+}
+
+function getPrevSectionId() {
+  const current = document.querySelector('.section.active');
+  if (!current) return null;
+  if (current.id === 'products-view') {
+    return AppState.sectionProductsDirect ? 'home-view' : 'subcats-view';
+  }
+  if (current.id === 'subcats-view') return 'brands-view';
+  if (current.id === 'brands-view') return 'home-view';
+  return null;
 }
 
 function goBack() {
@@ -244,8 +255,19 @@ function bindUI() {
   bindSheetDismiss(el('modal-promos'), closePromosModal);
   bindSheetDismiss(el('modal-carrito'), closeCartModal);
   bindSheetDismiss(el('modal-direccion'), closeDireccionModal);
-  bindBackSwipe(() => {
-    goBack();
+  bindBackSwipe({
+    getPrevId: getPrevSectionId,
+    onBack: (opts = {}) => {
+      if (opts.swipeHandoff) {
+        setNextShowOpts({
+          swipeHandoff: true,
+          direction: 'back',
+          peekedId: opts.peekedId || getPrevSectionId()
+        });
+      }
+      const didNav = goBack();
+      if (!didNav) setNextShowOpts(null);
+    }
   });
 }
 

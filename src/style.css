@@ -264,20 +264,107 @@ img { max-width: 100%; display: block; }
   padding: 12px var(--container-pad) calc(var(--bottom-nav-h) + env(safe-area-inset-bottom, 0px) + 88px);
   position: relative;
   z-index: 1;
+  overflow-x: clip;
+  isolation: isolate;
 }
 
 .section {
   display: none;
-  animation: fadeIn 0.2s ease;
 }
 
-.section.active {
+.section.active,
+.section.is-page-on,
+.section.is-page-under {
   display: block;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+.section.is-page-on {
+  position: relative;
+  width: 100%;
+  will-change: transform, opacity;
+  background: var(--bg-warm);
+}
+
+.section.is-enter-forward {
+  animation: pageInForward 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 3;
+  box-shadow: -10px 0 32px rgba(60, 45, 35, 0.14);
+}
+
+.section.is-leave-forward {
+  animation: pageOutForward 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 2;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+}
+
+.section.is-enter-back {
+  animation: pageInBack 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 2;
+}
+
+.section.is-leave-back {
+  animation: pageOutBack 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  z-index: 3;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  box-shadow: -10px 0 32px rgba(60, 45, 35, 0.18);
+}
+
+.section.is-page-under {
+  display: block !important;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  width: 100%;
+  min-height: 100%;
+  pointer-events: none;
+  background: var(--bg-warm);
+  will-change: transform, opacity;
+}
+
+.section.is-swipe-front,
+.section.is-swipe-dragging {
+  z-index: 5;
+  position: relative;
+  touch-action: pan-y;
+  background: var(--bg-warm);
+  will-change: transform;
+}
+
+@keyframes pageInForward {
+  from { transform: translate3d(100%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
+}
+
+@keyframes pageOutForward {
+  from { transform: translate3d(0, 0, 0); opacity: 1; }
+  to { transform: translate3d(-30%, 0, 0); opacity: 0.85; }
+}
+
+@keyframes pageInBack {
+  from { transform: translate3d(-30%, 0, 0); opacity: 0.85; }
+  to { transform: translate3d(0, 0, 0); opacity: 1; }
+}
+
+@keyframes pageOutBack {
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(100%, 0, 0); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .section.is-enter-forward,
+  .section.is-leave-forward,
+  .section.is-enter-back,
+  .section.is-leave-back {
+    animation: none !important;
+  }
 }
 
 .sec-label {
