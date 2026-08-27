@@ -218,16 +218,23 @@ export function mapPromos(rows) {
         pick(r, 'precio_promo', 'precio promo', 'precio pack', 'precio_pack')
       );
       const offer = mapOfferFields(r);
+      const es_tarjeta = Boolean(
+        offer.titulo || offer.precio_antes != null || offer.precio_oferta != null
+      );
+      const activoRaw = pick(r, 'activo', 'active');
+      const activo =
+        String(activoRaw).trim() === '' ? es_tarjeta : isTruthyFlag(activoRaw);
       return {
         id_promo: String(pick(r, 'id_promo', 'idpromo')).trim(),
         id_producto: padProductId(pick(r, 'id_producto', 'idproducto', 'product_id')),
         cantidad,
         precio_unidad: precioUnidad,
-        precio_promo: precioPromo ?? offer.precio_oferta,
-        activo: isTruthyFlag(pick(r, 'activo', 'active')),
+        precio_promo: precioPromo,
+        activo,
+        es_tarjeta,
         titulo: offer.titulo,
         precio_antes: offer.precio_antes,
-        precio_oferta: offer.precio_oferta ?? precioPromo,
+        precio_oferta: offer.precio_oferta,
         imagen_oferta: offer.imagen_oferta
       };
     })
@@ -286,7 +293,22 @@ export function offerPrices(promo, listPrice = 0) {
 }
 
 export function linePrice(qty, listPrice, promo) {
-  if (!promo || !promo.activo || !promo.cantidad || qty < promo.cantidad) {
+  if (!promo || !promo.activo) {
+    return { unitPrice: listPrice, subtotal: listPrice * qty, promoApplied: null };
+  }
+
+  if (promo.es_tarjeta && !(promo.cantidad > 0)) {
+    const unit = promo.precio_oferta ?? promo.precio_promo ?? listPrice;
+    return {
+      unitPrice: unit,
+      subtotal: unit * qty,
+      promoApplied: promo,
+      packs: 0,
+      rest: qty
+    };
+  }
+
+  if (!promo.cantidad || qty < promo.cantidad) {
     return { unitPrice: listPrice, subtotal: listPrice * qty, promoApplied: null };
   }
   const packs = Math.floor(qty / promo.cantidad);

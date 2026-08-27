@@ -7,13 +7,13 @@ function activeOffers() {
   const seen = new Set();
   const out = [];
   AppState.promos.forEach((pr) => {
-    if (!pr.activo || !pr.id_producto || seen.has(pr.id_producto)) return;
+    if (!pr.activo || !pr.es_tarjeta || !pr.id_producto || seen.has(pr.id_producto)) return;
     const product = AppState.products.find((p) => idsMatch(p.id, pr.id_producto));
     if (!product) return;
     seen.add(pr.id_producto);
     out.push({ promo: pr, product });
   });
-  return out;
+  return out.slice(0, 3);
 }
 
 function offerSlideHtml({ promo, product }) {
@@ -22,20 +22,17 @@ function offerSlideHtml({ promo, product }) {
   const img = imgSrc
     ? `<img src="${escapeAttr(imgSrc)}" alt="${escapeHtml(product.descripcion)}" draggable="false" onerror="this.style.display='none'">`
     : `<div class="offer-fallback">${escapeHtml((product.marca || '?')[0])}</div>`;
-  const title = promo.titulo || 'Oferta especial';
+  const title = promo.titulo || product.descripcion;
   const old = showOld ? `<span class="offer-price-old">${fmt(oldPrice)}</span>` : '';
 
   return `<article class="offer-slide" data-id="${escapeAttr(product.id)}">
     <div class="offer-kicker">Oferta</div>
     <div class="offer-visual">${img}</div>
     <h3 class="offer-title">${escapeHtml(title)}</h3>
-    <p class="offer-product">${escapeHtml(product.descripcion)}</p>
-    <p class="offer-brand">${escapeHtml(product.marca)}${product.subcategoria ? ` · ${escapeHtml(product.subcategoria)}` : ''}</p>
     <div class="offer-prices">
       ${old}
       <span class="offer-price-now">${fmt(newPrice)}</span>
     </div>
-    ${promo.cantidad > 0 ? `<span class="offer-pack">Promo x${promo.cantidad}</span>` : ''}
     <button class="btn btn-add offer-add" type="button" data-action="add" data-id="${escapeAttr(product.id)}">Agregar al carrito</button>
   </article>`;
 }
