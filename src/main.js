@@ -21,6 +21,7 @@ import {
   updateCartCounter
 } from './ui/cart.js';
 import { waForProduct } from './ui/products.js';
+import { bindOfferModal, maybeShowLaunchOffer, closeLaunchOffer, isLaunchOfferOpen } from './ui/offer.js';
 import { bindSheetDismiss, bindBackSwipe } from './lib/gestures.js';
 import { registerSW } from 'virtual:pwa-register';
 
@@ -197,9 +198,15 @@ function bindUI() {
   }
   bindProductActions(el('modal-buscar'));
   bindProductActions(el('modal-promos'));
+  bindProductActions(el('modal-oferta'));
+  bindOfferModal();
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
+      if (isLaunchOfferOpen()) {
+        closeLaunchOffer();
+        return;
+      }
       closeDireccionModal();
       closeCartModal();
       closeSearchModal();
@@ -333,6 +340,7 @@ async function bootstrap() {
     applyTheme(AppState.config);
     renderHomeSections();
     updateCartCounter();
+    maybeShowLaunchOffer();
     if (Object.keys(data.errors).length) {
       showToast(`No se pudo leer: ${Object.keys(data.errors).join(', ')}`, 4000);
     }

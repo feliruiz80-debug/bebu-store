@@ -1,18 +1,22 @@
 import { FALLBACKS } from '../config.js';
 import { AppState, findProduct, findPromo } from '../state.js';
 import { fmt, escapeHtml, escapeAttr } from '../lib/format.js';
-import { promoDisplayPrice } from '../lib/sheet.js';
+import { promoDisplayPrice, offerPrices } from '../lib/sheet.js';
+
+export function productPriceHtml(p, promo = findPromo(p.id)) {
+  const promoPrice = promoDisplayPrice(promo, p.precio);
+  if (promoPrice == null) return `<div class="product-price">${fmt(p.precio)}</div>`;
+  const { oldPrice, newPrice, showOld } = offerPrices(promo, p.precio);
+  const old = showOld ? `<span class="price-old">${fmt(oldPrice)}</span>` : '';
+  return `<div class="product-price">${old}<span class="price-now">${fmt(newPrice)}</span> <span class="promo-inline">Promo x${promo.cantidad}</span></div>`;
+}
 
 export function productCardHtml(p) {
   const promo = findPromo(p.id);
-  const promoPrice = promoDisplayPrice(promo, p.precio);
   const img = p.imagen
     ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">`
     : '';
-  const priceHtml =
-    promoPrice != null
-      ? `<div class="product-price">${fmt(promoPrice)} <span class="promo-inline">Promo x${promo.cantidad}</span></div>`
-      : `<div class="product-price">${fmt(p.precio)}</div>`;
+  const priceHtml = productPriceHtml(p, promo);
 
   return `<article class="product-card" data-id="${escapeAttr(p.id)}">
     <div class="product-img">${img}</div>

@@ -2,7 +2,7 @@ import { AppState, findPromo } from '../state.js';
 import { el, showSection } from '../lib/dom.js';
 import { escapeHtml, escapeAttr, idsMatch, fmt } from '../lib/format.js';
 import { FALLBACKS, HOME_SECTIONS } from '../config.js';
-import { promoDisplayPrice } from '../lib/sheet.js';
+import { promoDisplayPrice, offerPrices } from '../lib/sheet.js';
 
 export function getSectionById(id) {
   return HOME_SECTIONS.find((s) => s.id === id) || null;
@@ -47,6 +47,7 @@ function sectionMotifHtml(motif) {
 
 function carouselCardHtml(p) {
   const promo = findPromo(p.id);
+  const { oldPrice, newPrice, showOld } = offerPrices(promo, p.precio);
   const price = promoDisplayPrice(promo, p.precio) ?? p.precio;
   const promoQty =
     promo?.activo && promo.cantidad > 0
@@ -55,6 +56,7 @@ function carouselCardHtml(p) {
   const img = p.imagen
     ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">`
     : `<div class="carousel-card-fallback">${escapeHtml((p.marca || '?')[0])}</div>`;
+  const oldHtml = showOld ? `<span class="carousel-card-price-old">${fmt(oldPrice)}</span>` : '';
 
   return `<article class="carousel-card${promoQty ? ' carousel-card--promo' : ''}" data-id="${escapeAttr(p.id)}">
     <div class="carousel-card-img">${img}</div>
@@ -63,7 +65,8 @@ function carouselCardHtml(p) {
       <div class="carousel-card-name">${escapeHtml(p.descripcion)}</div>
       <div class="carousel-card-meta">
         <div class="carousel-card-pricing">
-          <span class="carousel-card-price">${fmt(price)}</span>
+          ${oldHtml}
+          <span class="carousel-card-price">${fmt(showOld ? newPrice : price)}</span>
           ${promoQty}
         </div>
         <button class="btn btn-add carousel-card-add" type="button" data-action="add" data-id="${escapeAttr(p.id)}" aria-label="Agregar al carrito">+</button>

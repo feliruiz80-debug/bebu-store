@@ -8,7 +8,7 @@ export const SHEETS = {
 };
 
 export const SHEET_TTL_MS = 60 * 1000;
-export const CACHE_VERSION = 'v3';
+export const CACHE_VERSION = 'v4';
 
 export const FALLBACKS = {
   WHATSAPP: '543517604762',

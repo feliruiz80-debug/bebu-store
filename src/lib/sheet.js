@@ -49,16 +49,69 @@ function parseCsv(text) {
   return rows;
 }
 
+function colLetter(index) {
+  let n = index + 1;
+  let s = '';
+  while (n > 0) {
+    s = String.fromCharCode(97 + ((n - 1) % 26)) + s;
+    n = Math.floor((n - 1) / 26);
+  }
+  return s;
+}
+
 function rowsToObjects(rows) {
   if (!rows.length) return [];
   const headers = rows[0].map(normalizeHeader);
   return rows.slice(1).map((r) => {
     const obj = {};
-    headers.forEach((h, i) => {
-      obj[h || `col${i}`] = r[i] ?? '';
-    });
+    const n = Math.max(headers.length, r.length);
+    for (let i = 0; i < n; i++) {
+      const value = r[i] ?? '';
+      obj[headers[i] || `col${i}`] = value;
+      obj[`col_${colLetter(i)}`] = value;
+    }
     return obj;
   });
+}
+
+function looksLikeUrl(raw) {
+  return /^https?:\/\//i.test(String(raw || '').trim());
+}
+
+function mapOfferFields(r) {
+  const namedTitulo = String(pick(r, 'titulo_oferta', 'titulo', 'headline')).trim();
+  const namedAntes = parsePrice(
+    pick(r, 'precio_antes', 'precio_anterior', 'precio_tachado', 'old_price')
+  );
+  const namedOferta = parsePrice(pick(r, 'precio_oferta', 'precio_nuevo'));
+  const namedImg = String(pick(r, 'imagen_oferta', 'url_oferta', 'url_imagen_oferta')).trim();
+
+  const h = String(r.col_h ?? '').trim();
+  const i = String(r.col_i ?? '').trim();
+  const j = String(r.col_j ?? '').trim();
+  const hPrice = parsePrice(h);
+  const iPrice = parsePrice(i);
+  const jPrice = parsePrice(j);
+
+  let titulo = namedTitulo;
+  let precio_antes = namedAntes;
+  let precio_oferta = namedOferta;
+  let imagen_oferta = namedImg;
+
+  if (h && hPrice == null && !looksLikeUrl(h)) {
+    if (!titulo) titulo = h;
+    if (precio_antes == null) precio_antes = iPrice;
+    if (precio_oferta == null) precio_oferta = jPrice;
+    if (!imagen_oferta && looksLikeUrl(j)) imagen_oferta = j;
+  } else {
+    if (precio_antes == null) precio_antes = hPrice;
+    if (precio_oferta == null) precio_oferta = iPrice ?? (jPrice != null && hPrice != null ? jPrice : null);
+    if (!titulo && j && jPrice == null && !looksLikeUrl(j)) titulo = j;
+    if (!imagen_oferta && looksLikeUrl(j)) imagen_oferta = j;
+    if (!imagen_oferta && looksLikeUrl(h)) imagen_oferta = h;
+  }
+
+  return { titulo, precio_antes, precio_oferta, imagen_oferta };
 }
 
 function getCached(key) {
@@ -164,13 +217,18 @@ export function mapPromos(rows) {
       const precioPromo = parsePrice(
         pick(r, 'precio_promo', 'precio promo', 'precio pack', 'precio_pack')
       );
+      const offer = mapOfferFields(r);
       return {
         id_promo: String(pick(r, 'id_promo', 'idpromo')).trim(),
         id_producto: padProductId(pick(r, 'id_producto', 'idproducto', 'product_id')),
         cantidad,
         precio_unidad: precioUnidad,
-        precio_promo: precioPromo,
-        activo: isTruthyFlag(pick(r, 'activo', 'active'))
+        precio_promo: precioPromo ?? offer.precio_oferta,
+        activo: isTruthyFlag(pick(r, 'activo', 'active')),
+        titulo: offer.titulo,
+        precio_antes: offer.precio_antes,
+        precio_oferta: offer.precio_oferta ?? precioPromo,
+        imagen_oferta: offer.imagen_oferta
       };
     })
     .filter((p) => p.id_producto);
@@ -203,11 +261,28 @@ export async function loadAllData() {
 
 export function promoDisplayPrice(promo, listPrice = 0) {
   if (!promo || !promo.activo) return null;
+  if (promo.precio_oferta != null) return promo.precio_oferta;
   if (promo.precio_promo != null) return promo.precio_promo;
   if (promo.precio_unidad != null && promo.cantidad > 0) {
     return promo.precio_unidad * promo.cantidad;
   }
   return listPrice;
+}
+
+export function offerPrices(promo, listPrice = 0) {
+  if (!promo || !promo.activo) {
+    return { oldPrice: listPrice, newPrice: listPrice, showOld: false };
+  }
+  const qty = promo.cantidad > 0 ? promo.cantidad : 1;
+  const newPrice = promoDisplayPrice(promo, listPrice);
+  const oldPrice =
+    promo.precio_antes != null
+      ? promo.precio_antes
+      : listPrice > 0
+        ? listPrice * qty
+        : null;
+  const showOld = oldPrice != null && newPrice != null && oldPrice > newPrice;
+  return { oldPrice, newPrice, showOld, qty };
 }
 
 export function linePrice(qty, listPrice, promo) {
@@ -217,9 +292,11 @@ export function linePrice(qty, listPrice, promo) {
   const packs = Math.floor(qty / promo.cantidad);
   const rest = qty % promo.cantidad;
   const packTotal =
-    promo.precio_promo != null
-      ? promo.precio_promo
-      : (promo.precio_unidad || listPrice) * promo.cantidad;
+    promo.precio_oferta != null
+      ? promo.precio_oferta
+      : promo.precio_promo != null
+        ? promo.precio_promo
+        : (promo.precio_unidad || listPrice) * promo.cantidad;
   const unitInPromo =
     promo.precio_unidad != null ? promo.precio_unidad : packTotal / promo.cantidad;
   const subtotal = packs * packTotal + rest * listPrice;
