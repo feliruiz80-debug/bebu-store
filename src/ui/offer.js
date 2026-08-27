@@ -37,8 +37,19 @@ export function productSizeLabel(product) {
   return '';
 }
 
+export function descriptionWithoutSize(text) {
+  return String(text || '')
+    .replace(/\btalle\s*/gi, '')
+    .replace(/\b(xxg|xg|xxl|xl|rn|nb|[pmgn])\b/gi, ' ')
+    .replace(/\s*[·|,/-]\s*$/g, '')
+    .replace(/\s{2,}/g, ' ')
+    .trim();
+}
+
 function offerMeta(items) {
-  const title = items.map((i) => i.titulo).find(Boolean) || '';
+  const sheetTitle = items.map((i) => i.titulo).find(Boolean) || '';
+  const product = items.map(productForItem).find(Boolean);
+  const description = descriptionWithoutSize(sheetTitle || product?.descripcion || '');
   const olds = items.map((i) => i.precio_antes).filter((n) => n != null);
   const news = items.map((i) => i.precio_oferta).filter((n) => n != null);
   const uniqueOld = [...new Set(olds)];
@@ -46,7 +57,7 @@ function offerMeta(items) {
   const oldPrice = uniqueOld.length === 1 ? uniqueOld[0] : olds.length ? olds.reduce((s, n) => s + n, 0) : null;
   const newPrice = uniqueNew.length === 1 ? uniqueNew[0] : news.length ? news.reduce((s, n) => s + n, 0) : null;
   return {
-    title,
+    description,
     oldPrice,
     newPrice,
     showOld: oldPrice != null && newPrice != null && oldPrice > newPrice
@@ -72,10 +83,12 @@ function sizeCardsHtml(items) {
 
 export function offerCardHtml(items = getOfferCardItems()) {
   if (!items.length) return '';
-  const { title, oldPrice, newPrice, showOld } = offerMeta(items);
+  const { description, oldPrice, newPrice, showOld } = offerMeta(items);
   const old = showOld ? `<span class="offer-price-old">${fmt(oldPrice)}</span>` : '';
   const now = newPrice != null ? `<span class="offer-price-now">${fmt(newPrice)}</span>` : '';
-  const subtitle = title ? `<p class="offer-subtitle">${escapeHtml(title)}</p>` : '';
+  const subtitle = description
+    ? `<p class="offer-subtitle">${escapeHtml(description)}</p>`
+    : '';
 
   return `<article class="offer-slide offer-slide--combo">
     <p class="offer-flag">Oferta</p>
@@ -88,7 +101,7 @@ export function offerCardHtml(items = getOfferCardItems()) {
 
 export function offerPromoListHtml(items = getOfferCardItems()) {
   if (!items.length) return '';
-  const { title, oldPrice, newPrice, showOld } = offerMeta(items);
+  const { description, oldPrice, newPrice, showOld } = offerMeta(items);
   const old = showOld ? `<span class="price-old">${fmt(oldPrice)}</span>` : '';
   const now = newPrice != null ? `<span class="price-now">${fmt(newPrice)}</span>` : '';
 
@@ -96,8 +109,7 @@ export function offerPromoListHtml(items = getOfferCardItems()) {
     <div class="offer-promo-photos">${sizeCardsHtml(items)}</div>
     <div class="product-body">
       <div>
-        <div class="offer-flag offer-flag--mini">Oferta</div>
-        <div class="product-name">${escapeHtml(title || 'Combo especial')}</div>
+        <div class="product-name">${escapeHtml(description || 'Combo especial')}</div>
         <div class="product-price">${old}${now}</div>
       </div>
       <div class="product-buttons">
