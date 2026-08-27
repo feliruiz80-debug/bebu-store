@@ -513,11 +513,16 @@ img { max-width: 100%; display: block; }
 }
 
 .section-card--primary {
-  min-height: 148px;
+  min-height: 168px;
+  padding-right: 86px;
 }
 
 .section-card--primary .section-card-title {
   font-size: 18px;
+}
+
+.section-card--primary > *:not(.section-motif) {
+  max-width: 100%;
 }
 
 .section-card::before {
@@ -581,41 +586,39 @@ img { max-width: 100%; display: block; }
   animation-delay: 1.2s;
 }
 
-/* —— Algodones + Óleo —— */
+/* —— Algodones + Óleo: en el hueco derecho, no detrás del texto —— */
 .section-motif--algodones .motif-item--1 {
-  width: 64px;
-  height: 64px;
-  right: 18px;
-  top: 22px;
+  width: 58px;
+  height: 58px;
+  right: 14px;
+  top: 18px;
+  left: auto;
   animation: motifSoftA 8s ease-in-out infinite;
 }
 .section-motif--algodones .motif-item--2 {
-  width: 52px;
-  height: 52px;
-  right: 78px;
-  top: 78px;
-  opacity: 0.9;
+  width: 50px;
+  height: 50px;
+  right: 14px;
+  top: auto;
+  bottom: 16px;
+  left: auto;
+  opacity: 0.95;
   animation: motifSoftB 9s ease-in-out infinite;
   animation-delay: 1.6s;
 }
 
-/* —— Toallas —— */
+/* —— Toallas: una sola imagen en el hueco —— */
 .section-motif--toallas .motif-item--1 {
-  width: 66px;
-  height: 66px;
-  right: 16px;
+  width: 72px;
+  height: 72px;
+  right: 12px;
   top: 50%;
-  margin-top: -33px;
+  margin-top: -36px;
+  left: auto;
   animation: motifSoftA 8.2s ease-in-out infinite;
 }
 .section-motif--toallas .motif-item--2 {
-  width: 40px;
-  height: 40px;
-  right: 92px;
-  top: 24px;
-  opacity: 0.5;
-  animation: motifSoftB 9.2s ease-in-out infinite;
-  animation-delay: 1.4s;
+  display: none;
 }
 
 @keyframes motifSoftA {
