@@ -1,7 +1,8 @@
-import { AppState } from '../state.js';
+import { AppState, findPromo } from '../state.js';
 import { el, showSection } from '../lib/dom.js';
-import { escapeHtml, escapeAttr, idsMatch } from '../lib/format.js';
+import { escapeHtml, escapeAttr, idsMatch, fmt } from '../lib/format.js';
 import { FALLBACKS, HOME_SECTIONS } from '../config.js';
+import { linePrice } from '../lib/sheet.js';
 
 export function getSectionById(id) {
   return HOME_SECTIONS.find((s) => s.id === id) || null;
@@ -17,12 +18,67 @@ export function productsForSection(section = getSectionById(AppState.currentSecc
   });
 }
 
+function carouselCardHtml(p) {
+  const promo = findPromo(p.id);
+  const pricing = linePrice(promo?.cantidad || 1, p.precio, promo);
+  const price = promo ? pricing.unitPrice : p.precio;
+  const img = p.imagen
+    ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+    : `<div class="carousel-card-fallback">${escapeHtml((p.marca || '?')[0])}</div>`;
+
+  return `<article class="carousel-card" data-id="${escapeAttr(p.id)}">
+    <div class="carousel-card-img">${img}</div>
+    <div class="carousel-card-body">
+      <div class="carousel-card-name">${escapeHtml(p.descripcion)}</div>
+      <div class="carousel-card-meta">
+        <span class="carousel-card-price">${fmt(price)}</span>
+        <button class="btn btn-add carousel-card-add" type="button" data-action="add" data-id="${escapeAttr(p.id)}">+</button>
+      </div>
+    </div>
+  </article>`;
+}
+
+function renderHomeCarousels() {
+  const root = el('home-carousels');
+  if (!root) return;
+
+  root.innerHTML = HOME_SECTIONS.map((section) => {
+    const list = productsForSection(section).slice(0, 14);
+    if (!list.length) return '';
+    const cards = list.map(carouselCardHtml).join('');
+    const seconds = Math.max(28, list.length * 3.2);
+    return `<div class="home-carousel" data-section="${escapeAttr(section.id)}" style="--carousel-duration: ${seconds}s; --section-accent: ${section.accent}">
+      <div class="home-carousel-label">${escapeHtml(section.title)}</div>
+      <div class="home-carousel-viewport">
+        <div class="home-carousel-track">
+          <div class="home-carousel-group">${cards}</div>
+          <div class="home-carousel-group" aria-hidden="true">${cards}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+
+  root.querySelectorAll('.home-carousel-viewport').forEach((viewport) => {
+    const track = viewport.querySelector('.home-carousel-track');
+    if (!track) return;
+    const pause = () => track.classList.add('is-paused');
+    const resume = () => track.classList.remove('is-paused');
+    viewport.addEventListener('pointerdown', pause);
+    viewport.addEventListener('pointerup', resume);
+    viewport.addEventListener('pointerleave', resume);
+    viewport.addEventListener('touchstart', pause, { passive: true });
+    viewport.addEventListener('touchend', resume, { passive: true });
+  });
+}
+
 export function renderHomeSections() {
   const container = el('sections-grid');
   if (!container) return;
 
   AppState.currentSeccion = null;
   AppState.currentMarca = null;
+
+  renderHomeCarousels();
 
   container.innerHTML = HOME_SECTIONS.map((section) => {
     const qty = productsForSection(section).length;
