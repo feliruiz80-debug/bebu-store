@@ -78,6 +78,13 @@ function looksLikeUrl(raw) {
   return /^https?:\/\//i.test(String(raw || '').trim());
 }
 
+function parseIdList(raw) {
+  return String(raw || '')
+    .split(/[,;|/]+|\s+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function mapOfferFields(r) {
   const h = String(r.col_h ?? '').trim();
   const i = String(r.col_i ?? '').trim();
@@ -102,12 +109,13 @@ function mapOfferFields(r) {
     else if (precio_oferta == null) precio_oferta = jPrice;
   }
 
+  const ids = parseIdList(k);
   return {
     titulo,
     precio_antes,
     precio_oferta,
-    id_imagen: k,
-    es_tarjeta: Boolean(h || i || j)
+    ids,
+    es_tarjeta: Boolean(h || i || j || ids.length)
   };
 }
 
@@ -227,20 +235,38 @@ export function mapPromos(rows) {
 }
 
 export function mapOfferCard(rows) {
-  return rows
-    .map((r) => {
-      const offer = mapOfferFields(r);
-      if (!offer.es_tarjeta) return null;
-      return {
+  const seen = new Set();
+  const items = [];
+  let titulo = '';
+  let precio_antes = null;
+  let precio_oferta = null;
+
+  rows.forEach((r) => {
+    const offer = mapOfferFields(r);
+    if (!offer.es_tarjeta) return;
+    if (offer.titulo) titulo = offer.titulo;
+    if (offer.precio_antes != null) precio_antes = offer.precio_antes;
+    if (offer.precio_oferta != null) precio_oferta = offer.precio_oferta;
+    offer.ids.forEach((rawId) => {
+      const id = padProductId(rawId);
+      if (!id || seen.has(id) || items.length >= 3) return;
+      seen.add(id);
+      items.push({
         titulo: offer.titulo,
         precio_antes: offer.precio_antes,
         precio_oferta: offer.precio_oferta,
-        id_imagen: offer.id_imagen,
-        id_producto: padProductId(offer.id_imagen)
-      };
-    })
-    .filter(Boolean)
-    .slice(0, 3);
+        id_imagen: rawId,
+        id_producto: id
+      });
+    });
+  });
+
+  return items.map((item) => ({
+    ...item,
+    titulo: item.titulo || titulo,
+    precio_antes: item.precio_antes ?? precio_antes,
+    precio_oferta: item.precio_oferta ?? precio_oferta
+  }));
 }
 
 export async function loadAllData() {

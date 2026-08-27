@@ -27,12 +27,24 @@ export function resolveOfferImage(item) {
   return '';
 }
 
+export function productSizeLabel(product) {
+  if (!product) return '';
+  const blob = `${product.descripcion || ''} ${product.subcategoria || ''}`;
+  const m = blob.match(/\b(XXG|XG|XXL|XL|RN|NB|[PMGN])\b/i);
+  if (m) return m[1].toUpperCase();
+  const sub = String(product.subcategoria || '').trim();
+  if (sub && !/^general$/i.test(sub)) return sub;
+  return '';
+}
+
 function offerMeta(items) {
-  const title = items.map((i) => i.titulo).find(Boolean) || 'Oferta especial';
+  const title = items.map((i) => i.titulo).find(Boolean) || '';
   const olds = items.map((i) => i.precio_antes).filter((n) => n != null);
   const news = items.map((i) => i.precio_oferta).filter((n) => n != null);
-  const oldPrice = olds.length ? olds.reduce((s, n) => s + n, 0) : null;
-  const newPrice = news.length ? news.reduce((s, n) => s + n, 0) : null;
+  const uniqueOld = [...new Set(olds)];
+  const uniqueNew = [...new Set(news)];
+  const oldPrice = uniqueOld.length === 1 ? uniqueOld[0] : olds.length ? olds.reduce((s, n) => s + n, 0) : null;
+  const newPrice = uniqueNew.length === 1 ? uniqueNew[0] : news.length ? news.reduce((s, n) => s + n, 0) : null;
   return {
     title,
     oldPrice,
@@ -41,12 +53,19 @@ function offerMeta(items) {
   };
 }
 
-function photosHtml(items, extraClass = '') {
+function sizeCardsHtml(items) {
   return items
     .map((item, idx) => {
+      const product = productForItem(item);
       const src = resolveOfferImage(item);
-      if (!src) return '';
-      return `<img class="offer-float-item offer-float-item--${idx + 1} ${extraClass}" src="${escapeAttr(src)}" alt="" draggable="false" onerror="this.style.display='none'">`;
+      const size = productSizeLabel(product);
+      const img = src
+        ? `<img src="${escapeAttr(src)}" alt="${escapeAttr(size || product?.descripcion || '')}" draggable="false" onerror="this.style.display='none'">`
+        : `<div class="offer-fallback">${escapeHtml((product?.marca || '?')[0])}</div>`;
+      return `<div class="offer-size offer-size--${idx + 1}">
+        <div class="offer-size-photo">${img}</div>
+        ${size ? `<span class="offer-size-tag">${escapeHtml(size)}</span>` : ''}
+      </div>`;
     })
     .join('');
 }
@@ -56,11 +75,12 @@ export function offerCardHtml(items = getOfferCardItems()) {
   const { title, oldPrice, newPrice, showOld } = offerMeta(items);
   const old = showOld ? `<span class="offer-price-old">${fmt(oldPrice)}</span>` : '';
   const now = newPrice != null ? `<span class="offer-price-now">${fmt(newPrice)}</span>` : '';
+  const subtitle = title ? `<p class="offer-subtitle">${escapeHtml(title)}</p>` : '';
 
   return `<article class="offer-slide offer-slide--combo">
-    <p class="offer-kicker">Solo por tiempo limitado</p>
-    <div class="offer-float" aria-hidden="true">${photosHtml(items)}</div>
-    <h3 class="offer-title">${escapeHtml(title)}</h3>
+    <p class="offer-flag">Oferta</p>
+    <div class="offer-sizes">${sizeCardsHtml(items)}</div>
+    ${subtitle}
     <div class="offer-prices">${old}${now}</div>
     <button class="btn btn-add offer-add" type="button" data-action="buy-offer">Comprar</button>
   </article>`;
@@ -73,11 +93,11 @@ export function offerPromoListHtml(items = getOfferCardItems()) {
   const now = newPrice != null ? `<span class="price-now">${fmt(newPrice)}</span>` : '';
 
   return `<article class="product-card offer-promo-row">
-    <div class="offer-promo-photos" aria-hidden="true">${photosHtml(items, 'offer-promo-photo')}</div>
+    <div class="offer-promo-photos">${sizeCardsHtml(items)}</div>
     <div class="product-body">
       <div>
-        <div class="product-brand">Oferta especial</div>
-        <div class="product-name">${escapeHtml(title)}</div>
+        <div class="offer-flag offer-flag--mini">Oferta</div>
+        <div class="product-name">${escapeHtml(title || 'Combo especial')}</div>
         <div class="product-price">${old}${now}</div>
       </div>
       <div class="product-buttons">
