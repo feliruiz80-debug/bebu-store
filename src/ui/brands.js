@@ -1,7 +1,7 @@
 import { AppState } from '../state.js';
 import { el, showSection } from '../lib/dom.js';
 import { escapeHtml, escapeAttr, idsMatch } from '../lib/format.js';
-import { FALLBACKS, HOME_SECTIONS } from '../config.js';
+import { FALLBACKS, HOME_SECTIONS, productMatchesSection } from '../config.js';
 import { sectionMotifIllustrations } from './section-motifs.js';
 
 export function getSectionById(id) {
@@ -10,12 +10,7 @@ export function getSectionById(id) {
 
 export function productsForSection(section = getSectionById(AppState.currentSeccion)) {
   if (!section) return AppState.products;
-  return AppState.products.filter((p) => {
-    if (section.matchSubcat) return section.matchSubcat.test(p.subcategoria || '');
-    if (section.marcas?.length && !section.marcas.includes(p.marca)) return false;
-    if (section.excludeSubcat?.test(p.subcategoria || '')) return false;
-    return true;
-  });
+  return AppState.products.filter((p) => productMatchesSection(p, section));
 }
 
 export function renderHomeSections() {
