@@ -2075,7 +2075,7 @@ html[data-font-scale="large"] {
 }
 
 .offer-flag {
-  margin: 10px 0 4px;
+  margin: 10px 0 6px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -2180,7 +2180,7 @@ html[data-font-scale="large"] {
 }
 
 .offer-subtitle {
-  margin: 4px 0 0;
+  margin: 0 0 8px;
   font-family: var(--font-ui);
   font-size: clamp(18px, 5.2vw, 26px);
   font-weight: 800;

@@ -108,9 +108,9 @@ export function offerCardHtml(items = getOfferCardItems()) {
 
   return `<article class="offer-slide offer-slide--combo">
     <p class="offer-flag">Oferta</p>
+    ${subtitle}
     <div class="offer-sizes">${sizeCardsHtml(items)}</div>
     <p class="offer-pick-hint">Elegí el talle</p>
-    ${subtitle}
     <div class="offer-prices">${old}${now}</div>
     <button class="btn btn-add offer-add" type="button" data-action="buy-offer">Comprar</button>
   </article>`;
