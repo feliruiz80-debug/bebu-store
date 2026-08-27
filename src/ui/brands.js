@@ -18,33 +18,85 @@ export function productsForSection(section = getSectionById(AppState.currentSecc
   });
 }
 
-/** Pick up to 3 distinct product photos for the floating home motifs. */
-export function motifProductsForSection(section, limit = 3) {
-  const withImg = productsForSection(section).filter((p) => p.imagen);
-  if (!withImg.length) return [];
-
-  const picked = [];
-  const seenUrl = new Set();
-  const seenMarca = new Set();
-
-  // Prefer brand diversity first (e.g. Pampers + Huggies + Babysec on Pañales).
-  for (const p of withImg) {
-    if (picked.length >= limit) break;
-    const url = p.imagen;
-    if (seenUrl.has(url) || seenMarca.has(p.marca)) continue;
-    seenUrl.add(url);
-    seenMarca.add(p.marca);
-    picked.push(p);
+function sectionMotifHtml(motif, uid = 'm') {
+  if (motif === 'panales') {
+    return `
+      <span class="motif-item motif-item--1 motif-illu motif-illu--diaper">
+        <svg viewBox="0 0 64 56" fill="none" aria-hidden="true">
+          <path d="M8 18c0-6 6-10 14-10h20c8 0 14 4 14 10v8c0 12-10 22-24 22S8 38 8 26v-8z" fill="url(#${uid}-d1)"/>
+          <path d="M14 20h36c1.5 0 2.5 1.4 2 2.8l-3 9.2c-1.2 3.6-4.6 6-8.4 6H23.4c-3.8 0-7.2-2.4-8.4-6l-3-9.2c-.5-1.4.5-2.8 2-2.8z" fill="#fff" opacity=".88"/>
+          <circle cx="24" cy="30" r="2.2" fill="currentColor"/>
+          <circle cx="40" cy="30" r="2.2" fill="currentColor"/>
+          <defs><linearGradient id="${uid}-d1" x1="8" y1="8" x2="56" y2="48"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        </svg>
+      </span>
+      <span class="motif-item motif-item--2 motif-illu motif-illu--diaper">
+        <svg viewBox="0 0 64 56" fill="none" aria-hidden="true">
+          <path d="M10 16c0-5 5-9 12-9h20c7 0 12 4 12 9v9c0 11-9 20-22 20S10 36 10 25v-9z" fill="url(#${uid}-d2)"/>
+          <path d="M16 19h32c1.2 0 2 1.1 1.6 2.2l-2.4 7.4c-1 3-3.8 5-7 5H23.8c-3.2 0-6-2-7-5l-2.4-7.4c-.4-1.1.4-2.2 1.6-2.2z" fill="#fff" opacity=".9"/>
+          <defs><linearGradient id="${uid}-d2" x1="10" y1="7" x2="54" y2="45"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        </svg>
+      </span>
+      <span class="motif-item motif-item--3 motif-illu motif-illu--diaper">
+        <svg viewBox="0 0 64 56" fill="none" aria-hidden="true">
+          <path d="M12 18c0-4 4-8 10-8h20c6 0 10 4 10 8v8c0 10-8 18-20 18S12 36 12 26v-8z" fill="url(#${uid}-d3)"/>
+          <defs><linearGradient id="${uid}-d3" x1="12" y1="10" x2="52" y2="44"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        </svg>
+      </span>`;
   }
 
-  for (const p of withImg) {
-    if (picked.length >= limit) break;
-    if (seenUrl.has(p.imagen)) continue;
-    seenUrl.add(p.imagen);
-    picked.push(p);
+  if (motif === 'algodones') {
+    return `
+      <span class="motif-item motif-item--1 motif-illu motif-illu--cotton">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <circle cx="32" cy="28" r="14" fill="#fff"/>
+          <circle cx="22" cy="34" r="11" fill="#fff"/>
+          <circle cx="42" cy="34" r="11" fill="#fff"/>
+          <circle cx="32" cy="40" r="10" fill="url(#${uid}-c1)"/>
+          <path d="M30 44v12M34 44v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
+          <defs><radialGradient id="${uid}-c1" cx=".35" cy=".3" r=".75"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></radialGradient></defs>
+        </svg>
+      </span>
+      <span class="motif-item motif-item--2 motif-illu motif-illu--drop">
+        <svg viewBox="0 0 48 64" fill="none" aria-hidden="true">
+          <path d="M24 6c10 14 18 24 18 34a18 18 0 1 1-36 0c0-10 8-20 18-34z" fill="url(#${uid}-o1)"/>
+          <ellipse cx="18" cy="36" rx="5" ry="8" fill="#fff" opacity=".45"/>
+          <defs><linearGradient id="${uid}-o1" x1="12" y1="8" x2="36" y2="56"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        </svg>
+      </span>
+      <span class="motif-item motif-item--3 motif-illu motif-illu--cotton">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <circle cx="32" cy="30" r="12" fill="#fff"/>
+          <circle cx="23" cy="35" r="9" fill="#fff"/>
+          <circle cx="41" cy="35" r="9" fill="url(#${uid}-c2)"/>
+          <defs><radialGradient id="${uid}-c2" cx=".4" cy=".3" r=".8"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></radialGradient></defs>
+        </svg>
+      </span>`;
   }
 
-  return picked;
+  return `
+    <span class="motif-item motif-item--1 motif-illu motif-illu--wipe">
+      <svg viewBox="0 0 72 52" fill="none" aria-hidden="true">
+        <rect x="6" y="10" width="52" height="34" rx="8" fill="url(#${uid}-w1)" transform="rotate(-8 32 27)"/>
+        <rect x="14" y="8" width="52" height="34" rx="8" fill="#fff" opacity=".92" transform="rotate(6 40 25)"/>
+        <path d="M22 20h28M22 28h22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>
+        <defs><linearGradient id="${uid}-w1" x1="6" y1="10" x2="58" y2="44"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+      </svg>
+    </span>
+    <span class="motif-item motif-item--2 motif-illu motif-illu--wipe">
+      <svg viewBox="0 0 72 52" fill="none" aria-hidden="true">
+        <rect x="10" y="12" width="48" height="30" rx="7" fill="url(#${uid}-w2)" transform="rotate(-12 34 27)"/>
+        <rect x="18" y="10" width="48" height="30" rx="7" fill="#fff" opacity=".9" transform="rotate(4 42 25)"/>
+        <defs><linearGradient id="${uid}-w2" x1="10" y1="12" x2="58" y2="42"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+      </svg>
+    </span>
+    <span class="motif-item motif-item--3 motif-illu motif-illu--wipe">
+      <svg viewBox="0 0 72 52" fill="none" aria-hidden="true">
+        <rect x="16" y="14" width="42" height="26" rx="6" fill="#fff" opacity=".95" transform="rotate(-4 37 27)"/>
+        <rect x="20" y="12" width="42" height="26" rx="6" fill="url(#${uid}-w3)" transform="rotate(8 41 25)"/>
+        <defs><linearGradient id="${uid}-w3" x1="20" y1="12" x2="62" y2="38"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+      </svg>
+    </span>`;
 }
 
 function carouselCardHtml(p) {
@@ -275,20 +327,9 @@ export function renderHomeSections() {
     const qty = products.length;
     const size = section.size || 'primary';
     const motif = section.motif || section.id;
-    const motifs = motifProductsForSection(section, 3);
-    const motifHtml = motifs.length
-      ? motifs
-          .map(
-            (p, i) =>
-              `<span class="motif-item motif-item--${i + 1}">
-                <img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" decoding="async" draggable="false" onerror="this.closest('.motif-item')?.remove()">
-              </span>`
-          )
-          .join('')
-      : '';
 
     return `<button type="button" class="section-card section-card--${escapeAttr(size)}" data-section="${escapeAttr(section.id)}" style="--section-accent: ${section.accent}">
-      <span class="section-motif section-motif--${escapeAttr(motif)}" aria-hidden="true">${motifHtml}</span>
+      <span class="section-motif section-motif--${escapeAttr(motif)}" aria-hidden="true">${sectionMotifHtml(motif, section.id)}</span>
       <span class="section-card-title">${escapeHtml(section.title)}</span>
       <span class="section-card-sub">${escapeHtml(section.subtitle)}</span>
       <span class="section-card-count">${qty} producto${qty !== 1 ? 's' : ''}</span>
