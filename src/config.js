@@ -31,7 +31,7 @@ export const HOME_SECTIONS = [
   {
     id: 'algodon-oleo',
     title: 'Algodones & Óleo',
-    subtitle: 'Estrella',
+    subtitle: '',
     accent: 'var(--accent-3)',
     size: 'primary',
     motif: 'algodones',
@@ -42,7 +42,7 @@ export const HOME_SECTIONS = [
   {
     id: 'toallas',
     title: 'Toallas',
-    subtitle: 'Húmedas y cuidado',
+    subtitle: '',
     accent: 'var(--accent-2)',
     size: 'primary',
     motif: 'toallas',

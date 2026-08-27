@@ -278,7 +278,7 @@ export function renderHomeSections() {
     return `<button type="button" class="section-card section-card--${escapeAttr(size)}" data-section="${escapeAttr(section.id)}" style="--section-accent: ${section.accent}">
       <span class="section-motif section-motif--${escapeAttr(motif)}" aria-hidden="true">${sectionMotifHtml(motif)}</span>
       <span class="section-card-title">${escapeHtml(section.title)}</span>
-      <span class="section-card-sub">${escapeHtml(section.subtitle)}</span>
+      ${section.subtitle ? `<span class="section-card-sub">${escapeHtml(section.subtitle)}</span>` : ''}
       <span class="section-card-count">${qty} producto${qty !== 1 ? 's' : ''}</span>
     </button>`;
   }).join('');
