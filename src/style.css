@@ -559,18 +559,22 @@ img { max-width: 100%; display: block; }
 .section-card--primary {
   min-height: 168px;
   padding: 18px 86px 16px 16px;
-  justify-content: space-between;
+  justify-content: center;
   align-items: flex-start;
 }
 
 .section-card--primary .section-card-title {
   font-size: 18px;
   margin: 0;
+  align-self: flex-start;
 }
 
 .section-card--primary .section-card-count {
-  margin-top: auto;
-  align-self: flex-start;
+  position: absolute;
+  left: 16px;
+  bottom: 16px;
+  margin: 0;
+  z-index: 1;
 }
 
 .section-card--primary > *:not(.section-motif) {
