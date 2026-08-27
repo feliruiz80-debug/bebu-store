@@ -425,12 +425,10 @@ img { max-width: 100%; display: block; }
   text-align: left;
   cursor: pointer;
   padding: 0;
-  border: 1px solid rgba(255, 90, 61, 0.35);
-  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 107, 87, 0.16));
 }
 
 .carousel-card--offer .carousel-card-brand {
-  color: #ff5a3d;
+  color: var(--accent-1);
 }
 
 .carousel-offer-thumbs {
@@ -2304,9 +2302,6 @@ html[data-font-scale="large"] {
   font-weight: 800;
   border-radius: 999px;
   flex: 0 0 auto;
-  background: linear-gradient(180deg, #ff6d52, #e94b32);
-  color: #fff;
-  box-shadow: 0 8px 18px rgba(233, 75, 50, 0.28);
   position: sticky;
   bottom: 0;
   z-index: 4;
