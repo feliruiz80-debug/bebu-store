@@ -3,8 +3,8 @@ import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav } from './lib/dom.js';
-import { renderHomeSections, renderBrands, renderSubcategories } from './ui/brands.js';
-import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal } from './ui/catalog.js';
+import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal, renderSectionProducts } from './ui/catalog.js';
+import { renderHomeSections, renderBrands, renderSubcategories, getSectionById } from './ui/brands.js';
 import {
   addToCart,
   updateCartQty,
@@ -78,6 +78,10 @@ function goBack() {
   const current = document.querySelector('.section.active');
   if (!current) return false;
   if (current.id === 'products-view') {
+    if (AppState.sectionProductsDirect) {
+      renderHomeSections();
+      return true;
+    }
     renderSubcategories(AppState.currentMarca);
     return true;
   }
@@ -120,6 +124,11 @@ function bindUI() {
     bindActivate(app, '.section-card', (card) => {
       const sectionId = card.getAttribute('data-section');
       AppState.currentSeccion = sectionId;
+      const section = getSectionById(sectionId);
+      if (section?.directProducts) {
+        renderSectionProducts(sectionId);
+        return;
+      }
       renderBrands(sectionId);
     });
     bindActivate(app, '.brand-card', (card) => {

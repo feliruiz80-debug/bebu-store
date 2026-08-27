@@ -36,7 +36,8 @@ export const HOME_SECTIONS = [
     size: 'primary',
     motif: 'algodones',
     marcas: ['ESTRELLA'],
-    matchSubcat: /algodon|oleo|óleo/i
+    matchSubcat: /algodon|oleo|óleo/i,
+    directProducts: true
   },
   {
     id: 'toallas',
@@ -45,7 +46,8 @@ export const HOME_SECTIONS = [
     accent: 'var(--accent-2)',
     size: 'primary',
     motif: 'toallas',
-    matchSubcat: /toalla/i
+    matchSubcat: /toalla/i,
+    directProducts: true
   }
 ];
 

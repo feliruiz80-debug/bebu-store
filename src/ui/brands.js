@@ -22,25 +22,31 @@ function sectionMotifHtml(motif, uid = 'm') {
   if (motif === 'panales') {
     return `
       <span class="motif-item motif-item--1 motif-illu motif-illu--diaper">
-        <svg viewBox="0 0 64 56" fill="none" aria-hidden="true">
-          <path d="M8 18c0-6 6-10 14-10h20c8 0 14 4 14 10v8c0 12-10 22-24 22S8 38 8 26v-8z" fill="url(#${uid}-d1)"/>
-          <path d="M14 20h36c1.5 0 2.5 1.4 2 2.8l-3 9.2c-1.2 3.6-4.6 6-8.4 6H23.4c-3.8 0-7.2-2.4-8.4-6l-3-9.2c-.5-1.4.5-2.8 2-2.8z" fill="#fff" opacity=".88"/>
-          <circle cx="24" cy="30" r="2.2" fill="currentColor"/>
-          <circle cx="40" cy="30" r="2.2" fill="currentColor"/>
-          <defs><linearGradient id="${uid}-d1" x1="8" y1="8" x2="56" y2="48"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        <svg viewBox="0 0 80 72" fill="none" aria-hidden="true">
+          <ellipse cx="40" cy="58" rx="22" ry="6" fill="currentColor" opacity=".12"/>
+          <path d="M14 22c0-8 8-14 18-14h16c10 0 18 6 18 14v10c0 14-12 26-26 26S14 46 14 32V22z" fill="url(#${uid}-d1)"/>
+          <path d="M20 20c2-6 10-10 20-10s18 4 20 10" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".55"/>
+          <path d="M22 26h36c2 0 3.2 1.8 2.6 3.6l-3.4 10.4c-1.4 4.2-5.4 7-9.8 7H32.6c-4.4 0-8.4-2.8-9.8-7L19.4 29.6C18.8 27.8 20 26 22 26z" fill="#fff" opacity=".92"/>
+          <path d="M28 36h24" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".35"/>
+          <circle cx="30" cy="40" r="2.6" fill="currentColor"/>
+          <circle cx="50" cy="40" r="2.6" fill="currentColor"/>
+          <path d="M34 46c2.2 2.4 9.8 2.4 12 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+          <defs><linearGradient id="${uid}-d1" x1="14" y1="8" x2="66" y2="62"><stop stop-color="#fff"/><stop offset=".55" stop-color="#f4fbff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
         </svg>
       </span>
       <span class="motif-item motif-item--2 motif-illu motif-illu--diaper">
-        <svg viewBox="0 0 64 56" fill="none" aria-hidden="true">
-          <path d="M10 16c0-5 5-9 12-9h20c7 0 12 4 12 9v9c0 11-9 20-22 20S10 36 10 25v-9z" fill="url(#${uid}-d2)"/>
-          <path d="M16 19h32c1.2 0 2 1.1 1.6 2.2l-2.4 7.4c-1 3-3.8 5-7 5H23.8c-3.2 0-6-2-7-5l-2.4-7.4c-.4-1.1.4-2.2 1.6-2.2z" fill="#fff" opacity=".9"/>
-          <defs><linearGradient id="${uid}-d2" x1="10" y1="7" x2="54" y2="45"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        <svg viewBox="0 0 80 72" fill="none" aria-hidden="true">
+          <path d="M18 20c0-7 7-12 16-12h12c9 0 16 5 16 12v10c0 12-10 22-22 22S18 42 18 30V20z" fill="url(#${uid}-d2)"/>
+          <path d="M24 24h32c1.6 0 2.6 1.5 2.1 3l-2.8 8.4c-1.1 3.4-4.3 5.6-7.9 5.6H32.6c-3.6 0-6.8-2.2-7.9-5.6L22 27c-.5-1.5.5-3 2.1-3z" fill="#fff" opacity=".9"/>
+          <circle cx="32" cy="34" r="2" fill="currentColor"/><circle cx="48" cy="34" r="2" fill="currentColor"/>
+          <defs><linearGradient id="${uid}-d2" x1="18" y1="8" x2="62" y2="54"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
         </svg>
       </span>
-      <span class="motif-item motif-item--3 motif-illu motif-illu--diaper">
-        <svg viewBox="0 0 64 56" fill="none" aria-hidden="true">
-          <path d="M12 18c0-4 4-8 10-8h20c6 0 10 4 10 8v8c0 10-8 18-20 18S12 36 12 26v-8z" fill="url(#${uid}-d3)"/>
-          <defs><linearGradient id="${uid}-d3" x1="12" y1="10" x2="52" y2="44"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+      <span class="motif-item motif-item--3 motif-illu motif-illu--stars">
+        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+          <path d="M32 8l3.2 9.8H46l-8.4 6.1 3.2 9.8L32 27.6 23.2 33.7l3.2-9.8L18 17.8h10.8L32 8z" fill="currentColor" opacity=".55"/>
+          <circle cx="14" cy="42" r="3.2" fill="#fff"/><circle cx="50" cy="46" r="2.4" fill="#fff" opacity=".85"/>
+          <circle cx="44" cy="18" r="2" fill="#fff" opacity=".7"/>
         </svg>
       </span>`;
   }
@@ -48,53 +54,64 @@ function sectionMotifHtml(motif, uid = 'm') {
   if (motif === 'algodones') {
     return `
       <span class="motif-item motif-item--1 motif-illu motif-illu--cotton">
-        <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-          <circle cx="32" cy="28" r="14" fill="#fff"/>
-          <circle cx="22" cy="34" r="11" fill="#fff"/>
-          <circle cx="42" cy="34" r="11" fill="#fff"/>
-          <circle cx="32" cy="40" r="10" fill="url(#${uid}-c1)"/>
-          <path d="M30 44v12M34 44v12" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"/>
-          <defs><radialGradient id="${uid}-c1" cx=".35" cy=".3" r=".75"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></radialGradient></defs>
+        <svg viewBox="0 0 72 72" fill="none" aria-hidden="true">
+          <ellipse cx="36" cy="64" rx="14" ry="4" fill="currentColor" opacity=".12"/>
+          <circle cx="36" cy="28" r="15" fill="#fff"/>
+          <circle cx="24" cy="36" r="12" fill="#fff"/>
+          <circle cx="48" cy="36" r="12" fill="#fff"/>
+          <circle cx="30" cy="44" r="11" fill="#fff"/>
+          <circle cx="42" cy="44" r="11" fill="url(#${uid}-c1)"/>
+          <circle cx="36" cy="34" r="5" fill="currentColor" opacity=".18"/>
+          <path d="M33 50v14M39 50v14" stroke="currentColor" stroke-width="2.8" stroke-linecap="round"/>
+          <path d="M30 58h12" stroke="currentColor" stroke-width="2" stroke-linecap="round" opacity=".45"/>
+          <defs><radialGradient id="${uid}-c1" cx=".35" cy=".28" r=".8"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></radialGradient></defs>
         </svg>
       </span>
       <span class="motif-item motif-item--2 motif-illu motif-illu--drop">
-        <svg viewBox="0 0 48 64" fill="none" aria-hidden="true">
-          <path d="M24 6c10 14 18 24 18 34a18 18 0 1 1-36 0c0-10 8-20 18-34z" fill="url(#${uid}-o1)"/>
-          <ellipse cx="18" cy="36" rx="5" ry="8" fill="#fff" opacity=".45"/>
-          <defs><linearGradient id="${uid}-o1" x1="12" y1="8" x2="36" y2="56"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        <svg viewBox="0 0 52 72" fill="none" aria-hidden="true">
+          <path d="M26 6c12 16 20 28 20 38a20 20 0 1 1-40 0c0-10 8-22 20-38z" fill="url(#${uid}-o1)"/>
+          <ellipse cx="20" cy="40" rx="6" ry="10" fill="#fff" opacity=".42"/>
+          <circle cx="30" cy="50" r="3" fill="#fff" opacity=".35"/>
+          <defs><linearGradient id="${uid}-o1" x1="14" y1="8" x2="40" y2="64"><stop stop-color="#fff7e8"/><stop offset=".45" stop-color="#ffe0b0"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
         </svg>
       </span>
       <span class="motif-item motif-item--3 motif-illu motif-illu--cotton">
         <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
-          <circle cx="32" cy="30" r="12" fill="#fff"/>
-          <circle cx="23" cy="35" r="9" fill="#fff"/>
-          <circle cx="41" cy="35" r="9" fill="url(#${uid}-c2)"/>
-          <defs><radialGradient id="${uid}-c2" cx=".4" cy=".3" r=".8"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></radialGradient></defs>
+          <circle cx="32" cy="26" r="11" fill="#fff"/>
+          <circle cx="22" cy="32" r="9" fill="#fff"/>
+          <circle cx="42" cy="32" r="9" fill="#fff"/>
+          <circle cx="32" cy="38" r="9" fill="url(#${uid}-c2)"/>
+          <path d="M29 44v10M35 44v10" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"/>
+          <defs><radialGradient id="${uid}-c2" cx=".4" cy=".3" r=".85"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></radialGradient></defs>
         </svg>
       </span>`;
   }
 
   return `
     <span class="motif-item motif-item--1 motif-illu motif-illu--wipe">
-      <svg viewBox="0 0 72 52" fill="none" aria-hidden="true">
-        <rect x="6" y="10" width="52" height="34" rx="8" fill="url(#${uid}-w1)" transform="rotate(-8 32 27)"/>
-        <rect x="14" y="8" width="52" height="34" rx="8" fill="#fff" opacity=".92" transform="rotate(6 40 25)"/>
-        <path d="M22 20h28M22 28h22" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>
-        <defs><linearGradient id="${uid}-w1" x1="6" y1="10" x2="58" y2="44"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+      <svg viewBox="0 0 84 64" fill="none" aria-hidden="true">
+        <rect x="8" y="16" width="56" height="38" rx="10" fill="url(#${uid}-w1)" transform="rotate(-10 36 35)"/>
+        <rect x="18" y="12" width="56" height="38" rx="10" fill="#fff" opacity=".96" transform="rotate(7 46 31)"/>
+        <path d="M28 24h30M28 33h24M28 42h18" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" opacity=".4"/>
+        <circle cx="66" cy="18" r="4" fill="currentColor" opacity=".35"/>
+        <defs><linearGradient id="${uid}-w1" x1="8" y1="16" x2="64" y2="54"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
       </svg>
     </span>
-    <span class="motif-item motif-item--2 motif-illu motif-illu--wipe">
-      <svg viewBox="0 0 72 52" fill="none" aria-hidden="true">
-        <rect x="10" y="12" width="48" height="30" rx="7" fill="url(#${uid}-w2)" transform="rotate(-12 34 27)"/>
-        <rect x="18" y="10" width="48" height="30" rx="7" fill="#fff" opacity=".9" transform="rotate(4 42 25)"/>
-        <defs><linearGradient id="${uid}-w2" x1="10" y1="12" x2="58" y2="42"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+    <span class="motif-item motif-item--2 motif-illu motif-illu--pack">
+      <svg viewBox="0 0 64 64" fill="none" aria-hidden="true">
+        <rect x="12" y="10" width="40" height="46" rx="8" fill="url(#${uid}-p1)"/>
+        <rect x="18" y="16" width="28" height="18" rx="5" fill="#fff" opacity=".85"/>
+        <path d="M22 40h20M22 46h14" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".7"/>
+        <circle cx="32" cy="25" r="5" fill="currentColor" opacity=".35"/>
+        <defs><linearGradient id="${uid}-p1" x1="12" y1="10" x2="52" y2="56"><stop stop-color="currentColor" stop-opacity=".55"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
       </svg>
     </span>
     <span class="motif-item motif-item--3 motif-illu motif-illu--wipe">
       <svg viewBox="0 0 72 52" fill="none" aria-hidden="true">
-        <rect x="16" y="14" width="42" height="26" rx="6" fill="#fff" opacity=".95" transform="rotate(-4 37 27)"/>
-        <rect x="20" y="12" width="42" height="26" rx="6" fill="url(#${uid}-w3)" transform="rotate(8 41 25)"/>
-        <defs><linearGradient id="${uid}-w3" x1="20" y1="12" x2="62" y2="38"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
+        <rect x="14" y="12" width="46" height="30" rx="8" fill="#fff" opacity=".95" transform="rotate(-6 37 27)"/>
+        <rect x="20" y="10" width="46" height="30" rx="8" fill="url(#${uid}-w3)" transform="rotate(8 43 25)"/>
+        <path d="M30 22h24" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".8"/>
+        <defs><linearGradient id="${uid}-w3" x1="20" y1="10" x2="66" y2="40"><stop stop-color="#fff"/><stop offset="1" stop-color="currentColor"/></linearGradient></defs>
       </svg>
     </span>`;
 }
@@ -319,6 +336,7 @@ export function renderHomeSections() {
 
   AppState.currentSeccion = null;
   AppState.currentMarca = null;
+  AppState.sectionProductsDirect = false;
 
   renderHomeCarousels();
 

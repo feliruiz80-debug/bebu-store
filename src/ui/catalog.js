@@ -2,7 +2,7 @@ import { AppState } from '../state.js';
 import { el, showSection, openOverlay, closeOverlay, setBottomNav } from '../lib/dom.js';
 import { escapeHtml, idsMatch } from '../lib/format.js';
 import { productCardHtml } from './products.js';
-import { productsForSection } from './brands.js';
+import { productsForSection, getSectionById } from './brands.js';
 
 function isSearchOpen() {
   return el('modal-buscar')?.classList.contains('is-open');
@@ -48,6 +48,7 @@ export function closePromosModal() {
 }
 
 export function renderProducts(marca, subcat) {
+  AppState.sectionProductsDirect = false;
   const container = el('products-grid');
   const list = productsForSection().filter((p) => p.marca === marca && p.subcategoria === subcat);
   if (!list.length) {
@@ -57,6 +58,27 @@ export function renderProducts(marca, subcat) {
   }
   const label = el('products-label');
   if (label) label.textContent = `${subcat} · ${list.length} producto${list.length !== 1 ? 's' : ''}`;
+  showSection('products-view');
+}
+
+export function renderSectionProducts(sectionId) {
+  const section = getSectionById(sectionId);
+  AppState.currentSeccion = sectionId;
+  AppState.currentMarca = null;
+  AppState.sectionProductsDirect = true;
+
+  const container = el('products-grid');
+  const list = productsForSection(section);
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><p>Sin productos</p></div>`;
+  } else {
+    container.innerHTML = list.map(productCardHtml).join('');
+  }
+  const label = el('products-label');
+  if (label) {
+    const title = section?.title || 'Productos';
+    label.textContent = `${title} · ${list.length} producto${list.length !== 1 ? 's' : ''}`;
+  }
   showSection('products-view');
 }
 

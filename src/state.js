@@ -10,6 +10,7 @@ export const AppState = {
   cart: [],
   currentSeccion: null,
   currentMarca: null,
+  sectionProductsDirect: false,
   envioActivo: false,
   transferencia: false,
   direccion: ''
