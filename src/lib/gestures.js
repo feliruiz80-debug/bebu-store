@@ -3,7 +3,7 @@ const DISMISS_VELOCITY = 0.65;
 const EDGE_ZONE = 24;
 const BACK_RATIO = 0.28;
 const BACK_VELOCITY = 0.45;
-const UNDER_RATIO = 0.18;
+const UNDER_RATIO = 0.16;
 const PAGE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
 const SNAP_MS = 320;
 
@@ -171,7 +171,7 @@ export function bindBackSwipe(opts = {}) {
 
   const unlockStage = () => {
     if (!stage) return;
-    stage.classList.remove('is-page-animating', 'is-swiping');
+    stage.classList.remove('is-swiping', 'is-page-animating');
     stage.style.minHeight = '';
     stage = null;
   };
@@ -205,10 +205,9 @@ export function bindBackSwipe(opts = {}) {
     stage = document.querySelector('.content') || document.querySelector('.main-container');
     width = Math.round(stage?.getBoundingClientRect().width || window.innerWidth);
     if (stage) {
-      // is-swiping: la de adelante sigue en flow (no se deforma al pasar a absolute)
-      stage.classList.remove('is-page-animating');
       stage.classList.add('is-swiping');
-      stage.style.minHeight = `${Math.ceil(front.offsetHeight)}px`;
+      // Sin minHeight: evita el espasmo de agrandar y volver
+      stage.style.minHeight = '';
     }
 
     under = node;

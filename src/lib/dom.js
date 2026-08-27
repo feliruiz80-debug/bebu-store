@@ -24,11 +24,9 @@ const SECTION_DEPTH = {
   'products-view': 3
 };
 
-/** Seda / iOS */
 const PAGE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
-const PAGE_MS = 380;
-/** Parallax suave de la página de atrás (solo translate en px, sin estirar) */
-const UNDER_RATIO = 0.18;
+const PAGE_MS = 360;
+const UNDER_RATIO = 0.16;
 
 let pageBusy = false;
 let pageTimer = 0;
@@ -45,12 +43,9 @@ export function isPageBusy() {
 function clearPageMotion(node) {
   if (!node) return;
   node.classList.remove(
-    'is-enter-forward',
-    'is-enter-back',
-    'is-leave-forward',
-    'is-leave-back',
     'is-page-on',
-    'is-page-layer',
+    'is-page-base',
+    'is-page-sheet',
     'is-swipe-dragging',
     'is-swipe-front',
     'is-page-under'
@@ -79,30 +74,15 @@ function stageWidth(stage) {
   return Math.round((stage || getStage())?.getBoundingClientRect().width || window.innerWidth);
 }
 
-function lockKeyed(stage, heightPx) {
+function setSwipeMode(stage, on) {
   if (!stage) return;
-  stage.classList.remove('is-swiping');
-  stage.classList.add('is-page-animating');
-  if (heightPx > 0) stage.style.minHeight = `${Math.ceil(heightPx)}px`;
-}
-
-function lockSwipe(stage, heightPx) {
-  if (!stage) return;
-  stage.classList.remove('is-page-animating');
-  stage.classList.add('is-swiping');
-  if (heightPx > 0) stage.style.minHeight = `${Math.ceil(heightPx)}px`;
-}
-
-function unlockStage(stage) {
-  if (!stage) return;
-  stage.classList.remove('is-page-animating', 'is-swiping');
-  stage.style.minHeight = '';
+  stage.classList.toggle('is-swiping', on);
 }
 
 function finishPageChrome() {
   const content = getStage();
-  if (content) content.scrollTop = 0;
-  window.scrollTo({ top: 0, behavior: 'auto' });
+  if (content?.scrollTop) content.scrollTop = 0;
+  if (window.scrollY > 1) window.scrollTo({ top: 0, behavior: 'auto' });
   if (
     !el('modal-buscar')?.classList.contains('is-open') &&
     !el('modal-carrito')?.classList.contains('is-open') &&
@@ -113,26 +93,21 @@ function finishPageChrome() {
 }
 
 function endTransition(leaving, entering, stage) {
-  if (leaving) {
-    leaving.classList.remove('active');
-    clearPageMotion(leaving);
-  }
+  // Un solo layout: sacar la que se va y dejar la nueva en flujo normal.
   $all('.section').forEach((s) => {
-    if (s !== entering) {
-      s.classList.remove('active');
-      clearPageMotion(s);
-    }
+    if (s === entering) return;
+    s.classList.remove('active');
+    clearPageMotion(s);
   });
   clearPageMotion(entering);
   entering.classList.add('active');
-  unlockStage(stage);
+  setSwipeMode(stage, false);
   pageBusy = false;
   finishPageChrome();
 }
 
-function setLayer(node, { z, x }) {
-  node.classList.add('is-page-on', 'is-page-layer');
-  node.style.zIndex = String(z);
+function prep(node, x) {
+  node.classList.add('is-page-on');
   node.style.willChange = 'transform';
   node.style.transition = 'none';
   node.style.transform = `translate3d(${Math.round(x)}px, 0, 0)`;
@@ -141,6 +116,10 @@ function setLayer(node, { z, x }) {
 function animateTo(node, x, ms = PAGE_MS) {
   node.style.transition = `transform ${ms}ms ${PAGE_EASE}`;
   node.style.transform = `translate3d(${Math.round(x)}px, 0, 0)`;
+}
+
+function kick(fn) {
+  requestAnimationFrame(() => requestAnimationFrame(fn));
 }
 
 export function showSection(id, opts = {}) {
@@ -152,7 +131,8 @@ export function showSection(id, opts = {}) {
 
   const current =
     document.querySelector('.section.active') ||
-    document.querySelector('.section.is-swipe-front');
+    document.querySelector('.section.is-swipe-front') ||
+    document.querySelector('.section.is-page-base');
 
   if (current === next) {
     finishPageChrome();
@@ -174,7 +154,7 @@ export function showSection(id, opts = {}) {
       s.classList.remove('active');
     });
     next.classList.add('active');
-    unlockStage(stage);
+    setSwipeMode(stage, false);
     pageBusy = false;
     finishPageChrome();
     return;
@@ -183,22 +163,21 @@ export function showSection(id, opts = {}) {
   pageBusy = true;
   window.clearTimeout(pageTimer);
   const w = stageWidth(stage);
+  const underShift = Math.round(w * UNDER_RATIO);
 
-  /* —— Gesto: misma geometría (front relative, under absolute), solo px —— */
+  setSwipeMode(stage, true);
+
+  /* Gesto: seguir desde el dedo, sin tocar altura del contenedor */
   if (merged.swipeHandoff && direction === 'back') {
     const peeked = merged.peekedId ? el(merged.peekedId) : null;
     const under = peeked && peeked !== current ? peeked : next;
 
-    lockSwipe(stage, current.offsetHeight);
-
     current.classList.remove('is-swipe-dragging');
     current.classList.add('is-swipe-front', 'is-page-on');
-    current.style.willChange = 'transform';
     animateTo(current, w);
 
     under.classList.add('is-page-under', 'is-page-on');
     under.classList.remove('active');
-    under.style.willChange = 'transform';
     under.style.pointerEvents = 'none';
     animateTo(under, 0);
 
@@ -211,39 +190,35 @@ export function showSection(id, opts = {}) {
     return;
   }
 
-  /* —— Volver / avanzar con tap: capas fijas + translate en px (sin deformar) —— */
-  const height = Math.max(current.offsetHeight, 120);
-  lockKeyed(stage, height);
-
-  clearPageMotion(current);
-  clearPageMotion(next);
-
-  const underShift = Math.round(w * UNDER_RATIO);
-
+  /*
+   * Tap: la página que está en flujo (relative) sostiene la altura.
+   * La otra va absolute encima/debajo. Sin minHeight → sin espasmo.
+   */
   if (direction === 'forward') {
-    // current se queda quieta detrás un poco; next entra desde la derecha
-    setLayer(current, { z: 2, x: 0 });
-    setLayer(next, { z: 3, x: w });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        animateTo(current, -underShift);
-        animateTo(next, 0);
-      });
+    current.classList.add('is-page-base');
+    prep(current, 0);
+
+    next.classList.add('is-page-sheet');
+    prep(next, w);
+
+    kick(() => {
+      animateTo(current, -underShift);
+      animateTo(next, 0);
     });
   } else {
-    // next (anterior) ya está detrás, quieta o casi; current se va a la derecha
-    // La página de atrás NO se escala ni se estira: solo un slide suave en px
-    setLayer(next, { z: 2, x: -underShift });
-    setLayer(current, { z: 3, x: 0 });
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        animateTo(next, 0);
-        animateTo(current, w);
-      });
+    next.classList.add('is-page-under');
+    prep(next, -underShift);
+
+    current.classList.add('is-swipe-front');
+    prep(current, 0);
+
+    kick(() => {
+      animateTo(next, 0);
+      animateTo(current, w);
     });
   }
 
-  pageTimer = window.setTimeout(() => endTransition(current, next, stage), PAGE_MS + 16);
+  pageTimer = window.setTimeout(() => endTransition(current, next, stage), PAGE_MS + 20);
 }
 
 export function setBottomNav(name) {
