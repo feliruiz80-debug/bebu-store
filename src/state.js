@@ -5,6 +5,7 @@ export const AppState = {
   products: [],
   brands: [],
   promos: [],
+  offerCard: [],
   config: {},
   errors: {},
   cart: [],
@@ -39,10 +40,7 @@ export function findProduct(id) {
 
 export function findPromo(productId) {
   return AppState.promos.find(
-    (pr) =>
-      pr.activo &&
-      idsMatch(pr.id_producto, productId) &&
-      (pr.cantidad > 0 || pr.es_tarjeta)
+    (pr) => pr.activo && idsMatch(pr.id_producto, productId) && pr.cantidad > 0
   );
 }
 

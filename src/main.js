@@ -335,6 +335,7 @@ async function bootstrap() {
     AppState.products = data.productos;
     AppState.brands = data.marcas;
     AppState.promos = data.promos;
+    AppState.offerCard = data.offerCard || [];
     AppState.config = data.config;
     AppState.errors = data.errors;
     applyTheme(AppState.config);

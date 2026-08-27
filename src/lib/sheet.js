@@ -214,28 +214,33 @@ export function mapPromos(rows) {
       const precioPromo = parsePrice(
         pick(r, 'precio_promo', 'precio promo', 'precio pack', 'precio_pack')
       );
-      const offer = mapOfferFields(r);
-      const fromB = padProductId(pick(r, 'id_producto', 'idproducto', 'product_id'));
-      const fromK = padProductId(offer.id_imagen);
-      const id_producto = fromB || fromK;
-      const activoRaw = pick(r, 'activo', 'active');
-      const activo =
-        String(activoRaw).trim() === '' ? offer.es_tarjeta : isTruthyFlag(activoRaw);
       return {
         id_promo: String(pick(r, 'id_promo', 'idpromo')).trim(),
-        id_producto,
+        id_producto: padProductId(pick(r, 'id_producto', 'idproducto', 'product_id')),
         cantidad,
         precio_unidad: precioUnidad,
         precio_promo: precioPromo,
-        activo,
-        es_tarjeta: offer.es_tarjeta,
+        activo: isTruthyFlag(pick(r, 'activo', 'active'))
+      };
+    })
+    .filter((p) => p.id_producto);
+}
+
+export function mapOfferCard(rows) {
+  return rows
+    .map((r) => {
+      const offer = mapOfferFields(r);
+      if (!offer.es_tarjeta) return null;
+      return {
         titulo: offer.titulo,
         precio_antes: offer.precio_antes,
         precio_oferta: offer.precio_oferta,
-        id_imagen: offer.id_imagen
+        id_imagen: offer.id_imagen,
+        id_producto: padProductId(offer.id_imagen)
       };
     })
-    .filter((p) => p.id_producto || p.es_tarjeta);
+    .filter(Boolean)
+    .slice(0, 3);
 }
 
 export async function loadAllData() {
@@ -254,18 +259,20 @@ export async function loadAllData() {
     return [];
   };
 
+  const promoRows = take(promosRes, 'Promociones');
+
   return {
     productos: mapProductos(take(productosRes, 'Productos')),
     marcas: mapMarcas(take(marcasRes, 'Marcas')),
     config: mapConfig(take(configRes, 'Config')),
-    promos: mapPromos(take(promosRes, 'Promociones')),
+    promos: mapPromos(promoRows),
+    offerCard: mapOfferCard(promoRows),
     errors
   };
 }
 
 export function promoDisplayPrice(promo, listPrice = 0) {
   if (!promo || !promo.activo) return null;
-  if (promo.precio_oferta != null) return promo.precio_oferta;
   if (promo.precio_promo != null) return promo.precio_promo;
   if (promo.precio_unidad != null && promo.cantidad > 0) {
     return promo.precio_unidad * promo.cantidad;
@@ -290,32 +297,15 @@ export function offerPrices(promo, listPrice = 0) {
 }
 
 export function linePrice(qty, listPrice, promo) {
-  if (!promo || !promo.activo) {
-    return { unitPrice: listPrice, subtotal: listPrice * qty, promoApplied: null };
-  }
-
-  if (promo.es_tarjeta && !(promo.cantidad > 0)) {
-    const unit = promo.precio_oferta ?? promo.precio_promo ?? listPrice;
-    return {
-      unitPrice: unit,
-      subtotal: unit * qty,
-      promoApplied: promo,
-      packs: 0,
-      rest: qty
-    };
-  }
-
-  if (!promo.cantidad || qty < promo.cantidad) {
+  if (!promo || !promo.activo || !promo.cantidad || qty < promo.cantidad) {
     return { unitPrice: listPrice, subtotal: listPrice * qty, promoApplied: null };
   }
   const packs = Math.floor(qty / promo.cantidad);
   const rest = qty % promo.cantidad;
   const packTotal =
-    promo.precio_oferta != null
-      ? promo.precio_oferta
-      : promo.precio_promo != null
-        ? promo.precio_promo
-        : (promo.precio_unidad || listPrice) * promo.cantidad;
+    promo.precio_promo != null
+      ? promo.precio_promo
+      : (promo.precio_unidad || listPrice) * promo.cantidad;
   const unitInPromo =
     promo.precio_unidad != null ? promo.precio_unidad : packTotal / promo.cantidad;
   const subtotal = packs * packTotal + rest * listPrice;

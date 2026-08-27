@@ -3,6 +3,7 @@ import { el, showSection, openOverlay, closeOverlay, setBottomNav } from '../lib
 import { escapeHtml, idsMatch } from '../lib/format.js';
 import { productCardHtml } from './products.js';
 import { productsForSection, getSectionById } from './brands.js';
+import { getOfferCardItems, offerPromoListHtml } from './offer.js';
 
 function isSearchOpen() {
   return el('modal-buscar')?.classList.contains('is-open');
@@ -98,15 +99,17 @@ export function renderPromotions() {
   const label = el('promos-count-label');
   if (!container) return;
 
-  if (!results.length) {
+  const combo = offerPromoListHtml(getOfferCardItems());
+  if (!results.length && !combo) {
     container.innerHTML = `<div class="empty-state"><p>No hay promociones activas</p></div>`;
     if (label) label.textContent = 'Sin promociones';
     return;
   }
 
-  container.innerHTML = results.map(productCardHtml).join('');
+  container.innerHTML = `${combo}${results.map(productCardHtml).join('')}`;
   if (label) {
-    label.textContent = `${results.length} promo${results.length !== 1 ? 's' : ''} activa${results.length !== 1 ? 's' : ''}`;
+    const n = results.length + (combo ? 1 : 0);
+    label.textContent = `${n} promo${n !== 1 ? 's' : ''} activa${n !== 1 ? 's' : ''}`;
   }
 }
 
