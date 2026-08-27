@@ -558,7 +558,7 @@ img { max-width: 100%; display: block; }
 
 .section-card--primary {
   min-height: 168px;
-  padding: 18px 86px 16px 16px;
+  padding: 18px 90px 44px 16px;
   justify-content: center;
   align-items: flex-start;
 }
@@ -572,9 +572,9 @@ img { max-width: 100%; display: block; }
 .section-card--primary .section-card-count {
   position: absolute;
   left: 16px;
-  bottom: 16px;
+  bottom: 8px;
   margin: 0;
-  z-index: 1;
+  z-index: 2;
 }
 
 .section-card--primary > *:not(.section-motif) {
@@ -594,7 +594,7 @@ img { max-width: 100%; display: block; }
 .section-motif {
   position: absolute;
   inset: 0;
-  z-index: 0;
+  z-index: 1;
   pointer-events: none;
   overflow: hidden;
 }
@@ -642,23 +642,25 @@ img { max-width: 100%; display: block; }
   animation-delay: 1.2s;
 }
 
-/* —— Algodones + Óleo: en el hueco derecho, no detrás del texto —— */
+/* —— Algodones + Óleo: columna derecha, ambas visibles —— */
 .section-motif--algodones .motif-item--1 {
-  width: 58px;
-  height: 58px;
-  right: 14px;
-  top: 18px;
+  width: 64px;
+  height: 64px;
+  right: 10px;
+  top: 50%;
+  margin-top: -66px;
   left: auto;
   animation: motifSoftA 8s ease-in-out infinite;
 }
 .section-motif--algodones .motif-item--2 {
-  width: 50px;
-  height: 50px;
+  width: 54px;
+  height: 54px;
   right: 14px;
-  top: auto;
-  bottom: 16px;
+  top: 50%;
+  margin-top: 6px;
+  bottom: auto;
   left: auto;
-  opacity: 0.95;
+  opacity: 0.98;
   animation: motifSoftB 9s ease-in-out infinite;
   animation-delay: 1.6s;
 }
@@ -689,7 +691,7 @@ img { max-width: 100%; display: block; }
 
 .section-card > *:not(.section-motif) {
   position: relative;
-  z-index: 1;
+  z-index: 2;
   max-width: min(100%, 58%);
 }
 
