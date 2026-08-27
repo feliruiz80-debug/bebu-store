@@ -3,6 +3,7 @@ import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav, showSection, isPageBusy } from './lib/dom.js';
+import { initDeviceProfile } from './lib/device.js';
 import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal, renderSectionProducts } from './ui/catalog.js';
 import { renderHomeSections, renderBrands, renderSubcategories, getSectionById } from './ui/brands.js';
 import {
@@ -311,6 +312,7 @@ function setupPwa() {
 }
 
 async function bootstrap() {
+  initDeviceProfile();
   loadCartFromStorage();
   bindUI();
   syncHeaderSpacer();
