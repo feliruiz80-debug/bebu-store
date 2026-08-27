@@ -3,6 +3,7 @@ import { el, showSection } from '../lib/dom.js';
 import { escapeHtml, escapeAttr, idsMatch, fmt } from '../lib/format.js';
 import { FALLBACKS, HOME_SECTIONS } from '../config.js';
 import { promoDisplayPrice, offerPrices } from '../lib/sheet.js';
+import { offerCarouselCardHtml } from './offer.js';
 
 export function getSectionById(id) {
   return HOME_SECTIONS.find((s) => s.id === id) || null;
@@ -260,12 +261,13 @@ function renderHomeCarousels() {
   }
 
   const list = pickFeaturedProducts(22);
-  if (!list.length) {
+  if (!list.length && !offerCarouselCardHtml()) {
     root.innerHTML = '';
     return;
   }
 
-  const cards = list.map(carouselCardHtml).join('');
+  const offerHtml = offerCarouselCardHtml();
+  const cards = `${offerHtml}${list.map(carouselCardHtml).join('')}`;
   root.innerHTML = `<div class="home-carousel home-carousel--featured" aria-label="Productos destacados">
     <div class="home-carousel-label">Destacados</div>
     <div class="home-carousel-viewport">

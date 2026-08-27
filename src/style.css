@@ -417,6 +417,42 @@ img { max-width: 100%; display: block; }
   -webkit-backdrop-filter: blur(8px) saturate(1.1);
 }
 
+.carousel-card--offer {
+  appearance: none;
+  -webkit-appearance: none;
+  font: inherit;
+  color: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+  border: 1px solid rgba(255, 90, 61, 0.35);
+  background: linear-gradient(145deg, rgba(255, 255, 255, 0.82), rgba(255, 107, 87, 0.16));
+}
+
+.carousel-card--offer .carousel-card-brand {
+  color: #ff5a3d;
+}
+
+.carousel-offer-thumbs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 6px 4px;
+}
+
+.carousel-offer-thumbs img {
+  width: 44%;
+  height: 78%;
+  object-fit: contain;
+  mix-blend-mode: normal;
+  margin-left: -14%;
+  pointer-events: none;
+}
+
+.carousel-offer-thumbs img:first-child {
+  margin-left: 0;
+}
+
 .carousel-card-img {
   background: transparent;
   display: flex;
@@ -1894,6 +1930,21 @@ img { max-width: 100%; display: block; }
   .sheet-handle {
     display: none;
   }
+  .offer-overlay {
+    padding: 28px 24px;
+  }
+  .offer-card {
+    max-height: min(86vh, 680px);
+  }
+  .offer-flag {
+    font-size: 52px;
+  }
+  .offer-size {
+    max-width: 112px;
+  }
+  .offer-size-photo {
+    padding: 6px;
+  }
 }
 
 @media (max-width: 399px) {
@@ -2015,7 +2066,9 @@ html[data-font-scale="large"] {
   display: flex;
   flex-direction: column;
   border-radius: 26px;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
   background: linear-gradient(
     165deg,
     rgba(255, 255, 255, 0.22),
@@ -2053,7 +2106,7 @@ html[data-font-scale="large"] {
   flex: 1 1 auto;
   min-height: 0;
   display: flex;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .offer-slide {
@@ -2241,7 +2294,7 @@ html[data-font-scale="large"] {
   line-height: 1;
 }
 
-.offer-add {
+.offer-slide .offer-add {
   width: min(100%, 320px);
   min-width: 0;
   margin-top: 10px;
@@ -2251,6 +2304,12 @@ html[data-font-scale="large"] {
   font-weight: 800;
   border-radius: 999px;
   flex: 0 0 auto;
+  background: linear-gradient(180deg, #ff6d52, #e94b32);
+  color: #fff;
+  box-shadow: 0 8px 18px rgba(233, 75, 50, 0.28);
+  position: sticky;
+  bottom: 0;
+  z-index: 4;
 }
 
 .offer-promo-row {

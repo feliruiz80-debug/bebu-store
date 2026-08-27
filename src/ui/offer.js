@@ -116,6 +116,35 @@ export function offerCardHtml(items = getOfferCardItems()) {
   </article>`;
 }
 
+export function offerCarouselCardHtml(items = getOfferCardItems()) {
+  if (!items.length) return '';
+  const { description, oldPrice, newPrice, showOld } = offerMeta(items);
+  const thumbs = items
+    .map((item) => {
+      const src = resolveOfferImage(item);
+      return src
+        ? `<img src="${escapeAttr(src)}" alt="" draggable="false" onerror="this.style.display='none'">`
+        : '';
+    })
+    .join('');
+  const old = showOld ? `<span class="carousel-card-price-old">${fmt(oldPrice)}</span>` : '';
+  const now = newPrice != null ? `<span class="carousel-card-price">${fmt(newPrice)}</span>` : '';
+
+  return `<button type="button" class="carousel-card carousel-card--offer" data-action="open-offer" aria-label="Ver oferta">
+    <div class="carousel-card-img carousel-offer-thumbs">${thumbs}</div>
+    <div class="carousel-card-body">
+      <div class="carousel-card-brand">Oferta</div>
+      <div class="carousel-card-name">${escapeHtml(description || 'Oferta especial')}</div>
+      <div class="carousel-card-meta">
+        <div class="carousel-card-pricing">
+          ${old}
+          ${now}
+        </div>
+      </div>
+    </div>
+  </button>`;
+}
+
 export function offerPromoListHtml(items = getOfferCardItems()) {
   if (!items.length) return '';
   const { description, oldPrice, newPrice, showOld } = offerMeta(items);
@@ -193,6 +222,7 @@ export function bindOfferModal() {
       return;
     }
     if (e.target.closest('[data-action="buy-offer"]')) buyOfferCard();
+    if (e.target.closest('[data-action="open-offer"]')) maybeShowLaunchOffer();
   });
 }
 
