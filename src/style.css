@@ -303,11 +303,8 @@ img { max-width: 100%; display: block; }
   padding-bottom: 24px;
 }
 
-/* ========== HOME CAROUSELS ========== */
+/* ========== HOME CAROUSEL ========== */
 .home-carousels {
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
   margin-bottom: 18px;
 }
 
@@ -318,45 +315,52 @@ img { max-width: 100%; display: block; }
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--muted);
-  margin-bottom: 8px;
+  margin-bottom: 10px;
 }
 
 .home-carousel-viewport {
   overflow: hidden;
-  mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
-  -webkit-mask-image: linear-gradient(90deg, transparent, #000 4%, #000 96%, transparent);
+  touch-action: pan-y;
+  cursor: grab;
+  mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 3%, #000 97%, transparent);
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.home-carousel-viewport:active {
+  cursor: grabbing;
 }
 
 .home-carousel-track {
   display: flex;
   width: max-content;
-  animation: homeCarouselMarquee var(--carousel-duration, 36s) linear infinite;
   will-change: transform;
 }
 
-.home-carousel-track.is-paused {
-  animation-play-state: paused;
+.home-carousel-track.is-dragging {
+  cursor: grabbing;
 }
 
 .home-carousel-group {
   display: flex;
-  gap: 10px;
-  padding-right: 10px;
+  gap: 12px;
+  padding-right: 12px;
 }
 
 .carousel-card {
-  flex: 0 0 196px;
-  width: 196px;
-  height: 78px;
+  flex: 0 0 228px;
+  width: 228px;
+  height: 112px;
   display: grid;
-  grid-template-columns: 68px 1fr;
+  grid-template-columns: 100px 1fr;
   gap: 0;
-  border-radius: 14px;
+  border-radius: 16px;
   overflow: hidden;
   background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.7), rgba(255, 255, 255, 0.32));
+    linear-gradient(145deg, rgba(255, 255, 255, 0.74), rgba(255, 255, 255, 0.34));
   border: var(--card-border);
-  box-shadow: 0 8px 18px rgba(80, 60, 40, 0.07), inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  box-shadow: 0 10px 22px rgba(80, 60, 40, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.75);
   backdrop-filter: blur(12px) saturate(1.15);
   -webkit-backdrop-filter: blur(12px) saturate(1.15);
 }
@@ -373,7 +377,8 @@ img { max-width: 100%; display: block; }
   width: 100%;
   height: 100%;
   object-fit: contain;
-  padding: 4px;
+  padding: 6px;
+  pointer-events: none;
 }
 
 .carousel-card-fallback {
@@ -382,25 +387,34 @@ img { max-width: 100%; display: block; }
   display: grid;
   place-items: center;
   font-family: var(--font-heading);
-  font-size: 22px;
+  font-size: 26px;
   font-weight: 900;
-  color: color-mix(in srgb, var(--section-accent, var(--accent-1)) 70%, var(--brand-text));
-  background: color-mix(in srgb, var(--section-accent, var(--accent-1)) 18%, transparent);
+  color: color-mix(in srgb, var(--accent-1) 70%, var(--brand-text));
+  background: color-mix(in srgb, var(--accent-1) 16%, transparent);
 }
 
 .carousel-card-body {
-  padding: 8px 10px 8px 8px;
+  padding: 10px 12px 10px 10px;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   min-width: 0;
-  background: rgba(255, 255, 255, 0.72);
+  background: rgba(255, 255, 255, 0.78);
   border-left: 1px solid rgba(212, 206, 191, 0.45);
+}
+
+.carousel-card-brand {
+  font-family: var(--font-ui);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--accent-1);
 }
 
 .carousel-card-name {
   font-family: var(--font-ui);
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 700;
   line-height: 1.2;
   color: var(--brand-text);
@@ -408,6 +422,8 @@ img { max-width: 100%; display: block; }
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
   overflow: hidden;
+  flex: 1;
+  margin: 4px 0;
 }
 
 .carousel-card-meta {
@@ -419,30 +435,25 @@ img { max-width: 100%; display: block; }
 
 .carousel-card-price {
   font-family: var(--font-price);
-  font-size: 12px;
+  font-size: 13px;
   font-weight: 800;
   color: var(--accent-4);
   font-variant-numeric: tabular-nums;
 }
 
 .carousel-card-add {
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
+  width: 30px;
+  height: 30px;
+  min-width: 30px;
   padding: 0;
-  border-radius: 9px;
-  font-size: 16px;
+  border-radius: 10px;
+  font-size: 17px;
   line-height: 1;
-}
-
-@keyframes homeCarouselMarquee {
-  from { transform: translateX(0); }
-  to { transform: translateX(-50%); }
 }
 
 @media (prefers-reduced-motion: reduce) {
   .home-carousel-track {
-    animation: none;
+    transform: none !important;
   }
 }
 

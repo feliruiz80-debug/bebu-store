@@ -52,12 +52,13 @@ function carouselCardHtml(p) {
   const pricing = linePrice(promo?.cantidad || 1, p.precio, promo);
   const price = promo ? pricing.unitPrice : p.precio;
   const img = p.imagen
-    ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" onerror="this.style.display='none'">`
+    ? `<img src="${escapeAttr(p.imagen)}" alt="" loading="lazy" draggable="false" onerror="this.style.display='none'">`
     : `<div class="carousel-card-fallback">${escapeHtml((p.marca || '?')[0])}</div>`;
 
   return `<article class="carousel-card" data-id="${escapeAttr(p.id)}">
     <div class="carousel-card-img">${img}</div>
     <div class="carousel-card-body">
+      <div class="carousel-card-brand">${escapeHtml(p.marca)}</div>
       <div class="carousel-card-name">${escapeHtml(p.descripcion)}</div>
       <div class="carousel-card-meta">
         <span class="carousel-card-price">${fmt(price)}</span>
@@ -67,37 +68,185 @@ function carouselCardHtml(p) {
   </article>`;
 }
 
+function pickFeaturedProducts(limit = 22) {
+  const pools = HOME_SECTIONS.map((section) => productsForSection(section));
+  const out = [];
+  const seen = new Set();
+  let i = 0;
+  while (out.length < limit) {
+    let added = false;
+    for (const pool of pools) {
+      if (i >= pool.length) continue;
+      const p = pool[i];
+      if (!p || seen.has(p.id)) continue;
+      seen.add(p.id);
+      out.push(p);
+      added = true;
+      if (out.length >= limit) break;
+    }
+    if (!added) break;
+    i += 1;
+  }
+  return out;
+}
+
+let homeCarouselStop = null;
+
+function bindInfiniteCarousel(viewport, track) {
+  const prefersReduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const AUTO_SPEED = prefersReduced ? 0 : 22; // px/s — lento
+  let offset = 0;
+  let loopWidth = 0;
+  let raf = 0;
+  let dragging = false;
+  let pointerId = null;
+  let startX = 0;
+  let startOffset = 0;
+  let lastX = 0;
+  let lastT = 0;
+  let velocity = 0;
+  let moved = false;
+
+  const group = track.querySelector('.home-carousel-group');
+
+  function measure() {
+    loopWidth = group ? group.getBoundingClientRect().width : track.scrollWidth / 2;
+  }
+
+  function wrap() {
+    if (!loopWidth) return;
+    while (offset <= -loopWidth) offset += loopWidth;
+    while (offset > 0) offset -= loopWidth;
+  }
+
+  function paint() {
+    track.style.transform = `translate3d(${offset}px, 0, 0)`;
+  }
+
+  let prevTs = 0;
+  function frame(ts) {
+    if (!prevTs) prevTs = ts;
+    const dt = Math.min(32, ts - prevTs) / 1000;
+    prevTs = ts;
+
+    if (!dragging) {
+      if (Math.abs(velocity) > 8) {
+        offset += velocity * dt;
+        velocity *= Math.pow(0.92, dt * 60);
+      } else {
+        velocity = 0;
+        offset -= AUTO_SPEED * dt;
+      }
+      wrap();
+      paint();
+    }
+
+    raf = requestAnimationFrame(frame);
+  }
+
+  function onPointerDown(e) {
+    if (e.button != null && e.button !== 0) return;
+    if (e.target.closest('button')) return;
+    dragging = true;
+    moved = false;
+    pointerId = e.pointerId;
+    viewport.setPointerCapture?.(pointerId);
+    startX = e.clientX;
+    startOffset = offset;
+    lastX = e.clientX;
+    lastT = performance.now();
+    velocity = 0;
+    track.classList.add('is-dragging');
+  }
+
+  function onPointerMove(e) {
+    if (!dragging || (pointerId != null && e.pointerId !== pointerId)) return;
+    const dx = e.clientX - startX;
+    if (Math.abs(dx) > 4) moved = true;
+    offset = startOffset + dx;
+    wrap();
+    paint();
+
+    const now = performance.now();
+    const dt = Math.max(1, now - lastT);
+    velocity = ((e.clientX - lastX) / dt) * 1000;
+    lastX = e.clientX;
+    lastT = now;
+  }
+
+  function onPointerUp(e) {
+    if (!dragging || (pointerId != null && e.pointerId !== pointerId)) return;
+    dragging = false;
+    pointerId = null;
+    track.classList.remove('is-dragging');
+    // Clamp residual flick so it eases back into slow cruise
+    velocity = Math.max(-420, Math.min(420, velocity));
+  }
+
+  function onClickCapture(e) {
+    if (moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      moved = false;
+    }
+  }
+
+  measure();
+  paint();
+  raf = requestAnimationFrame(frame);
+  const onResize = () => {
+    measure();
+    wrap();
+    paint();
+  };
+  window.addEventListener('resize', onResize, { passive: true });
+
+  viewport.addEventListener('pointerdown', onPointerDown);
+  viewport.addEventListener('pointermove', onPointerMove);
+  viewport.addEventListener('pointerup', onPointerUp);
+  viewport.addEventListener('pointercancel', onPointerUp);
+  viewport.addEventListener('click', onClickCapture, true);
+
+  return () => {
+    cancelAnimationFrame(raf);
+    window.removeEventListener('resize', onResize);
+    viewport.removeEventListener('pointerdown', onPointerDown);
+    viewport.removeEventListener('pointermove', onPointerMove);
+    viewport.removeEventListener('pointerup', onPointerUp);
+    viewport.removeEventListener('pointercancel', onPointerUp);
+    viewport.removeEventListener('click', onClickCapture, true);
+  };
+}
+
 function renderHomeCarousels() {
   const root = el('home-carousels');
   if (!root) return;
 
-  root.innerHTML = HOME_SECTIONS.map((section) => {
-    const list = productsForSection(section).slice(0, 14);
-    if (!list.length) return '';
-    const cards = list.map(carouselCardHtml).join('');
-    const seconds = Math.max(28, list.length * 3.2);
-    return `<div class="home-carousel" data-section="${escapeAttr(section.id)}" style="--carousel-duration: ${seconds}s; --section-accent: ${section.accent}">
-      <div class="home-carousel-label">${escapeHtml(section.title)}</div>
-      <div class="home-carousel-viewport">
-        <div class="home-carousel-track">
-          <div class="home-carousel-group">${cards}</div>
-          <div class="home-carousel-group" aria-hidden="true">${cards}</div>
-        </div>
-      </div>
-    </div>`;
-  }).join('');
+  if (typeof homeCarouselStop === 'function') {
+    homeCarouselStop();
+    homeCarouselStop = null;
+  }
 
-  root.querySelectorAll('.home-carousel-viewport').forEach((viewport) => {
-    const track = viewport.querySelector('.home-carousel-track');
-    if (!track) return;
-    const pause = () => track.classList.add('is-paused');
-    const resume = () => track.classList.remove('is-paused');
-    viewport.addEventListener('pointerdown', pause);
-    viewport.addEventListener('pointerup', resume);
-    viewport.addEventListener('pointerleave', resume);
-    viewport.addEventListener('touchstart', pause, { passive: true });
-    viewport.addEventListener('touchend', resume, { passive: true });
-  });
+  const list = pickFeaturedProducts(22);
+  if (!list.length) {
+    root.innerHTML = '';
+    return;
+  }
+
+  const cards = list.map(carouselCardHtml).join('');
+  root.innerHTML = `<div class="home-carousel home-carousel--featured" aria-label="Productos destacados">
+    <div class="home-carousel-label">Destacados</div>
+    <div class="home-carousel-viewport">
+      <div class="home-carousel-track">
+        <div class="home-carousel-group">${cards}</div>
+        <div class="home-carousel-group" aria-hidden="true">${cards}</div>
+      </div>
+    </div>
+  </div>`;
+
+  const viewport = root.querySelector('.home-carousel-viewport');
+  const track = root.querySelector('.home-carousel-track');
+  if (viewport && track) homeCarouselStop = bindInfiniteCarousel(viewport, track);
 }
 
 export function renderHomeSections() {
