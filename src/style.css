@@ -265,7 +265,12 @@ img { max-width: 100%; display: block; }
   position: relative;
   z-index: 1;
   overflow-x: clip;
-  isolation: isolate;
+}
+
+.content.is-page-animating {
+  overflow: hidden;
+  pointer-events: none;
+  touch-action: none;
 }
 
 .section {
@@ -278,64 +283,64 @@ img { max-width: 100%; display: block; }
   display: block;
 }
 
-.section.is-page-on {
-  position: relative;
-  width: 100%;
-  will-change: transform, opacity;
-  background: var(--bg-warm);
-}
-
-.section.is-enter-forward {
-  animation: pageInForward 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-  z-index: 3;
-  box-shadow: -10px 0 32px rgba(60, 45, 35, 0.14);
-}
-
-.section.is-leave-forward {
-  animation: pageOutForward 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
-  z-index: 2;
+.content.is-page-animating > .section.is-page-on,
+.content.is-page-animating > .section.is-page-under,
+.content.is-page-animating > .section.is-swipe-front {
   position: absolute;
   left: 0;
   right: 0;
   top: 0;
+  width: 100%;
+  margin: 0;
+  background: var(--bg-warm);
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  transform: translateZ(0);
+}
+
+.section.is-enter-forward {
+  animation: pageInForward 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+  z-index: 3;
+}
+
+.section.is-leave-forward {
+  animation: pageOutForward 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
+  z-index: 2;
 }
 
 .section.is-enter-back {
-  animation: pageInBack 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pageInBack 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
   z-index: 2;
 }
 
 .section.is-leave-back {
-  animation: pageOutBack 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation: pageOutBack 0.32s cubic-bezier(0.32, 0.72, 0, 1) both;
   z-index: 3;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
-  box-shadow: -10px 0 32px rgba(60, 45, 35, 0.18);
 }
 
 .section.is-page-under {
-  display: block !important;
-  position: absolute;
-  left: 0;
-  right: 0;
-  top: 0;
   z-index: 1;
-  width: 100%;
-  min-height: 100%;
   pointer-events: none;
-  background: var(--bg-warm);
-  will-change: transform, opacity;
 }
 
 .section.is-swipe-front,
 .section.is-swipe-dragging {
-  z-index: 5;
-  position: relative;
+  z-index: 4;
   touch-action: pan-y;
-  background: var(--bg-warm);
-  will-change: transform;
+}
+
+/* Sombra fija (no se recalcula en cada frame del gesto) */
+.section.is-swipe-front::before,
+.section.is-leave-back::before,
+.section.is-enter-forward::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: -18px;
+  width: 18px;
+  pointer-events: none;
+  background: linear-gradient(to left, rgba(60, 45, 35, 0.14), transparent);
 }
 
 @keyframes pageInForward {
@@ -344,13 +349,13 @@ img { max-width: 100%; display: block; }
 }
 
 @keyframes pageOutForward {
-  from { transform: translate3d(0, 0, 0); opacity: 1; }
-  to { transform: translate3d(-30%, 0, 0); opacity: 0.85; }
+  from { transform: translate3d(0, 0, 0); }
+  to { transform: translate3d(-22%, 0, 0); }
 }
 
 @keyframes pageInBack {
-  from { transform: translate3d(-30%, 0, 0); opacity: 0.85; }
-  to { transform: translate3d(0, 0, 0); opacity: 1; }
+  from { transform: translate3d(-22%, 0, 0); }
+  to { transform: translate3d(0, 0, 0); }
 }
 
 @keyframes pageOutBack {

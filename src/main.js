@@ -2,7 +2,7 @@ import './style.css';
 import { FALLBACKS } from './config.js';
 import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
-import { el, bindActivate, showToast, setBottomNav, setNextShowOpts } from './lib/dom.js';
+import { el, bindActivate, showToast, setBottomNav, showSection, isPageBusy } from './lib/dom.js';
 import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal, renderSectionProducts } from './ui/catalog.js';
 import { renderHomeSections, renderBrands, renderSubcategories, getSectionById } from './ui/brands.js';
 import {
@@ -69,7 +69,27 @@ function getPrevSectionId() {
   return null;
 }
 
-function goBack() {
+function syncStateForBack(fromId) {
+  if (fromId === 'products-view') {
+    if (AppState.sectionProductsDirect) {
+      AppState.currentSeccion = null;
+      AppState.currentMarca = null;
+      AppState.sectionProductsDirect = false;
+    }
+    return;
+  }
+  if (fromId === 'subcats-view') {
+    AppState.currentMarca = null;
+    return;
+  }
+  if (fromId === 'brands-view') {
+    AppState.currentSeccion = null;
+    AppState.currentMarca = null;
+    AppState.sectionProductsDirect = false;
+  }
+}
+
+function goBack(opts = {}) {
   if (el('modal-direccion')?.classList.contains('is-open')) {
     closeDireccionModal();
     return true;
@@ -86,8 +106,22 @@ function goBack() {
     closePromosModal();
     return true;
   }
-  const current = document.querySelector('.section.active');
+  const current = document.querySelector('.section.active') || document.querySelector('.section.is-swipe-front');
   if (!current) return false;
+
+  // Swipe: no re-renderizar la página de atrás (eso trababa la animación).
+  if (opts.swipeHandoff) {
+    const prev = opts.peekedId || getPrevSectionId();
+    if (!prev) return false;
+    syncStateForBack(current.id);
+    showSection(prev, {
+      swipeHandoff: true,
+      direction: 'back',
+      peekedId: prev
+    });
+    return true;
+  }
+
   if (current.id === 'products-view') {
     if (AppState.sectionProductsDirect) {
       renderHomeSections();
@@ -257,17 +291,8 @@ function bindUI() {
   bindSheetDismiss(el('modal-direccion'), closeDireccionModal);
   bindBackSwipe({
     getPrevId: getPrevSectionId,
-    onBack: (opts = {}) => {
-      if (opts.swipeHandoff) {
-        setNextShowOpts({
-          swipeHandoff: true,
-          direction: 'back',
-          peekedId: opts.peekedId || getPrevSectionId()
-        });
-      }
-      const didNav = goBack();
-      if (!didNav) setNextShowOpts(null);
-    }
+    isBusy: isPageBusy,
+    onBack: (opts = {}) => goBack(opts)
   });
 }
 

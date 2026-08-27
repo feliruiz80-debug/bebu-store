@@ -1,9 +1,11 @@
 const DISMISS_DY = 110;
 const DISMISS_VELOCITY = 0.65;
-const EDGE_ZONE = 28;
-const BACK_RATIO = 0.32;
-const BACK_VELOCITY = 0.55;
-const UNDER_OFFSET = 0.3; // 30% — estilo iOS
+const EDGE_ZONE = 24;
+const BACK_RATIO = 0.28;
+const BACK_VELOCITY = 0.45;
+const UNDER_OFFSET = 0.22;
+const PAGE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const SNAP_MS = 280;
 
 function sheetEl(overlay) {
   return overlay?.querySelector('.modal-card');
@@ -127,11 +129,12 @@ export function bindSheetDismiss(overlay, onClose) {
 
 /**
  * Gesto atrás estilo iOS: arrastra la página actual y se ve la anterior debajo.
- * @param {{ onBack: Function, getPrevId: () => string|null }} opts
+ * @param {{ onBack: Function, getPrevId: () => string|null, isBusy?: () => boolean }} opts
  */
 export function bindBackSwipe(opts = {}) {
   const onBack = typeof opts === 'function' ? opts : opts.onBack;
   const getPrevId = typeof opts === 'function' ? null : opts.getPrevId;
+  const isBusy = typeof opts === 'function' ? null : opts.isBusy;
   if (typeof onBack !== 'function') return () => {};
 
   let startX = 0;
@@ -143,35 +146,50 @@ export function bindBackSwipe(opts = {}) {
   let front = null;
   let under = null;
   let width = 0;
+  let raf = 0;
+  let pendingX = 0;
+  let stage = null;
 
   const clearNodeMotion = (node) => {
     if (!node) return;
     node.classList.remove('is-swipe-front', 'is-page-under', 'is-swipe-dragging', 'is-page-on');
     node.style.transform = '';
     node.style.transition = '';
-    node.style.boxShadow = '';
     node.style.opacity = '';
+    node.style.boxShadow = '';
     node.style.position = '';
     node.style.left = '';
     node.style.right = '';
     node.style.top = '';
     node.style.bottom = '';
+    node.style.width = '';
     node.style.zIndex = '';
     node.style.pointerEvents = '';
-    node.style.background = '';
+    node.style.willChange = '';
+  };
+
+  const unlockStage = () => {
+    if (!stage) return;
+    stage.classList.remove('is-page-animating');
+    stage.style.minHeight = '';
+    stage = null;
+  };
+
+  const paint = () => {
+    raf = 0;
+    if (!front) return;
+    const w = width || window.innerWidth;
+    const x = Math.min(w, Math.max(0, pendingX));
+    const p = x / w;
+    front.style.transform = `translate3d(${x}px, 0, 0)`;
+    if (under) {
+      under.style.transform = `translate3d(${(-UNDER_OFFSET * (1 - p) * 100).toFixed(2)}%, 0, 0)`;
+    }
   };
 
   const applyProgress = (x) => {
-    if (!front) return;
-    const w = width || window.innerWidth;
-    const p = Math.min(1, Math.max(0, x / w));
-    front.style.transform = `translate3d(${x}px, 0, 0)`;
-    front.style.boxShadow = p > 0.01 ? '-10px 0 32px rgba(60, 45, 35, 0.18)' : 'none';
-    if (under) {
-      const underX = -UNDER_OFFSET * (1 - p) * 100;
-      under.style.transform = `translate3d(${underX}%, 0, 0)`;
-      under.style.opacity = String(0.72 + p * 0.28);
-    }
+    pendingX = x;
+    if (!raf) raf = requestAnimationFrame(paint);
   };
 
   const prepareUnder = () => {
@@ -180,15 +198,30 @@ export function bindBackSwipe(opts = {}) {
     if (!id || id === front.id) return;
     const node = document.getElementById(id);
     if (!node) return;
+
+    stage = document.querySelector('.content') || document.querySelector('.main-container');
+    if (stage) {
+      stage.classList.add('is-page-animating');
+      stage.style.minHeight = `${Math.ceil(front.offsetHeight)}px`;
+    }
+
     under = node;
     under.classList.add('is-page-under', 'is-page-on');
     under.style.transition = 'none';
     under.style.pointerEvents = 'none';
+    under.style.willChange = 'transform';
     under.style.transform = `translate3d(${-UNDER_OFFSET * 100}%, 0, 0)`;
-    under.style.opacity = '0.72';
+
+    front.classList.add('is-swipe-front', 'is-swipe-dragging', 'is-page-on');
+    front.style.willChange = 'transform';
+    front.style.transition = 'none';
   };
 
   const resetCancel = () => {
+    if (raf) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+    }
     if (front) {
       front.classList.remove('is-swipe-dragging');
       clearNodeMotion(front);
@@ -198,6 +231,7 @@ export function bindBackSwipe(opts = {}) {
       clearNodeMotion(under);
       under.classList.remove('active');
     }
+    unlockStage();
     front = null;
     under = null;
     dragging = false;
@@ -209,13 +243,14 @@ export function bindBackSwipe(opts = {}) {
     if (t.clientX > EDGE_ZONE) return;
     if (e.target.closest('.modal-overlay.is-open, .bottom-nav, input, textarea')) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+    if (typeof isBusy === 'function' && isBusy()) return;
     const active = document.querySelector('.section.active');
     if (!active || active.id === 'home-view') return;
     if (!getPrevId || !getPrevId()) return;
     startX = t.clientX;
     startY = t.clientY;
     lastX = startX;
-    lastT = Date.now();
+    lastT = performance.now();
     tracking = true;
     dragging = false;
     front = active;
@@ -230,21 +265,19 @@ export function bindBackSwipe(opts = {}) {
     const dx = Math.max(0, t.clientX - startX);
     const dy = Math.abs(t.clientY - startY);
     if (!dragging) {
-      if (dy > 48 && dy > dx) {
+      if (dy > 40 && dy > dx) {
         tracking = false;
         front = null;
         return;
       }
-      if (dx < 8) return;
+      if (dx < 6) return;
       dragging = true;
-      front.classList.add('is-swipe-front', 'is-swipe-dragging', 'is-page-on');
-      front.style.transition = 'none';
       prepareUnder();
     }
     e.preventDefault();
     applyProgress(Math.min(width, dx));
     lastX = t.clientX;
-    lastT = Date.now();
+    lastT = performance.now();
   };
 
   const onEnd = (e) => {
@@ -252,55 +285,45 @@ export function bindBackSwipe(opts = {}) {
     tracking = false;
     if (!front) return;
 
+    if (raf) {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      paint();
+    }
+
     const t = e.changedTouches?.[0];
-    const dx = t ? Math.max(0, t.clientX - startX) : 0;
+    const now = performance.now();
+    const dx = t ? Math.max(0, t.clientX - startX) : pendingX;
     const dy = t ? Math.abs(t.clientY - startY) : 0;
-    const dt = Math.max(1, Date.now() - lastT);
+    const dt = Math.max(1, now - lastT);
     const vx = t ? Math.max(0, (t.clientX - lastX) / dt) : 0;
     const progress = dx / (width || window.innerWidth);
     const shouldBack =
       dragging &&
-      dy < 100 &&
-      (progress >= BACK_RATIO || (vx > BACK_VELOCITY && progress > 0.08));
+      dy < 110 &&
+      (progress >= BACK_RATIO || (vx > BACK_VELOCITY && progress > 0.06));
 
     if (shouldBack) {
-      const leaving = front;
-      const revealed = under;
-      const peekedId = revealed?.id || null;
+      const peekedId = under?.id || null;
       front = null;
       under = null;
       dragging = false;
-
-      // showSection completa el slide manteniendo la página de atrás visible.
-      onBack({
-        swipeHandoff: true,
-        peekedId
-      });
-
-      // Si goBack no corrió (fallback), limpiar.
-      if (leaving?.classList.contains('is-swipe-front') || leaving?.classList.contains('is-swipe-dragging')) {
-        window.setTimeout(() => {
-          if (!leaving.classList.contains('active')) return;
-          clearNodeMotion(leaving);
-          if (revealed) clearNodeMotion(revealed);
-        }, 400);
-      }
+      stage = null;
+      onBack({ swipeHandoff: true, peekedId });
       return;
     }
 
     if (dragging) {
       const snapFront = front;
       const snapUnder = under;
-      const ease = '0.3s cubic-bezier(0.22, 1, 0.36, 1)';
+      const ease = `transform ${SNAP_MS}ms ${PAGE_EASE}`;
       if (snapFront) {
-        snapFront.style.transition = `transform ${ease}, box-shadow ${ease}`;
+        snapFront.style.transition = ease;
         snapFront.style.transform = 'translate3d(0, 0, 0)';
-        snapFront.style.boxShadow = 'none';
       }
       if (snapUnder) {
-        snapUnder.style.transition = `transform ${ease}, opacity ${ease}`;
+        snapUnder.style.transition = ease;
         snapUnder.style.transform = `translate3d(${-UNDER_OFFSET * 100}%, 0, 0)`;
-        snapUnder.style.opacity = '0.72';
       }
       window.setTimeout(() => {
         if (snapFront) {
@@ -312,10 +335,11 @@ export function bindBackSwipe(opts = {}) {
           clearNodeMotion(snapUnder);
           snapUnder.classList.remove('active');
         }
+        unlockStage();
         if (front === snapFront) front = null;
         if (under === snapUnder) under = null;
         dragging = false;
-      }, 300);
+      }, SNAP_MS);
       return;
     }
 

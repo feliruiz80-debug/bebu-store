@@ -24,7 +24,9 @@ const SECTION_DEPTH = {
   'products-view': 3
 };
 
-const PAGE_MS = 380;
+/** Curva cercana a iOS UINavigationController */
+const PAGE_EASE = 'cubic-bezier(0.32, 0.72, 0, 1)';
+const PAGE_MS = 320;
 let pageBusy = false;
 let pageTimer = 0;
 let pendingShowOpts = null;
@@ -33,7 +35,11 @@ export function setNextShowOpts(opts) {
   pendingShowOpts = opts && typeof opts === 'object' ? { ...opts } : null;
 }
 
-function clearPageClasses(node) {
+export function isPageBusy() {
+  return pageBusy;
+}
+
+function clearPageMotion(node) {
   if (!node) return;
   node.classList.remove(
     'is-enter-forward',
@@ -53,11 +59,31 @@ function clearPageClasses(node) {
   node.style.left = '';
   node.style.right = '';
   node.style.top = '';
+  node.style.bottom = '';
+  node.style.width = '';
   node.style.zIndex = '';
+  node.style.pointerEvents = '';
+  node.style.willChange = '';
+}
+
+function getStage() {
+  return document.querySelector('.content') || document.querySelector('.main-container');
+}
+
+function lockStage(stage, heightPx) {
+  if (!stage) return;
+  stage.classList.add('is-page-animating');
+  if (heightPx > 0) stage.style.minHeight = `${Math.ceil(heightPx)}px`;
+}
+
+function unlockStage(stage) {
+  if (!stage) return;
+  stage.classList.remove('is-page-animating');
+  stage.style.minHeight = '';
 }
 
 function finishPageChrome() {
-  const content = document.querySelector('.content');
+  const content = getStage();
   if (content) content.scrollTop = 0;
   window.scrollTo({ top: 0, behavior: 'auto' });
   if (
@@ -69,6 +95,24 @@ function finishPageChrome() {
   }
 }
 
+function endTransition(leaving, entering, stage) {
+  if (leaving) {
+    leaving.classList.remove('active');
+    clearPageMotion(leaving);
+  }
+  $all('.section').forEach((s) => {
+    if (s !== entering) {
+      s.classList.remove('active');
+      clearPageMotion(s);
+    }
+  });
+  clearPageMotion(entering);
+  entering.classList.add('active');
+  unlockStage(stage);
+  pageBusy = false;
+  finishPageChrome();
+}
+
 export function showSection(id, opts = {}) {
   const next = el(id);
   if (!next) return;
@@ -76,7 +120,10 @@ export function showSection(id, opts = {}) {
   const merged = { ...(pendingShowOpts || {}), ...opts };
   pendingShowOpts = null;
 
-  const current = document.querySelector('.section.active');
+  const current =
+    document.querySelector('.section.active') ||
+    document.querySelector('.section.is-swipe-front');
+
   if (current === next) {
     finishPageChrome();
     return;
@@ -88,12 +135,16 @@ export function showSection(id, opts = {}) {
   let direction = merged.direction;
   if (!direction) direction = toDepth < fromDepth ? 'back' : 'forward';
 
+  const stage = getStage();
+
   if (merged.instant || reduceMotion || !current || (pageBusy && !merged.swipeHandoff)) {
+    window.clearTimeout(pageTimer);
     $all('.section').forEach((s) => {
-      clearPageClasses(s);
+      clearPageMotion(s);
       s.classList.remove('active');
     });
     next.classList.add('active');
+    unlockStage(stage);
     pageBusy = false;
     finishPageChrome();
     return;
@@ -102,67 +153,50 @@ export function showSection(id, opts = {}) {
   pageBusy = true;
   window.clearTimeout(pageTimer);
 
+  /* —— Gesto: continuar desde el dedo, sin re-layout brusco —— */
   if (merged.swipeHandoff && direction === 'back') {
     const peeked = merged.peekedId ? el(merged.peekedId) : null;
     const under = peeked && peeked !== current ? peeked : next;
-    const ease = '0.32s cubic-bezier(0.22, 1, 0.36, 1)';
+    const ease = `transform ${PAGE_MS}ms ${PAGE_EASE}`;
 
-    // Página actual sigue el dedo → sale a la derecha (mantiene altura del layout).
+    lockStage(stage, Math.max(current.offsetHeight, under.offsetHeight || 0));
+
     current.classList.remove('is-swipe-dragging');
     current.classList.add('is-swipe-front', 'is-page-on');
-    current.style.position = 'relative';
-    current.style.zIndex = '3';
-    current.style.transition = `transform ${ease}, box-shadow ${ease}`;
+    current.style.willChange = 'transform';
+    current.style.transition = ease;
     current.style.transform = 'translate3d(100%, 0, 0)';
-    current.style.boxShadow = '-10px 0 32px rgba(60, 45, 35, 0.18)';
 
-    // Página de atrás ya visible debajo: termina de llegar al centro.
     under.classList.add('is-page-under', 'is-page-on');
     under.classList.remove('active');
-    under.style.transition = `transform ${ease}, opacity ${ease}`;
+    under.style.willChange = 'transform';
+    under.style.transition = ease;
     under.style.transform = 'translate3d(0, 0, 0)';
-    under.style.opacity = '1';
     under.style.pointerEvents = 'none';
-    under.style.zIndex = '1';
 
     if (next !== under && next !== current) {
-      clearPageClasses(next);
+      clearPageMotion(next);
       next.classList.remove('active');
     }
 
-    pageTimer = window.setTimeout(() => {
-      current.classList.remove('active', 'is-page-on', 'is-swipe-front');
-      clearPageClasses(current);
-      under.classList.remove('is-page-under');
-      clearPageClasses(under);
-      under.classList.add('active');
-      under.style.pointerEvents = '';
-      pageBusy = false;
-    }, 320);
-    finishPageChrome();
+    pageTimer = window.setTimeout(() => endTransition(current, under, stage), PAGE_MS);
     return;
   }
 
-  clearPageClasses(current);
-  clearPageClasses(next);
+  /* —— Tap / navegación normal —— */
+  const height = Math.max(current.offsetHeight, 120);
+  lockStage(stage, height);
+
+  clearPageMotion(current);
+  clearPageMotion(next);
 
   const leaveClass = direction === 'back' ? 'is-leave-back' : 'is-leave-forward';
   const enterClass = direction === 'back' ? 'is-enter-back' : 'is-enter-forward';
 
   current.classList.add(leaveClass, 'is-page-on');
-  // Solo is-page-on en la que entra: evita dos .active a la vez (rompe el gesto iOS).
   next.classList.add(enterClass, 'is-page-on');
 
-  pageTimer = window.setTimeout(() => {
-    current.classList.remove('active', leaveClass, 'is-page-on');
-    clearPageClasses(current);
-    next.classList.remove(enterClass, 'is-page-on');
-    clearPageClasses(next);
-    next.classList.add('active');
-    pageBusy = false;
-  }, PAGE_MS);
-
-  finishPageChrome();
+  pageTimer = window.setTimeout(() => endTransition(current, next, stage), PAGE_MS);
 }
 
 export function setBottomNav(name) {
