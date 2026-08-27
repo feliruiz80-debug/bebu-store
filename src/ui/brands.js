@@ -35,7 +35,7 @@ function sectionMotifHtml(motif) {
         <img src="/illustrations/algodon.png?v=5" alt="" decoding="async" draggable="false">
       </span>
       <span class="motif-item motif-item--2 motif-illu motif-illu--photo">
-        <img src="/illustrations/oleo.png?v=5" alt="" decoding="async" draggable="false">
+        <img src="/illustrations/oleo.png?v=6" alt="" decoding="async" draggable="false">
       </span>`;
   }
 
