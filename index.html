@@ -139,10 +139,17 @@
           <input type="checkbox" id="switch-envio" />
           Envío a domicilio
         </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="switch-transferencia" />
-          Pago por transferencia
-        </label>
+        <div class="pay-options" role="radiogroup" aria-label="Forma de pago">
+          <span class="pay-options-label">Forma de pago</span>
+          <label class="checkbox-label">
+            <input type="radio" name="pago" id="pago-efectivo" value="efectivo" />
+            Efectivo
+          </label>
+          <label class="checkbox-label">
+            <input type="radio" name="pago" id="pago-transferencia" value="transferencia" />
+            Transferencia
+          </label>
+        </div>
         <button id="btn-abrir-direccion" class="btn-secondary" type="button" hidden>Ingresar dirección</button>
       </div>
       <div class="totales-desglose">

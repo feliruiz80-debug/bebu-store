@@ -1403,6 +1403,24 @@ img { max-width: 100%; display: block; }
   accent-color: var(--accent-1);
 }
 
+.pay-options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pay-options-label {
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.pay-options .checkbox-label {
+  font-weight: 700;
+}
+
 .btn-secondary {
   background: var(--accent-1);
   color: #fff;

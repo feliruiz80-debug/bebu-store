@@ -282,8 +282,10 @@ function bindUI() {
     AppState.envioActivo = e.target.checked;
     renderCartDrawer();
   });
-  el('switch-transferencia')?.addEventListener('change', (e) => {
-    AppState.transferencia = e.target.checked;
+  document.querySelectorAll('input[name="pago"]').forEach((input) => {
+    input.addEventListener('change', (e) => {
+      if (e.target.checked) AppState.pago = e.target.value;
+    });
   });
 
   el('btn-enviar-whatsapp')?.addEventListener('click', sendOrderWhatsApp);

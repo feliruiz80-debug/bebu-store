@@ -13,7 +13,7 @@ export const AppState = {
   currentMarca: null,
   sectionProductsDirect: false,
   envioActivo: false,
-  transferencia: false,
+  pago: '',
   direccion: ''
 };
 

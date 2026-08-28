@@ -42,15 +42,14 @@ export function waForProduct(id) {
   const brand = String(p.marca || '').trim();
   const size = String(p.subcategoria || '').trim();
   const details = [brand, size ? `Talle ${size}` : ''].filter(Boolean).join(' · ');
+  const rule = '--------------------';
   const msg = [
-    'Hola.',
-    '',
     '*CONSULTA BEBU STORE*',
-    '',
+    rule,
     `*${p.descripcion}*`,
     details,
-    `*${fmt(price)}*`,
-    '',
+    `Precio: ${fmt(price)}`,
+    rule,
     'Me interesa. ¿Tienen stock?',
     'Gracias.'
   ]
