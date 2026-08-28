@@ -43,14 +43,16 @@ export function waForProduct(id) {
   const size = String(p.subcategoria || '').trim();
   const details = [brand, size ? `Talle ${size}` : ''].filter(Boolean).join(' · ');
   const msg = [
-    'Hola 👋',
-    '*Consulta BEBU*',
+    'Hola.',
+    '',
+    '*CONSULTA BEBU STORE*',
     '',
     `*${p.descripcion}*`,
     details,
     `*${fmt(price)}*`,
     '',
-    'Me interesa, ¿tienen stock? Gracias.'
+    'Me interesa. ¿Tienen stock?',
+    'Gracias.'
   ]
     .filter((line) => line)
     .join('\n');

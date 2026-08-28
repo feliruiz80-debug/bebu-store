@@ -203,38 +203,38 @@ export function sendOrderWhatsApp() {
 
   const phone = String(AppState.config.WHATSAPP || FALLBACKS.WHATSAPP).replace(/\D/g, '');
   const { items, subtotal, envio, total } = computeCartTotals();
-  const lines = ['Hola 👋', '*Pedido BEBU*', ''];
+  const lines = ['Hola.', '', '*PEDIDO BEBU STORE*', ''];
 
   items.forEach((it, i) => {
     const p = it.product;
     const brand = String(p.marca || '').trim();
     const size = String(p.subcategoria || '').trim();
     const tag = it.promoApplied?.oferta
-      ? 'oferta'
+      ? 'Oferta'
       : it.promoApplied?.cantidad
-        ? `promo x${it.promoApplied.cantidad}`
+        ? `Promo x${it.promoApplied.cantidad}`
         : '';
     const details = [brand, size ? `Talle ${size}` : '', tag].filter(Boolean).join(' · ');
     const qty =
-      it.qty > 1 ? `Cant. ${it.qty} x ${fmt(it.unitPrice)}` : `Cant. ${it.qty}`;
+      it.qty > 1 ? `Cantidad: ${it.qty} x ${fmt(it.unitPrice)}` : `Cantidad: ${it.qty}`;
 
     lines.push(`${i + 1}. *${p.descripcion}*`);
     if (details) lines.push(details);
     lines.push(`${qty}  ·  *${fmt(it.subtotal)}*`, '');
   });
 
-  if (envio) lines.push(`Productos  ${fmt(subtotal)}`);
+  if (envio) lines.push(`Productos: ${fmt(subtotal)}`);
   if (AppState.envioActivo) {
-    lines.push(`Envío  ${fmt(envio)}`);
+    lines.push(`Envío: ${fmt(envio)}`);
     if (AppState.direccion) lines.push(`Dirección: ${AppState.direccion}`);
   }
-  lines.push(`*Total  ${fmt(total)}*`);
+  lines.push(`*Total: ${fmt(total)}*`);
 
   if (AppState.transferencia) {
-    lines.push('', 'Pago: transferencia', 'Alias: *TIENDABEBU*');
+    lines.push('', 'Forma de pago: transferencia', 'Alias: *TIENDABEBU*');
   }
 
-  lines.push('', 'Quedo atento para confirmar. Gracias.');
+  lines.push('', 'Aguardo su confirmación.', 'Gracias.');
 
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
   showToast('Pedido abierto en WhatsApp. El carrito se mantiene.');
