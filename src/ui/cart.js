@@ -203,38 +203,38 @@ export function sendOrderWhatsApp() {
 
   const phone = String(AppState.config.WHATSAPP || FALLBACKS.WHATSAPP).replace(/\D/g, '');
   const { items, subtotal, envio, total } = computeCartTotals();
-  const lines = ['*Compra BEBU* ✅', ''];
+  const lines = ['Hola 👋', '*Pedido BEBU*', ''];
 
   items.forEach((it, i) => {
     const p = it.product;
     const brand = String(p.marca || '').trim();
     const size = String(p.subcategoria || '').trim();
     const tag = it.promoApplied?.oferta
-      ? 'Oferta'
+      ? 'oferta'
       : it.promoApplied?.cantidad
-        ? `Promo x${it.promoApplied.cantidad}`
+        ? `promo x${it.promoApplied.cantidad}`
         : '';
     const details = [brand, size ? `Talle ${size}` : '', tag].filter(Boolean).join(' · ');
-    const qtyLine =
-      it.qty > 1 ? `${it.qty} un. x ${fmt(it.unitPrice)}` : `${it.qty} un.`;
+    const qty =
+      it.qty > 1 ? `Cant. ${it.qty} x ${fmt(it.unitPrice)}` : `Cant. ${it.qty}`;
 
     lines.push(`${i + 1}. *${p.descripcion}*`);
     if (details) lines.push(details);
-    lines.push(`${qtyLine} - *${fmt(it.subtotal)}*`);
+    lines.push(`${qty}  ·  *${fmt(it.subtotal)}*`, '');
   });
 
-  lines.push('');
-  if (envio) lines.push(`Productos: ${fmt(subtotal)}`);
+  if (envio) lines.push(`Productos  ${fmt(subtotal)}`);
   if (AppState.envioActivo) {
-    lines.push(`📍 Envio: ${fmt(envio)}${AppState.direccion ? ` · ${AppState.direccion}` : ''}`);
+    lines.push(`Envío  ${fmt(envio)}`);
+    if (AppState.direccion) lines.push(`Dirección: ${AppState.direccion}`);
   }
-  lines.push(`*Total: ${fmt(total)}*`);
+  lines.push(`*Total  ${fmt(total)}*`);
 
   if (AppState.transferencia) {
-    lines.push('💳 Transferencia · Alias: TIENDABEBU');
+    lines.push('', 'Pago: transferencia', 'Alias: *TIENDABEBU*');
   }
 
-  lines.push('', 'Confirmo este pedido. Gracias ✨');
+  lines.push('', 'Quedo atento para confirmar. Gracias.');
 
   window.open(`https://wa.me/${phone}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
   showToast('Pedido abierto en WhatsApp. El carrito se mantiene.');
