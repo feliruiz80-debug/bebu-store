@@ -1,5 +1,3 @@
-import { isWebLayout } from './device.js';
-
 export function el(id) {
   return document.getElementById(id);
 }
@@ -76,7 +74,6 @@ function setSwipeMode(stage, on) {
 
 function finishPageChrome(section) {
   if (section) section.scrollTop = 0;
-  if (isWebLayout()) window.scrollTo(0, 0);
   if (
     !el('modal-buscar')?.classList.contains('is-open') &&
     !el('modal-carrito')?.classList.contains('is-open') &&
@@ -142,7 +139,7 @@ export function showSection(id, opts = {}) {
 
   const stage = getStage();
 
-  if (merged.instant || reduceMotion || isWebLayout() || !current || (pageBusy && !merged.swipeHandoff)) {
+  if (merged.instant || reduceMotion || !current || (pageBusy && !merged.swipeHandoff)) {
     window.clearTimeout(pageTimer);
     $all('.section').forEach((s) => {
       clearPageMotion(s);

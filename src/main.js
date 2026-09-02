@@ -232,17 +232,6 @@ function bindUI() {
     if (e.target.id === 'modal-promos') closePromosModal();
   });
 
-  document.querySelector('.brand-mark')?.addEventListener('click', () => {
-    closeCartModal();
-    closeSearchModal();
-    closePromosModal();
-    const searchInput = el('buscador');
-    if (searchInput) searchInput.value = '';
-    window.scrollTo({ top: 0, behavior: 'smooth' });
-    renderHomeSections();
-    setBottomNav('home');
-  });
-
   el('bottom-nav')?.addEventListener('click', (e) => {
     const btn = e.target.closest('[data-nav]');
     if (!btn) return;
