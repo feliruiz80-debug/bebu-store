@@ -2442,3 +2442,173 @@ html[data-density="compact"] .offer-price-now {
   font-size: 28px;
 }
 
+/* ========== DESKTOP WEB LAYOUT ========== */
+html[data-layout="web"] {
+  height: auto;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior-y: auto;
+  touch-action: auto;
+  --max-width: 1180px;
+  --container-pad: 28px;
+  --header-h: 84px;
+  --bottom-nav-h: 0px;
+}
+
+html[data-layout="web"] body {
+  height: auto;
+  min-height: 100%;
+  overflow: visible;
+  overscroll-behavior: auto;
+}
+
+html[data-layout="web"] .header-spacer {
+  display: block;
+}
+
+html[data-layout="web"] .site-header {
+  background: rgba(255, 255, 255, 0.84);
+  backdrop-filter: blur(18px) saturate(1.2);
+  -webkit-backdrop-filter: blur(18px) saturate(1.2);
+  box-shadow: 0 1px 0 rgba(106, 90, 91, 0.08);
+}
+
+html[data-layout="web"] .header-inner {
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  padding: 12px var(--container-pad);
+}
+
+html[data-layout="web"] .header-divider {
+  opacity: 0.4;
+}
+
+html[data-layout="web"] .brand-mark {
+  cursor: pointer;
+}
+
+html[data-layout="web"] .logo-app {
+  height: 64px;
+}
+
+html[data-layout="web"] .main-container,
+html[data-layout="web"] .content {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  bottom: auto;
+  width: 100%;
+  overflow: visible;
+  min-height: calc(100vh - var(--header-offset, var(--header-h)));
+}
+
+html[data-layout="web"] .section {
+  position: relative;
+  inset: auto;
+  overflow: visible;
+  padding: 8px var(--container-pad) 72px;
+  min-height: 0;
+}
+
+html[data-layout="web"] .section.is-page-on:not(.active) {
+  display: none;
+}
+
+html[data-layout="web"] .section.is-page-sheet::before,
+html[data-layout="web"] .section.is-swipe-front::before {
+  display: none;
+}
+
+html[data-layout="web"] .bottom-nav {
+  position: static;
+  transform: none;
+  left: auto;
+  bottom: auto;
+  width: auto;
+  display: flex;
+  gap: 6px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+}
+
+html[data-layout="web"] .bottom-nav-btn {
+  flex-direction: row;
+  gap: 8px;
+  height: 42px;
+  min-height: 42px;
+  padding: 0 16px;
+}
+
+html[data-layout="web"] .bottom-nav-btn:active {
+  transform: none;
+}
+
+html[data-layout="web"] .bottom-nav-label {
+  font-size: 13px;
+  font-weight: 700;
+}
+
+html[data-layout="web"] .bottom-nav-ico,
+html[data-layout="web"] .bottom-nav-ico svg {
+  width: 16px;
+  height: 16px;
+}
+
+html[data-layout="web"] .badge-nav {
+  top: 4px;
+  right: 6px;
+}
+
+html[data-layout="web"] .sections-grid {
+  grid-template-columns: 1.35fr 1fr;
+  gap: 18px;
+}
+
+html[data-layout="web"] .section-card--hero {
+  grid-column: 1;
+  grid-row: 1 / span 2;
+  min-height: 340px;
+}
+
+html[data-layout="web"] .section-card--primary {
+  min-height: 160px;
+}
+
+html[data-layout="web"] .brands-grid {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 18px;
+}
+
+html[data-layout="web"] .products-grid,
+html[data-layout="web"] .search-results-grid,
+html[data-layout="web"] .product-group-grid {
+  grid-template-columns: repeat(4, 1fr);
+}
+
+html[data-layout="web"] .products-grid:has(.product-group) {
+  grid-template-columns: 1fr;
+}
+
+html[data-layout="web"] .modal-overlay {
+  align-items: center;
+  padding: 40px 24px;
+}
+
+html[data-layout="web"] .modal-card {
+  border-radius: 24px;
+  max-height: min(82vh, 740px);
+  animation: none;
+}
+
+html[data-layout="web"] .sheet-handle {
+  display: none;
+}
+
+html[data-layout="web"] .bebu-toast {
+  bottom: 28px;
+}
+
+

@@ -27,6 +27,17 @@ function fontScale() {
   return measured / 16;
 }
 
+const PHONE_UA = /iPhone|iPod|Android.+Mobile|webOS|BlackBerry|IEMobile|Opera Mini/i;
+
+export function isWebLayout() {
+  return document.documentElement.dataset.layout === 'web';
+}
+
+function layoutFromWidth(width) {
+  if (PHONE_UA.test(UA) && width < 900) return 'app';
+  return width >= 900 ? 'web' : 'app';
+}
+
 export function applyDeviceProfile() {
   const root = document.documentElement;
   const width = Math.round(window.visualViewport?.width || window.innerWidth || 0);
@@ -35,8 +46,10 @@ export function applyDeviceProfile() {
   const size = sizeFromWidth(width);
   const compact = width < 400 || height < 680 || scale > 1.12;
   const engine = engineFromUa();
+  const layout = layoutFromWidth(width);
 
   root.dataset.device = size;
+  root.dataset.layout = layout;
   root.dataset.density = compact ? 'compact' : 'comfortable';
   root.dataset.engine = engine;
   root.dataset.fontScale = scale > 1.2 ? 'large' : scale > 1.08 ? 'medium' : 'normal';

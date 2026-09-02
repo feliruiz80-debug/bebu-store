@@ -243,6 +243,7 @@ export function bindBackSwipe(opts = {}) {
     const t = e.touches?.[0];
     if (!t) return;
     if (t.clientX > EDGE_ZONE) return;
+    if (document.documentElement.dataset.layout === 'web') return;
     if (e.target.closest('.modal-overlay.is-open, .bottom-nav, input, textarea')) return;
     if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
     if (typeof isBusy === 'function' && isBusy()) return;

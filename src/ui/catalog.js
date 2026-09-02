@@ -48,27 +48,6 @@ export function closePromosModal() {
   }
 }
 
-const SIZE_RANK = {
-  RN: 1,
-  'RN+': 2,
-  NB: 1,
-  P: 3,
-  M: 4,
-  G: 5,
-  XG: 6,
-  XXG: 7,
-  XXXG: 8,
-  XXXXG: 9
-};
-
-function rankSubcat(name) {
-  const key = String(name || '').trim().toUpperCase();
-  if (SIZE_RANK[key] != null) return SIZE_RANK[key];
-  const token = key.split(/[\s/-]+/)[0];
-  if (SIZE_RANK[token] != null) return SIZE_RANK[token];
-  return 1000;
-}
-
 function groupProductsBySubcat(list) {
   const groups = new Map();
   list.forEach((p) => {
@@ -76,12 +55,7 @@ function groupProductsBySubcat(list) {
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(p);
   });
-  return [...groups.entries()].sort((a, b) => {
-    const ra = rankSubcat(a[0]);
-    const rb = rankSubcat(b[0]);
-    if (ra !== rb) return ra - rb;
-    return String(a[0]).localeCompare(String(b[0]), 'es');
-  });
+  return [...groups.entries()];
 }
 
 function productsGroupedHtml(list, { hideSubcat = false } = {}) {
