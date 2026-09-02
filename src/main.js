@@ -4,8 +4,8 @@ import { AppState, loadCartFromStorage, skeletonCards } from './state.js';
 import { loadAllData } from './lib/sheet.js';
 import { el, bindActivate, showToast, setBottomNav, showSection, isPageBusy } from './lib/dom.js';
 import { initDeviceProfile } from './lib/device.js';
-import { renderProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal, renderSectionProducts } from './ui/catalog.js';
-import { renderHomeSections, renderBrands, renderSubcategories, getSectionById } from './ui/brands.js';
+import { renderProducts, renderBrandProducts, handleSearchInput, openSearchModal, closeSearchModal, openPromosModal, closePromosModal, renderSectionProducts } from './ui/catalog.js';
+import { renderHomeSections, renderBrands, getSectionById } from './ui/brands.js';
 import {
   addToCart,
   updateCartQty,
@@ -66,7 +66,7 @@ function getPrevSectionId() {
   const current = document.querySelector('.section.active');
   if (!current) return null;
   if (current.id === 'products-view') {
-    return AppState.sectionProductsDirect ? 'home-view' : 'subcats-view';
+    return AppState.sectionProductsDirect ? 'home-view' : 'brands-view';
   }
   if (current.id === 'subcats-view') return 'brands-view';
   if (current.id === 'brands-view') return 'home-view';
@@ -79,6 +79,8 @@ function syncStateForBack(fromId) {
       AppState.currentSeccion = null;
       AppState.currentMarca = null;
       AppState.sectionProductsDirect = false;
+    } else {
+      AppState.currentMarca = null;
     }
     return;
   }
@@ -131,7 +133,7 @@ function goBack(opts = {}) {
       renderHomeSections();
       return true;
     }
-    renderSubcategories(AppState.currentMarca);
+    renderBrands(AppState.currentSeccion);
     return true;
   }
   if (current.id === 'subcats-view') {
@@ -189,7 +191,7 @@ function bindUI() {
         return;
       }
       AppState.currentMarca = marca;
-      renderSubcategories(marca);
+      renderBrandProducts(marca);
     });
     bindActivate(app, '.subcat-card', (card) => {
       renderProducts(AppState.currentMarca, card.getAttribute('data-sub'));

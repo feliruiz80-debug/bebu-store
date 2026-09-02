@@ -11,18 +11,21 @@ export function productPriceHtml(p, promo = findPromo(p.id)) {
   return `<div class="product-price">${old}<span class="price-now">${fmt(newPrice)}</span> <span class="promo-inline">Promo x${promo.cantidad}</span></div>`;
 }
 
-export function productCardHtml(p) {
+export function productCardHtml(p, opts = {}) {
   const promo = findPromo(p.id);
   const img = p.imagen
     ? `<img src="${escapeAttr(p.imagen)}" alt="${escapeHtml(p.descripcion)}" loading="lazy" onerror="this.style.display='none'">`
     : '';
   const priceHtml = productPriceHtml(p, promo);
+  const brandLine = opts.hideSubcat
+    ? escapeHtml(p.marca)
+    : `${escapeHtml(p.marca)} · ${escapeHtml(p.subcategoria)}`;
 
   return `<article class="product-card" data-id="${escapeAttr(p.id)}">
     <div class="product-img">${img}</div>
     <div class="product-body">
       <div>
-        <div class="product-brand">${escapeHtml(p.marca)} · ${escapeHtml(p.subcategoria)}</div>
+        <div class="product-brand">${brandLine}</div>
         <div class="product-name">${escapeHtml(p.descripcion)}</div>
         ${priceHtml}
       </div>

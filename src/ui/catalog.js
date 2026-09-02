@@ -48,6 +48,61 @@ export function closePromosModal() {
   }
 }
 
+const SIZE_RANK = {
+  RN: 1,
+  'RN+': 2,
+  NB: 1,
+  P: 3,
+  M: 4,
+  G: 5,
+  XG: 6,
+  XXG: 7,
+  XXXG: 8,
+  XXXXG: 9
+};
+
+function rankSubcat(name) {
+  const key = String(name || '').trim().toUpperCase();
+  if (SIZE_RANK[key] != null) return SIZE_RANK[key];
+  const token = key.split(/[\s/-]+/)[0];
+  if (SIZE_RANK[token] != null) return SIZE_RANK[token];
+  return 1000;
+}
+
+function groupProductsBySubcat(list) {
+  const groups = new Map();
+  list.forEach((p) => {
+    const key = p.subcategoria || 'General';
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key).push(p);
+  });
+  return [...groups.entries()].sort((a, b) => {
+    const ra = rankSubcat(a[0]);
+    const rb = rankSubcat(b[0]);
+    if (ra !== rb) return ra - rb;
+    return String(a[0]).localeCompare(String(b[0]), 'es');
+  });
+}
+
+function productsGroupedHtml(list, { hideSubcat = false } = {}) {
+  const groups = groupProductsBySubcat(list);
+  if (groups.length <= 1) {
+    return list.map((p) => productCardHtml(p, { hideSubcat: false })).join('');
+  }
+  return groups
+    .map(([subcat, items]) => {
+      const qty = items.length;
+      return `<section class="product-group" aria-label="${escapeHtml(subcat)}">
+        <h2 class="product-group-title">
+          <span>${escapeHtml(subcat)}</span>
+          <span class="product-group-count">${qty} producto${qty !== 1 ? 's' : ''}</span>
+        </h2>
+        <div class="product-group-grid">${items.map((p) => productCardHtml(p, { hideSubcat })).join('')}</div>
+      </section>`;
+    })
+    .join('');
+}
+
 export function renderProducts(marca, subcat) {
   AppState.sectionProductsDirect = false;
   const container = el('products-grid');
@@ -59,6 +114,24 @@ export function renderProducts(marca, subcat) {
   }
   const label = el('products-label');
   if (label) label.textContent = `${subcat} · ${list.length} producto${list.length !== 1 ? 's' : ''}`;
+  showSection('products-view');
+}
+
+export function renderBrandProducts(marca) {
+  AppState.sectionProductsDirect = false;
+  AppState.currentMarca = marca;
+
+  const container = el('products-grid');
+  const list = productsForSection().filter((p) => p.marca === marca);
+  if (!list.length) {
+    container.innerHTML = `<div class="empty-state"><p>Sin productos</p></div>`;
+  } else {
+    container.innerHTML = productsGroupedHtml(list, { hideSubcat: true });
+  }
+  const label = el('products-label');
+  if (label) {
+    label.textContent = `${marca} · ${list.length} producto${list.length !== 1 ? 's' : ''}`;
+  }
   showSection('products-view');
 }
 
